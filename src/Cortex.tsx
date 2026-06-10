@@ -1,63 +1,133 @@
-import { MAGENTA } from './infrastructure/constants';
-import { GlobalStyles } from './presentation/styles/global';
+import { useState } from 'react';
+import { Settings } from 'lucide-react';
 import { useCortex } from './application/useCortex';
+import { I18nProvider, useI18n } from './i18n/I18nContext';
+import type { ViewTransform } from './layout/fitView';
+import { Nebula } from './presentation/components/background/Nebula';
+import { Particles } from './presentation/components/background/Particles';
+import { DesktopScene } from './presentation/components/DesktopScene';
+import { LoadingScene } from './presentation/components/graph/LoadingScene';
 import { HexGrid } from './presentation/components/HexGrid';
-import { QueryInput } from './presentation/components/QueryInput';
-import { TopBar } from './presentation/components/TopBar';
-import { MetaHUD } from './presentation/components/MetaHUD';
+import { MobileExplorer } from './presentation/components/mobile/MobileExplorer';
 import { QueryHistory } from './presentation/components/QueryHistory';
-import { HUDFrame } from './presentation/components/HUDFrame';
-import { KnowledgeGraph } from './presentation/components/graph/KnowledgeGraph';
+import { QueryInput } from './presentation/components/QueryInput';
+import { SettingsMenu } from './presentation/components/settings/SettingsMenu';
+import { TopBar } from './presentation/components/TopBar';
+import { useIsMobile } from './presentation/hooks/useBreakpoint';
+import { SettingsContext, useSettings, useSettingsState } from './presentation/hooks/useSettings';
+import styles from './Cortex.module.css';
 
 export default function Cortex() {
-  const {
-    query, phase, graphData, history,
-    hoveredCat, setHoveredCat,
-    error, viewport,
-    handleSubmit, handleNewQuery,
-  } = useCortex();
-
-  const { W, H } = viewport;
-  const active = phase === 'loading' || phase === 'graph';
-
+  const settingsState = useSettingsState();
   return (
-    <div className="cortex-root">
-      <GlobalStyles />
-      <HexGrid W={W} H={H} />
-
-      {phase === 'input' && <QueryInput onSubmit={handleSubmit} />}
-
-      {active && <TopBar query={query} onNewQuery={handleNewQuery} />}
-      {active && <HUDFrame />}
-      {active && (
-        <KnowledgeGraph
-          graphData={graphData}
-          phase={phase}
-          hoveredCat={hoveredCat}
-          setHoveredCat={setHoveredCat}
-          W={W} H={H}
-        />
-      )}
-
-      {phase === 'graph' && <MetaHUD graphData={graphData} />}
-
-      <QueryHistory history={history} onSelect={handleSubmit} />
-
-      {error && <ErrorToast message={error} />}
-    </div>
+    <SettingsContext.Provider value={settingsState}>
+      <I18nProvider locale={settingsState.settings.locale}>
+        <CortexApp />
+      </I18nProvider>
+    </SettingsContext.Provider>
   );
 }
 
-function ErrorToast({ message }: { message: string }) {
+function CortexApp() {
+  const { settings } = useSettings();
+  const { t } = useI18n();
+  const isMobile = useIsMobile();
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [graphTransformRef, setGraphTransformRef] =
+    useState<React.RefObject<ViewTransform> | null>(null);
+
+  const { query, phase, graphData, history, error, viewport, handleSubmit, handleNewQuery } =
+    useCortex(settings.locale);
+  const { W, H } = viewport;
+
+  const gearButton = (
+    <button
+      className={styles.gearBtn}
+      onClick={() => setSettingsOpen(true)}
+      aria-label={t('topbar.settings')}
+    >
+      <Settings size={16} />
+    </button>
+  );
+
+  const overlays = (
+    <>
+      {settingsOpen && <SettingsMenu onClose={() => setSettingsOpen(false)} />}
+      {error && <div className={styles.errorToast}>{error}</div>}
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <div className={`cortex-root ${phase === 'graph' ? 'cortex-root--scroll' : ''}`}>
+        <Nebula />
+        {phase === 'input' && (
+          <>
+            <QueryInput
+              onSubmit={handleSubmit}
+              historySlot={<QueryHistory history={history} onSelect={handleSubmit} variant="inline" />}
+            />
+            {gearButton}
+          </>
+        )}
+        {phase === 'loading' && (
+          <div className={styles.loadingWrap}>
+            <LoadingScene W={W} H={H} />
+          </div>
+        )}
+        {phase === 'graph' && graphData && (
+          <MobileExplorer
+            query={query}
+            graphData={graphData}
+            onNewQuery={handleNewQuery}
+            onToggleSettings={() => setSettingsOpen(true)}
+          />
+        )}
+        {overlays}
+      </div>
+    );
+  }
+
   return (
-    <div style={{
-      position: 'fixed', bottom: 24, right: 20, zIndex: 50,
-      background: `${MAGENTA}18`, border: `1px solid ${MAGENTA}55`,
-      borderRadius: 4, padding: '10px 14px',
-      fontFamily: 'Space Mono', fontSize: 10, color: MAGENTA,
-      boxShadow: `0 0 16px ${MAGENTA}22`, maxWidth: 300,
-    }}>
-      {message}
+    <div className="cortex-root">
+      <Nebula />
+      <HexGrid W={W} H={H} />
+      <Particles offsetRef={graphTransformRef ?? undefined} />
+
+      {phase === 'input' && (
+        <>
+          <QueryInput
+            onSubmit={handleSubmit}
+            historySlot={<QueryHistory history={history} onSelect={handleSubmit} variant="inline" />}
+          />
+          {gearButton}
+        </>
+      )}
+
+      {phase === 'loading' && (
+        <>
+          <TopBar query={query} onNewQuery={handleNewQuery} />
+          <div className={styles.loadingWrap}>
+            <LoadingScene W={W} H={H} />
+          </div>
+        </>
+      )}
+
+      {phase === 'graph' && graphData && (
+        <DesktopScene
+          query={query}
+          graphData={graphData}
+          history={history}
+          W={W}
+          H={H}
+          onSubmit={handleSubmit}
+          onNewQuery={handleNewQuery}
+          onToggleSettings={() => setSettingsOpen(true)}
+          onTransformRef={setGraphTransformRef}
+        />
+      )}
+
+      {overlays}
     </div>
   );
 }

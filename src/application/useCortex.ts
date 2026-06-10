@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { callCortexAPI } from './cortexService';
 import type { GraphData } from '../domain/GraphData';
+import type { Locale } from '../i18n/translations';
 
 type Phase = 'input' | 'loading' | 'graph';
 
@@ -14,20 +15,17 @@ interface CortexState {
   phase: Phase;
   graphData: GraphData | null;
   history: string[];
-  hoveredCat: number | null;
-  setHoveredCat: (cat: number | null) => void;
   error: string | null;
   viewport: Viewport;
   handleSubmit: (q: string) => Promise<void>;
   handleNewQuery: () => void;
 }
 
-export function useCortex(): CortexState {
+export function useCortex(locale: Locale): CortexState {
   const [query, setQuery] = useState('');
   const [phase, setPhase] = useState<Phase>('input');
   const [graphData, setGraphData] = useState<GraphData | null>(null);
   const [history, setHistory] = useState<string[]>([]);
-  const [hoveredCat, setHoveredCat] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [viewport, setViewport] = useState<Viewport>({
     W: window.innerWidth,
@@ -47,14 +45,14 @@ export function useCortex(): CortexState {
     setError(null);
     setHistory(prev => [q, ...prev.filter(h => h !== q)].slice(0, 4));
     try {
-      const data = await callCortexAPI(q);
+      const data = await callCortexAPI(q, locale);
       setGraphData(data);
       setPhase('graph');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
       setPhase('input');
     }
-  }, []);
+  }, [locale]);
 
   const handleNewQuery = useCallback(() => {
     setPhase('input');
@@ -64,7 +62,6 @@ export function useCortex(): CortexState {
 
   return {
     query, phase, graphData, history,
-    hoveredCat, setHoveredCat,
     error, viewport,
     handleSubmit, handleNewQuery,
   };

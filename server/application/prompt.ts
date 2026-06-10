@@ -1,3 +1,20 @@
+export type ResponseLang = 'en' | 'es';
+
+const LANG_NAMES: Record<ResponseLang, string> = {
+  en: 'English',
+  es: 'Spanish',
+};
+
+/**
+ * Builds the system prompt with an explicit response-language instruction.
+ * JSON field NAMES never change; only human-readable VALUES are localized.
+ * image_query stays in English — image search works far better that way.
+ */
+export function buildSystemPrompt(lang: ResponseLang): string {
+  return `${SYSTEM_PROMPT}
+- LANGUAGE: Write every human-readable value (title, subtitle, summary, category names, facts, and meta keys/values) in ${LANG_NAMES[lang]}. JSON field names stay exactly as specified. EXCEPTION: every "image_query" must ALWAYS be in English regardless of the response language.`;
+}
+
 export const SYSTEM_PROMPT = `You are Cortex, an intelligent knowledge engine.
 Analyze the query, search for current accurate information, then return ONLY a JSON object, no markdown, no explanation.
 

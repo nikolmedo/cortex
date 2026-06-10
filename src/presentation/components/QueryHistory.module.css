@@ -1,0 +1,43 @@
+.chip {
+  background: rgba(0, 212, 255, 0.04);
+  border: 1px solid rgba(0, 212, 255, 0.18);
+  clip-path: var(--chamfer-sm);
+  padding: 5px 14px;
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  color: rgba(0, 212, 255, 0.6);
+  letter-spacing: 1px;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  white-space: nowrap;
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chip:hover {
+  background: rgba(0, 212, 255, 0.12);
+  color: var(--cyan);
+  box-shadow: var(--glow-sm);
+}
+
+.dockRight {
+  position: fixed;
+  top: 66px;
+  right: 16px;
+  z-index: var(--z-hud);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  align-items: flex-end;
+  animation: hudSlideRight 0.5s ease 0.55s both;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.dockHidden {
+  /* Cancel the entrance animation: its fill mode would override these. */
+  animation: none;
+  opacity: 0;
+  transform: translateX(24px);
+  pointer-events: none;
+}

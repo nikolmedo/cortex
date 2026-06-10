@@ -1,0 +1,79 @@
+/*
+ * Cortex design tokens — "evolved cyberpunk" theme.
+ * Hex values for --bg / --cyan / --purple / --magenta must stay in sync
+ * with src/infrastructure/constants.ts (TS needs them for SVG/canvas attrs).
+ */
+:root {
+  /* Palette */
+  --bg: #030712;
+  --cyan: #00d4ff;
+  --purple: #7b2fbe;
+  --magenta: #ff3c6e;
+  --text-bright: #f2f7ff;
+  --text-body: #c3d0e2;
+  --text-dim: #6b7a95;
+
+  /* Glass recipe */
+  --glass-bg: rgba(8, 14, 32, 0.55);
+  --glass-bg-solid: rgba(6, 11, 26, 0.92);
+  --glass-blur: blur(14px) saturate(1.5);
+  --glass-blur-heavy: blur(20px) saturate(1.6);
+  --glass-border: rgba(0, 212, 255, 0.18);
+
+  /* Glow recipes */
+  --glow-sm: 0 0 12px rgba(0, 212, 255, 0.35);
+  --glow-md: 0 0 24px rgba(0, 212, 255, 0.45);
+  --glow-lg: 0 0 48px rgba(0, 212, 255, 0.5);
+
+  /* Typography */
+  --font-display: 'Orbitron', sans-serif;
+  --font-mono: 'Space Mono', monospace;
+  --fs-2xs: 10px;
+  --fs-xs: 11px;
+  --fs-sm: 13px;
+  --fs-md: 16px;
+  --fs-lg: 22px;
+  --fs-xl: 32px;
+  --track-wide: 0.15em;
+  --track-wider: 0.3em;
+
+  /* Spacing scale */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+
+  /* Z-index scale */
+  --z-bg: 0;
+  --z-graph: 5;
+  --z-hud: 25;
+  --z-topbar: 30;
+  --z-panel: 35;
+  --z-float: 40;
+  --z-overlay: 60;
+  --z-toast: 70;
+
+  /* Motion */
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Cyberpunk chamfered corners */
+  --chamfer: polygon(
+    10px 0,
+    100% 0,
+    100% calc(100% - 10px),
+    calc(100% - 10px) 100%,
+    0 100%,
+    0 10px
+  );
+  --chamfer-sm: polygon(
+    6px 0,
+    100% 0,
+    100% calc(100% - 6px),
+    calc(100% - 6px) 100%,
+    0 100%,
+    0 6px
+  );
+}

@@ -1,0 +1,51 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-bg);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(60px);
+  will-change: transform;
+}
+
+.blobCyan {
+  composes: blob;
+  width: 60vw;
+  height: 60vw;
+  top: -18vw;
+  left: -14vw;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.08), transparent 70%);
+  animation: nebulaDriftA 110s ease-in-out infinite;
+}
+
+.blobPurple {
+  composes: blob;
+  width: 55vw;
+  height: 55vw;
+  top: 22vh;
+  right: -16vw;
+  background: radial-gradient(circle, rgba(123, 47, 190, 0.1), transparent 70%);
+  animation: nebulaDriftB 140s ease-in-out infinite;
+}
+
+.blobMagenta {
+  composes: blob;
+  width: 48vw;
+  height: 48vw;
+  bottom: -20vh;
+  left: 12vw;
+  background: radial-gradient(circle, rgba(255, 60, 110, 0.06), transparent 70%);
+  animation: nebulaDriftC 95s ease-in-out infinite;
+}
+
+.grain {
+  position: absolute;
+  inset: 0;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+}

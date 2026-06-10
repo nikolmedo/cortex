@@ -1,0 +1,28 @@
+.root {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+}
+
+.gradient {
+  position: absolute;
+  inset: -40%;
+  animation: monogramSpin 14s linear infinite;
+  opacity: 0.55;
+}
+
+.initials {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-display);
+  font-weight: 900;
+  color: var(--text-bright);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 24px currentColor;
+  user-select: none;
+}

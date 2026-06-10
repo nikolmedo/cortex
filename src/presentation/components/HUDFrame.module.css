@@ -1,0 +1,47 @@
+.bracket {
+  position: fixed;
+  width: 26px;
+  height: 26px;
+  pointer-events: none;
+  z-index: 28;
+  animation: hudBracketFadeIn 0.6s ease 0.1s both;
+  transition: opacity 0.35s ease;
+}
+
+.hidden {
+  /* Cancel the entrance animation: its fill mode would override opacity. */
+  animation: none;
+  opacity: 0;
+}
+
+.tl {
+  composes: bracket;
+  top: 74px;
+  left: 18px;
+  border-top: 1px solid rgba(0, 212, 255, 0.35);
+  border-left: 1px solid rgba(0, 212, 255, 0.35);
+}
+
+.tr {
+  composes: bracket;
+  top: 74px;
+  right: 18px;
+  border-top: 1px solid rgba(0, 212, 255, 0.35);
+  border-right: 1px solid rgba(0, 212, 255, 0.35);
+}
+
+.bl {
+  composes: bracket;
+  bottom: 18px;
+  left: 18px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.35);
+  border-left: 1px solid rgba(0, 212, 255, 0.35);
+}
+
+.br {
+  composes: bracket;
+  bottom: 18px;
+  right: 18px;
+  border-bottom: 1px solid rgba(0, 212, 255, 0.35);
+  border-right: 1px solid rgba(0, 212, 255, 0.35);
+}

@@ -1,0 +1,108 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: rgba(3, 5, 15, 0.82);
+  backdrop-filter: var(--glass-blur-heavy);
+  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeIn 0.25s ease both;
+  cursor: zoom-out;
+}
+
+.frame {
+  position: relative;
+  max-width: min(86vw, 980px);
+  max-height: 80vh;
+  cursor: default;
+  animation: lightboxReveal 0.55s var(--ease-out-expo) both;
+}
+
+.image {
+  display: block;
+  max-width: min(86vw, 980px);
+  max-height: 72vh;
+  object-fit: contain;
+  border: 1px solid color-mix(in srgb, var(--c, var(--cyan)) 33%, transparent);
+  box-shadow: 0 0 60px color-mix(in srgb, var(--c, var(--cyan)) 21%, transparent);
+}
+
+.monogramBox {
+  width: min(70vw, 520px);
+  height: min(52vh, 390px);
+  border: 1px solid color-mix(in srgb, var(--c, var(--cyan)) 33%, transparent);
+}
+
+.bracket {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+}
+
+.tl {
+  composes: bracket;
+  top: -8px;
+  left: -8px;
+  border-top: 1px solid var(--c, var(--cyan));
+  border-left: 1px solid var(--c, var(--cyan));
+}
+
+.tr {
+  composes: bracket;
+  top: -8px;
+  right: -8px;
+  border-top: 1px solid var(--c, var(--cyan));
+  border-right: 1px solid var(--c, var(--cyan));
+}
+
+.bl {
+  composes: bracket;
+  bottom: -8px;
+  left: -8px;
+  border-bottom: 1px solid var(--c, var(--cyan));
+  border-left: 1px solid var(--c, var(--cyan));
+}
+
+.br {
+  composes: bracket;
+  bottom: -8px;
+  right: -8px;
+  border-bottom: 1px solid var(--c, var(--cyan));
+  border-right: 1px solid var(--c, var(--cyan));
+}
+
+.caption {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.captionText {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-body);
+  letter-spacing: 2px;
+}
+
+.closeBtn {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--c, var(--cyan)) 33%, transparent);
+  clip-path: var(--chamfer-sm);
+  color: var(--c, var(--cyan));
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  padding: 6px 14px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.closeBtn:hover {
+  background: color-mix(in srgb, var(--c, var(--cyan)) 12%, transparent);
+  box-shadow: var(--glow-sm);
+}

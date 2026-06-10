@@ -1,0 +1,49 @@
+.gearBtn {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: var(--z-float);
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  clip-path: var(--chamfer-sm);
+  color: rgba(0, 212, 255, 0.65);
+  cursor: pointer;
+  transition: color 0.2s, box-shadow 0.2s;
+}
+
+.gearBtn:hover {
+  color: var(--cyan);
+  box-shadow: var(--glow-sm);
+}
+
+.errorToast {
+  position: fixed;
+  bottom: 24px;
+  right: 20px;
+  z-index: var(--z-toast);
+  background: rgba(255, 60, 110, 0.09);
+  border: 1px solid rgba(255, 60, 110, 0.33);
+  clip-path: var(--chamfer-sm);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  padding: 10px 14px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--magenta);
+  box-shadow: 0 0 16px rgba(255, 60, 110, 0.13);
+  max-width: 300px;
+  animation: fadeInUp 0.3s var(--ease-out-expo) both;
+}
+
+.loadingWrap {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-graph);
+}

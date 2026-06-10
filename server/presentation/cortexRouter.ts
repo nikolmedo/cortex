@@ -5,15 +5,17 @@ import { CortexError } from '../domain/errors.js';
 export const cortexRouter = Router();
 
 cortexRouter.post('/cortex', async (req, res) => {
-  const { query } = req.body as { query?: unknown };
+  const { query, lang } = req.body as { query?: unknown; lang?: unknown };
 
   if (typeof query !== 'string' || query.trim().length === 0) {
     res.status(400).json({ error: 'query must be a non-empty string', code: 'INVALID_INPUT' });
     return;
   }
 
+  const responseLang = lang === 'es' ? 'es' : 'en';
+
   try {
-    const data = await cortexFlow({ query: query.trim() });
+    const data = await cortexFlow({ query: query.trim(), lang: responseLang });
     res.json(data);
   } catch (err) {
     if (err instanceof CortexError) {

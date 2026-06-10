@@ -1,0 +1,89 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  animation: fadeIn 0.2s ease both;
+}
+
+.panel {
+  position: fixed;
+  top: 64px;
+  right: 16px;
+  width: 260px;
+  z-index: var(--z-overlay);
+  background: rgba(4, 8, 20, 0.88);
+  backdrop-filter: var(--glass-blur-heavy);
+  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  clip-path: var(--chamfer);
+  border: 1px solid rgba(0, 212, 255, 0.25);
+  padding: 16px;
+  animation: expandIn 0.3s var(--ease-out-expo) both;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--cyan);
+  letter-spacing: 4px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.titleRule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0, 212, 255, 0.3), transparent);
+}
+
+.groupLabel {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--text-dim);
+  letter-spacing: 2px;
+  margin: 12px 0 6px;
+}
+
+.segment {
+  display: flex;
+  gap: 4px;
+}
+
+.option {
+  flex: 1;
+  background: rgba(0, 212, 255, 0.04);
+  border: 1px solid rgba(0, 212, 255, 0.18);
+  clip-path: var(--chamfer-sm);
+  color: var(--text-dim);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  padding: 8px 4px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.option:hover {
+  color: var(--cyan);
+  border-color: rgba(0, 212, 255, 0.4);
+}
+
+.optionActive {
+  background: rgba(0, 212, 255, 0.14);
+  border-color: rgba(0, 212, 255, 0.6);
+  color: var(--cyan);
+  box-shadow: var(--glow-sm);
+}
+
+.hint {
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  color: var(--text-dim);
+  letter-spacing: 0.5px;
+  line-height: 1.6;
+  margin-top: 10px;
+  opacity: 0.8;
+}

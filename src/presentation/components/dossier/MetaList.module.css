@@ -1,0 +1,25 @@
+.row {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 6px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  align-items: flex-start;
+}
+
+.key {
+  color: color-mix(in srgb, var(--c, var(--cyan)) 45%, transparent);
+  min-width: 88px;
+  flex-shrink: 0;
+  padding-top: 1px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.value {
+  color: var(--text-body);
+  flex: 1;
+  overflow-wrap: break-word;
+  line-height: 1.6;
+  user-select: text;
+}

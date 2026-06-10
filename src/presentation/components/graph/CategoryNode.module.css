@@ -1,0 +1,104 @@
+.card {
+  position: relative;
+  width: 120px;
+  height: 140px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 8px 8px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  clip-path: var(--chamfer);
+  cursor: pointer;
+  transition: transform 0.3s var(--ease-spring), background 0.3s;
+}
+
+/* Gradient neon border, masked to a 1px ring. */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  background: conic-gradient(
+    from 140deg,
+    color-mix(in srgb, var(--c) 15%, transparent),
+    var(--c),
+    color-mix(in srgb, var(--c) 15%, transparent) 60%
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.card:hover,
+.cardFocused {
+  transform: translateY(-2px);
+  background: color-mix(in srgb, var(--c) 8%, rgba(8, 14, 32, 0.6));
+}
+
+.imageWrap {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  clip-path: var(--chamfer-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.65) saturate(1.6);
+  transition: filter 0.3s;
+}
+
+.card:hover .image,
+.cardFocused .image {
+  filter: brightness(0.9) saturate(1.4);
+}
+
+.tint {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--c) 16%, transparent);
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--c);
+  letter-spacing: 2px;
+  margin-top: 9px;
+  text-shadow: 0 0 8px color-mix(in srgb, var(--c) 65%, transparent);
+  text-align: center;
+  max-width: 104px;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-height: 1.4;
+}
+
+.count {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  background: rgba(2, 5, 16, 0.85);
+  clip-path: var(--chamfer-sm);
+  padding: 2px 6px;
+  border: 1px solid color-mix(in srgb, var(--c) 33%, transparent);
+  font-family: var(--font-display);
+  font-size: 8px;
+  color: var(--c);
+  letter-spacing: 0.5px;
+}
+
+.glow {
+  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--c) 50%, transparent));
+}

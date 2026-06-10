@@ -1,0 +1,167 @@
+.root {
+  position: relative;
+  z-index: 5;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.stickyBar {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-topbar);
+  height: 52px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  background: rgba(3, 7, 18, 0.85);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.12);
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 900;
+  color: var(--cyan);
+  letter-spacing: 3px;
+  text-shadow: 0 0 12px rgba(0, 212, 255, 0.45);
+  flex-shrink: 0;
+}
+
+.query {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+}
+
+.iconBtn {
+  background: transparent;
+  border: 1px solid rgba(0, 212, 255, 0.22);
+  clip-path: var(--chamfer-sm);
+  color: rgba(0, 212, 255, 0.65);
+  min-width: 44px;
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.iconBtn:active,
+.iconBtn:hover {
+  color: var(--cyan);
+  border-color: rgba(0, 212, 255, 0.5);
+}
+
+.content {
+  flex: 1;
+  padding: 14px 14px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.card {
+  position: relative;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  clip-path: var(--chamfer);
+  border: 1px solid rgba(0, 212, 255, 0.14);
+  padding: 14px;
+  animation: fadeInUp 0.45s var(--ease-out-expo) both;
+}
+
+.cardLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.cardLabelText {
+  font-family: var(--font-display);
+  font-size: 9px;
+  color: rgba(0, 212, 255, 0.55);
+  letter-spacing: 3px;
+}
+
+.cardLabelRule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0, 212, 255, 0.2), transparent);
+}
+
+.copyBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: rgba(0, 212, 255, 0.5);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 1px;
+  padding: 4px 6px;
+}
+
+.summary {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text-body);
+  line-height: 1.75;
+  user-select: text;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  animation: fadeInUp 0.45s var(--ease-out-expo) both;
+}
+
+.dividerText {
+  font-family: var(--font-display);
+  font-size: 10px;
+  color: var(--cyan);
+  letter-spacing: 3px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.dividerRule {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, rgba(0, 212, 255, 0.4), transparent);
+  box-shadow: 0 0 6px rgba(0, 212, 255, 0.3);
+}
+
+.newQueryBtn {
+  margin: 10px auto 0;
+  background: rgba(0, 212, 255, 0.06);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  clip-path: var(--chamfer);
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  padding: 13px 28px;
+  min-height: 44px;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.newQueryBtn:active,
+.newQueryBtn:hover {
+  background: rgba(0, 212, 255, 0.14);
+  box-shadow: var(--glow-sm);
+}

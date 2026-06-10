@@ -1,0 +1,100 @@
+.sheet {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  width: min(560px, calc(100vw - 32px));
+  max-height: 46vh;
+  z-index: var(--z-overlay);
+  background: rgba(4, 8, 20, 0.85);
+  backdrop-filter: var(--glass-blur-heavy);
+  -webkit-backdrop-filter: var(--glass-blur-heavy);
+  clip-path: var(--chamfer);
+  border: 1px solid color-mix(in srgb, var(--c) 33%, transparent);
+  border-top: 2px solid var(--c);
+  display: flex;
+  flex-direction: column;
+  animation: sheetUp 0.4s var(--ease-out-expo) both;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-bottom: 1px solid color-mix(in srgb, var(--c) 15%, transparent);
+}
+
+.image {
+  width: 44px;
+  height: 44px;
+  clip-path: var(--chamfer-sm);
+  object-fit: cover;
+  flex-shrink: 0;
+  filter: brightness(0.8) saturate(1.4);
+}
+
+.name {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--c);
+  letter-spacing: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.count {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: color-mix(in srgb, var(--c) 55%, transparent);
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+.copyBtn {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--c) 33%, transparent);
+  clip-path: var(--chamfer-sm);
+  color: var(--c);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 1.5px;
+  padding: 5px 10px;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.2s;
+}
+
+.copyBtn:hover {
+  background: color-mix(in srgb, var(--c) 12%, transparent);
+}
+
+.closeBtn {
+  composes: copyBtn;
+}
+
+.facts {
+  overflow-y: auto;
+  padding: 10px 16px 14px;
+}
+
+.fact {
+  display: flex;
+  gap: 10px;
+  padding: 5px 0;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--text-body);
+  line-height: 1.65;
+  user-select: text;
+}
+
+.factIndex {
+  font-family: var(--font-display);
+  font-size: 8px;
+  color: color-mix(in srgb, var(--c) 60%, transparent);
+  padding-top: 4px;
+  flex-shrink: 0;
+  user-select: none;
+}

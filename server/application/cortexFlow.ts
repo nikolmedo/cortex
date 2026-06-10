@@ -1,19 +1,22 @@
 import { z } from 'genkit';
 import { ai } from '../infrastructure/geminiClient.js';
 import { extractJSON, validateGraphData } from '../infrastructure/parseGraphData.js';
-import { SYSTEM_PROMPT } from './prompt.js';
+import { buildSystemPrompt } from './prompt.js';
 import type { GraphData } from '../domain/GraphData.js';
 
 export const cortexFlow = ai.defineFlow(
   {
     name: 'cortexFlow',
-    inputSchema: z.object({ query: z.string().min(1) }),
+    inputSchema: z.object({
+      query: z.string().min(1),
+      lang: z.enum(['en', 'es']).default('en'),
+    }),
     // outputSchema omitted: Gemini rejects JSON mode + search grounding simultaneously
   },
-  async ({ query }): Promise<GraphData> => {
+  async ({ query, lang }): Promise<GraphData> => {
     const { text } = await ai.generate({
       model: `googleai/${process.env.GEMINI_MODEL ?? 'gemini-2.0-flash'}`,
-      system: SYSTEM_PROMPT,
+      system: buildSystemPrompt(lang),
       prompt: query,
       config: {
         maxOutputTokens: 4000,

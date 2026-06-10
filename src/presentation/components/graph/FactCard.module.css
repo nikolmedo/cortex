@@ -1,0 +1,44 @@
+/*
+ * Rendered metrics must match src/layout/measure.ts:
+ * width 230px, horizontal padding 12+14, text 12.5px/19.4px Space Mono.
+ * No backdrop-filter here on purpose — up to 40 cards can be on screen.
+ */
+.card {
+  width: 230px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(6, 11, 26, 0.94), rgba(8, 14, 32, 0.88));
+  border-top: 1px solid color-mix(in srgb, var(--c) 33%, transparent);
+  border-right: 1px solid color-mix(in srgb, var(--c) 19%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--c) 19%, transparent);
+  border-left: 3px solid var(--c);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--c) 21%, transparent),
+    inset 0 0 30px color-mix(in srgb, var(--c) 4%, transparent);
+  padding: 8px 14px 8px 12px;
+  transition: box-shadow 0.25s, transform 0.25s;
+  user-select: text;
+  cursor: text;
+}
+
+.card:hover {
+  box-shadow: 0 0 26px color-mix(in srgb, var(--c) 38%, transparent),
+    inset 0 0 30px color-mix(in srgb, var(--c) 8%, transparent);
+  transform: scale(1.03);
+}
+
+.index {
+  font-family: var(--font-display);
+  font-size: 8px;
+  color: color-mix(in srgb, var(--c) 70%, transparent);
+  letter-spacing: 2px;
+  margin-bottom: 4px;
+  user-select: none;
+}
+
+.text {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 19.4px;
+  color: #f0f5ff;
+  letter-spacing: 0.3px;
+  overflow-wrap: break-word;
+}
