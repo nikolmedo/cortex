@@ -19,10 +19,12 @@ A futuristic AI-powered knowledge graph visualizer. Type any query — a person,
 
 | Layer | Choice |
 |---|---|
-| Framework | React 18 + Vite |
+| Frontend | React 18 + Vite |
+| Backend | Node.js + Express |
+| AI runtime | Genkit + `@genkit-ai/google-genai` |
+| AI model | Google Gemini (configurable via `GEMINI_MODEL`) |
+| Search grounding | `googleSearch` tool (built-in Gemini grounding) |
 | Rendering | SVG + absolute-positioned HTML (no canvas, no D3) |
-| AI | Google Gemini API (`generativelanguage.googleapis.com`) |
-| Search grounding | `google_search` tool (built-in Gemini tool) |
 | Fonts | Orbitron + Space Mono (Google Fonts) |
 | Icons | lucide-react |
 
@@ -39,8 +41,9 @@ npm install
 **2. Create `.env`**
 
 ```env
-VITE_GEMINI_API_KEY=AIza...
-VITE_GEMINI_MODEL=gemini-2.0-flash
+GEMINI_API_KEY=AIza...
+GEMINI_MODEL=gemini-2.0-flash
+PORT=3001
 ```
 
 Get an API key at [aistudio.google.com](https://aistudio.google.com).
@@ -51,13 +54,23 @@ Get an API key at [aistudio.google.com](https://aistudio.google.com).
 npm run dev
 ```
 
-Open [http://localhost:5173](http://localhost:5173).
+This opens the backend (API on port 3001) and the frontend in **two separate
+terminal windows**. Wait for `Cortex server running on http://localhost:3001`
+in the SERVER window, then open [http://localhost:5173](http://localhost:5173).
+
+> Why two windows? `tsx watch` needs its own console (TTY). Running both
+> processes through `concurrently` in one pane is unreliable on Windows — the
+> server's watch child fails to keep the port bound and the client gets
+> `ECONNREFUSED`. Separate windows sidestep that.
+
+Prefer a single pane? `npm run dev:concurrent` still uses `concurrently`, or run
+each side yourself: `npm run dev:server` and `npm run dev:client`.
 
 ---
 
 ## Switching models
 
-Change `VITE_GEMINI_MODEL` in `.env` and restart the dev server. Any Gemini model that supports the `google_search` grounding tool works:
+Change `GEMINI_MODEL` in `.env` and restart the dev server. Any Gemini model that supports the `google_search` grounding tool works:
 
 | Model | Notes |
 |---|---|
@@ -100,22 +113,37 @@ The model returns 4–8 categories and 2–5 facts per category depending on how
 
 ```
 cortex/
-├── src/
-│   ├── Cortex.jsx     # Entire application — all components, hooks, API logic
-│   └── main.jsx       # React root mount
-├── index.html         # Google Fonts link, body background
-├── vite.config.js
+├── server/                    # Node.js/Express backend
+│   ├── index.ts               # Entry point — loads dotenv, starts Express
+│   ├── application/
+│   │   ├── cortexFlow.ts      # Genkit flow — calls Gemini with grounding
+│   │   └── prompt.ts          # System prompt
+│   ├── domain/
+│   │   └── GraphData.ts       # Graph data types
+│   ├── infrastructure/
+│   │   ├── geminiClient.ts    # Genkit + googleAI plugin setup
+│   │   └── parseGraphData.ts  # JSON extraction + validation
+│   └── presentation/
+│       └── cortexRouter.ts    # POST /api/cortex route
+├── src/                       # React frontend
+│   ├── main.tsx               # React root mount
+│   ├── Cortex.tsx             # Root component
+│   ├── application/           # Frontend use cases
+│   ├── domain/                # Shared domain types
+│   ├── infrastructure/        # API client
+│   ├── layout/                # Graph layout computation
+│   └── presentation/          # UI components
+├── index.html
+├── vite.config.ts
 ├── package.json
-├── .env               # Your API key (gitignored)
-└── .env.example       # Template
+├── .env                       # Your API key (gitignored)
+└── .env.example               # Template
 ```
-
-All application logic lives in a single `Cortex.jsx`. No external component libraries are used.
 
 ---
 
 ## Notes
 
-- The Gemini API key is embedded in the browser bundle at build time — fine for local use and demos, not for public deployment without a backend proxy.
+- The Gemini API key lives server-side only — it is never exposed to the browser.
 - Images come from Unsplash (category nodes + gallery strip) and from direct URLs returned by the model (center node). If an image fails, it falls back to the subject's initials or a colored gradient.
 - `React.StrictMode` is intentionally omitted to prevent the `requestAnimationFrame` animation loop from double-mounting in development.
