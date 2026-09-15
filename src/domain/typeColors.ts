@@ -9,7 +9,7 @@ export const TYPE_COLOR: Record<GraphDataType, string> = {
   series: MAGENTA,
   company: PURPLE,
   event: '#FF8C00',
-  concept: '#A855F7',
+  concept: '#A855F7', // unslop-ignore: one violet slot in the per-type palette, not the brand primary
   sports_team: '#10B981',
   album: '#FF6B35',
   book: CYAN,

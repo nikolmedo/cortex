@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Maximize2, Minimize2 } from 'lucide-react';
-import type { GraphData } from '../../domain/GraphData';
+import type { Scene } from '../../domain/Scene';
 import { typeColor } from '../../domain/typeColors';
 import { TOP_BAR_H } from '../../infrastructure/constants';
 import { IMG } from '../../infrastructure/image';
@@ -19,7 +19,7 @@ import styles from './DesktopScene.module.css';
 
 interface DesktopSceneProps {
   query: string;
-  graphData: GraphData;
+  scene: Scene;
   history: string[];
   W: number;
   H: number;
@@ -31,7 +31,7 @@ interface DesktopSceneProps {
 
 export function DesktopScene({
   query,
-  graphData,
+  scene,
   history,
   W,
   H,
@@ -42,12 +42,14 @@ export function DesktopScene({
 }: DesktopSceneProps) {
   const { t } = useI18n();
   const { settings } = useSettings();
-  const ui = useUiState(settings.defaultViewMode, graphData);
+  const ui = useUiState(settings.defaultViewMode, scene);
   const [focusedCat, setFocusedCat] = useState<number | null>(null);
+  const [spotlightRequest, setSpotlightRequest] = useState(0);
 
   useEffect(() => {
     setFocusedCat(null);
-  }, [graphData]);
+    setSpotlightRequest(0);
+  }, [scene]);
 
   const viewRect = useMemo<ViewRect>(() => {
     const top = ui.immersive ? 0 : TOP_BAR_H;
@@ -73,13 +75,12 @@ export function DesktopScene({
     return () => window.removeEventListener('keydown', handler);
   }, [ui, focusedCat]);
 
-  const color = typeColor(graphData.type);
-  const lightboxSrc =
-    graphData.image_url || IMG.lightbox(graphData.image_query ?? graphData.title, 99);
+  const color = typeColor(scene.type);
+  const lightboxSrc = scene.image_url || IMG.lightbox(scene.image_query || scene.title, 99);
 
   const openEntityLightbox = useCallback(() => {
-    ui.openLightbox({ src: lightboxSrc, title: graphData.title, color });
-  }, [ui, lightboxSrc, graphData.title, color]);
+    ui.openLightbox({ src: lightboxSrc, title: scene.title, color });
+  }, [ui, lightboxSrc, scene.title, color]);
 
   const handleCategoryClick = useCallback(
     (index: number) => {
@@ -92,21 +93,28 @@ export function DesktopScene({
     [ui],
   );
 
+  const handleSpotlightClick = useCallback(() => {
+    ui.openDossier();
+    setSpotlightRequest(n => n + 1);
+  }, [ui]);
+
   return (
     <>
       <GraphStage
         key={query}
-        graphData={graphData}
+        scene={scene}
         viewRect={viewRect}
         focusedCat={focusedCat}
         onCategoryClick={handleCategoryClick}
         onBackgroundClick={() => setFocusedCat(null)}
         onCenterImageClick={openEntityLightbox}
+        onSpotlightClick={handleSpotlightClick}
         onTransformRef={onTransformRef}
       />
 
       <TopBar
         query={query}
+        scene={scene}
         onNewQuery={onNewQuery}
         hidden={ui.immersive}
         dossierOpen={ui.dossierOpen}
@@ -118,12 +126,13 @@ export function DesktopScene({
       <QueryHistory history={history} onSelect={onSubmit} hidden={ui.immersive} />
 
       <DossierPanel
-        graphData={graphData}
+        scene={scene}
         open={ui.dossierOpen && !ui.immersive}
         onHeroClick={openEntityLightbox}
+        spotlightRequest={spotlightRequest}
       />
 
-      {focusedCat != null && graphData.graph[focusedCat] && (
+      {focusedCat != null && scene.graph[focusedCat] && (
         <button className={styles.focusBar} onClick={() => setFocusedCat(null)}>
           <span>◄</span>
           <span>{t('graph.overview')}</span>
@@ -140,8 +149,8 @@ export function DesktopScene({
         {ui.immersive ? <Minimize2 size={15} /> : <Maximize2 size={15} />}
       </button>
 
-      {ui.detailCat != null && graphData.graph[ui.detailCat] && (
-        <NodeDetailSheet category={graphData.graph[ui.detailCat]} onClose={ui.closeDetail} />
+      {ui.detailCat != null && scene.graph[ui.detailCat] && (
+        <NodeDetailSheet category={scene.graph[ui.detailCat]} onClose={ui.closeDetail} />
       )}
 
       {ui.lightbox && (

@@ -1,6 +1,6 @@
-import { CYAN } from '../../../infrastructure/constants';
 import { IMG } from '../../../infrastructure/image';
 import { useImageCascade } from '../../hooks/useImageCascade';
+import { useSceneTheme } from '../../scene/SceneTheme';
 import { Monogram } from '../shared/Monogram';
 import styles from './CenterNode.module.css';
 
@@ -13,7 +13,8 @@ interface CenterNodeProps {
 }
 
 export function CenterNode({ title, subtitle, imageUrl, imageQuery, onImageClick }: CenterNodeProps) {
-  const img = useImageCascade(imageUrl || undefined, IMG.node(imageQuery ?? title, 99));
+  const { accent } = useSceneTheme();
+  const img = useImageCascade(imageUrl || undefined, IMG.node(imageQuery || title, 99));
 
   return (
     <div className={styles.root}>
@@ -29,7 +30,7 @@ export function CenterNode({ title, subtitle, imageUrl, imageQuery, onImageClick
         {img.src ? (
           <img className={styles.image} src={img.src} alt={title} onError={img.onError} />
         ) : (
-          <Monogram title={title} color={CYAN} size={34} />
+          <Monogram title={title} color={accent} size={34} />
         )}
       </div>
       <div className={styles.title}>{title}</div>

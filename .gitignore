@@ -1,3 +1,6 @@
 node_modules/
 dist/
 .env
+
+# gentle-ai local skill registry (machine-specific, auto-generated)
+.atl/

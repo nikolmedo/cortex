@@ -1,4 +1,4 @@
-/* Collision size in measure.ts is 220x250 — keep the rendered node inside it. */
+/* Collision size is ROLE_W.center x CENTER_H (220x250) — keep the rendered node inside it. */
 .root {
   width: 220px;
   height: 250px;
@@ -16,7 +16,7 @@
   top: 0;
   left: 22px;
   border-radius: 50%;
-  border: 2px solid rgba(0, 212, 255, 0.1);
+  border: 2px solid rgb(var(--scene-primary-rgb) / 0.1);
 }
 
 .ringInner {
@@ -26,7 +26,7 @@
   top: 10px;
   left: 32px;
   border-radius: 50%;
-  border: 1px solid rgba(0, 212, 255, 0.28);
+  border: 1px solid rgb(var(--scene-primary-rgb) / 0.28);
 }
 
 .imageWrap {
@@ -37,17 +37,17 @@
   overflow: hidden;
   position: relative;
   z-index: 1;
-  border: 2px solid var(--cyan);
-  box-shadow: 0 0 32px rgba(0, 212, 255, 0.4), 0 0 70px rgba(0, 212, 255, 0.14),
-    inset 0 0 24px rgba(0, 212, 255, 0.13);
+  border: 2px solid var(--scene-primary);
+  box-shadow: 0 0 32px rgb(var(--scene-primary-rgb) / 0.4), 0 0 70px rgb(var(--scene-primary-rgb) / 0.14),
+    inset 0 0 24px rgb(var(--scene-primary-rgb) / 0.13);
   cursor: pointer;
   transition: transform 0.3s var(--ease-spring), box-shadow 0.3s;
 }
 
 .imageWrap:hover {
   transform: scale(1.04);
-  box-shadow: 0 0 44px rgba(0, 212, 255, 0.6), 0 0 90px rgba(0, 212, 255, 0.2),
-    inset 0 0 24px rgba(0, 212, 255, 0.18);
+  box-shadow: 0 0 44px rgb(var(--scene-primary-rgb) / 0.6), 0 0 90px rgb(var(--scene-primary-rgb) / 0.2),
+    inset 0 0 24px rgb(var(--scene-primary-rgb) / 0.18);
 }
 
 .image {
@@ -64,7 +64,7 @@
   color: var(--text-bright);
   letter-spacing: 2px;
   text-align: center;
-  text-shadow: 0 0 16px rgba(0, 212, 255, 0.45);
+  text-shadow: 0 0 16px rgb(var(--scene-primary-rgb) / 0.45);
   max-width: 220px;
   overflow: hidden;
   display: -webkit-box;
@@ -78,7 +78,7 @@
 .subtitle {
   font-family: var(--font-mono);
   font-size: 9.5px;
-  color: rgba(0, 212, 255, 0.55);
+  color: rgb(var(--scene-primary-rgb) / 0.55);
   letter-spacing: 1.4px;
   text-align: center;
   max-width: 220px;

@@ -1,0 +1,94 @@
+.root {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  fill: none;
+  stroke: var(--scene-primary);
+  stroke-width: 0.5;
+  opacity: 0.035;
+}
+
+.layer[data-motif='wave'] {
+  stroke-width: 0.7;
+  opacity: 0.05;
+}
+
+.layer[data-motif='rings'] {
+  stroke-width: 0.6;
+  opacity: 0.045;
+}
+
+.secondary {
+  stroke: var(--scene-secondary);
+}
+
+.entering {
+  animation: motifIn 0.9s ease both;
+}
+
+.leaving {
+  animation: motifOut 0.9s ease both;
+}
+
+/* Ambient drift per motif; each loop translates by a whole tile so it never pops. Period follows the mood. */
+.hexPan {
+  animation: honeycombPan calc(20s / var(--motion-scale)) linear infinite;
+}
+
+.latticePan {
+  animation: latticePan calc(26s / var(--motion-scale)) linear infinite;
+}
+
+.wavePan {
+  animation: wavePan calc(40s / var(--motion-scale)) linear infinite;
+}
+
+.ringsBreathe {
+  animation: ringsBreathe calc(14s / var(--motion-scale)) ease-in-out infinite alternate;
+}
+
+@keyframes motifIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes motifOut {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes honeycombPan {
+  to {
+    transform: translate(-90px, -51.96px);
+  }
+}
+
+@keyframes latticePan {
+  to {
+    transform: translate(-44px, -76.2px);
+  }
+}
+
+@keyframes wavePan {
+  to {
+    transform: translateX(-260px);
+  }
+}
+
+@keyframes ringsBreathe {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.03);
+  }
+}

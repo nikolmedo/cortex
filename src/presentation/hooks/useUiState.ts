@@ -13,6 +13,8 @@ export interface UiState {
   toggleImmersive: () => void;
   dossierOpen: boolean;
   toggleDossier: () => void;
+  /** Forces the dossier open, leaving immersive mode if needed. */
+  openDossier: () => void;
   lightbox: LightboxState | null;
   openLightbox: (state: LightboxState) => void;
   closeLightbox: () => void;
@@ -55,6 +57,11 @@ export function useUiState(defaultViewMode: ViewMode, resetKey: unknown): UiStat
     }, []),
     dossierOpen,
     toggleDossier: useCallback(() => setDossierOpen(prev => !prev), []),
+    openDossier: useCallback(() => {
+      setImmersive(false);
+      setDetailCat(null);
+      setDossierOpen(true);
+    }, []),
     lightbox,
     openLightbox: useCallback((state: LightboxState) => setLightbox(state), []),
     closeLightbox: useCallback(() => setLightbox(null), []),

@@ -47,3 +47,17 @@
   inset: 0;
   z-index: var(--z-graph);
 }
+
+/*
+ * In-app MOTION: REDUCED setting. The shell stamps data-motion="reduced" on
+ * <html>; this mirrors the prefers-reduced-motion clamp from global.css so
+ * every module (including portaled overlays) honours the setting.
+ */
+:global([data-motion='reduced']) :global(*),
+:global([data-motion='reduced']) :global(*::before),
+:global([data-motion='reduced']) :global(*::after) {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+}

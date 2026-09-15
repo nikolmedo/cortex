@@ -1,0 +1,4 @@
+/* Box-less wrapper: custom properties inherit through it, layout is untouched. */
+.root {
+  display: contents;
+}

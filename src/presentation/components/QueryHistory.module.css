@@ -41,3 +41,16 @@
   transform: translateX(24px);
   pointer-events: none;
 }
+
+/* Chips follow the scene accent once a scene is mounted; cyan is the pre-scene fallback. */
+.chip {
+  border-color: color-mix(in srgb, var(--scene-primary, var(--cyan)) 18%, transparent);
+  background: color-mix(in srgb, var(--scene-primary, var(--cyan)) 4%, transparent);
+  color: color-mix(in srgb, var(--scene-primary, var(--cyan)) 60%, transparent);
+}
+
+.chip:hover {
+  background: color-mix(in srgb, var(--scene-primary, var(--cyan)) 12%, transparent);
+  color: var(--scene-primary, var(--cyan));
+  box-shadow: 0 0 12px color-mix(in srgb, var(--scene-primary, var(--cyan)) 35%, transparent);
+}
