@@ -1,19 +1,39 @@
-export type NodeKind = 'center' | 'category' | 'fact';
+import type { SceneArchetype } from '../domain/Scene';
 
-export interface LayoutNode {
+/**
+ * Node roles in the stage graph:
+ * - center: the entity node (fixed at the origin)
+ * - spotlight: optional headline stat/quote/callout linked to the center
+ * - category: one per scene category
+ * - fact: one per item for non-composite kinds
+ * - block: one composite node per category for timeline/comparison/ranking/progress
+ */
+export type NodeKind = 'center' | 'spotlight' | 'category' | 'fact' | 'block';
+
+type EdgeRole = 'trunk' | 'leaf' | 'spotlight';
+
+export interface NodeSpec {
   id: string;
   kind: NodeKind;
-  /** Measured rectangle size used for collision; the rendered node must match. */
+  color: string;
+  /** -1 for the center and spotlight nodes. */
+  catIndex: number;
+  /** Item index for fact nodes; -1 for every other role. */
+  factIndex: number;
+}
+
+export interface NodeSize {
   w: number;
   h: number;
+}
+
+/** Measured rectangle per node id; the rendered node must match these metrics. */
+export type NodeSizes = ReadonlyMap<string, NodeSize>;
+
+export interface LayoutNode extends NodeSpec, NodeSize {
   /** Settled position (rectangle center) in stage coordinates. */
   x: number;
   y: number;
-  color: string;
-  /** -1 for the center node. */
-  catIndex: number;
-  /** -1 for center and category nodes. */
-  factIndex: number;
 }
 
 export interface LayoutEdge {
@@ -21,6 +41,7 @@ export interface LayoutEdge {
   sourceId: string;
   targetId: string;
   color: string;
+  role: EdgeRole;
   catIndex: number;
   factIndex: number;
 }
@@ -33,8 +54,11 @@ export interface BBox {
 }
 
 export interface LayoutResult {
+  archetype: SceneArchetype;
   nodes: LayoutNode[];
   byId: Map<string, LayoutNode>;
   edges: LayoutEdge[];
   bbox: BBox;
+  /** Collision padding the layout was solved with; float amplitude must stay below it. */
+  padding: number;
 }

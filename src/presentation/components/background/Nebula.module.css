@@ -11,41 +11,44 @@
   border-radius: 50%;
   filter: blur(60px);
   will-change: transform;
+  transition: background 1.2s ease;
 }
 
-.blobCyan {
+/* Drift period follows the mood: kinetic scenes breathe faster, archival ones barely move. */
+.blobPrimary {
   composes: blob;
   width: 60vw;
   height: 60vw;
   top: -18vw;
   left: -14vw;
-  background: radial-gradient(circle, rgba(0, 212, 255, 0.08), transparent 70%);
-  animation: nebulaDriftA 110s ease-in-out infinite;
+  background: radial-gradient(circle, rgb(var(--scene-primary-rgb) / 0.08), transparent 70%);
+  animation: nebulaDriftA calc(110s / var(--motion-scale)) ease-in-out infinite;
 }
 
-.blobPurple {
+.blobSecondary {
   composes: blob;
   width: 55vw;
   height: 55vw;
   top: 22vh;
   right: -16vw;
-  background: radial-gradient(circle, rgba(123, 47, 190, 0.1), transparent 70%);
-  animation: nebulaDriftB 140s ease-in-out infinite;
+  background: radial-gradient(circle, rgb(var(--scene-secondary-rgb) / 0.1), transparent 70%);
+  animation: nebulaDriftB calc(140s / var(--motion-scale)) ease-in-out infinite;
 }
 
-.blobMagenta {
+.blobAccent {
   composes: blob;
   width: 48vw;
   height: 48vw;
   bottom: -20vh;
   left: 12vw;
-  background: radial-gradient(circle, rgba(255, 60, 110, 0.06), transparent 70%);
-  animation: nebulaDriftC 95s ease-in-out infinite;
+  background: radial-gradient(circle, rgb(var(--scene-accent-rgb) / 0.06), transparent 70%);
+  animation: nebulaDriftC calc(95s / var(--motion-scale)) ease-in-out infinite;
 }
 
 .grain {
   position: absolute;
   inset: 0;
-  opacity: 0.05;
+  opacity: var(--grain-opacity);
   mix-blend-mode: overlay;
+  transition: opacity 1.2s ease;
 }

@@ -1,62 +1,78 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { GraphData } from '../../../domain/GraphData';
+import { useEffect, useMemo, useRef } from 'react';
+import type { Scene } from '../../../domain/Scene';
 import type { ViewRect, ViewTransform } from '../../../layout/fitView';
 import { floatOffset } from '../../../layout/float';
 import { categoryBBox, computeForceLayout } from '../../../layout/forceLayout';
-import { fontsReady } from '../../../layout/measure';
+import { floatAmplitude } from '../../../layout/sceneMetrics';
+import { buildGraphSpec } from '../../../layout/sceneNodes';
+import type { LayoutNode } from '../../../layout/types';
 import { usePanZoom } from '../../hooks/usePanZoom';
-import { CategoryNode } from './CategoryNode';
-import { CenterNode } from './CenterNode';
+import { choreograph } from '../../scene/choreography';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { EdgeLayer } from './EdgeLayer';
-import { FactCard } from './FactCard';
+import { NodeContent } from './nodeContent';
 import { NodeDiv } from './NodeDiv';
+import { useMeasuredSizes } from './useMeasuredSizes';
 
 interface GraphStageProps {
-  graphData: GraphData;
+  scene: Scene;
   viewRect: ViewRect;
   focusedCat: number | null;
   onCategoryClick: (index: number) => void;
   onBackgroundClick: () => void;
   onCenterImageClick: () => void;
+  onSpotlightClick?: () => void;
   /** Exposes the live pan/zoom transform (e.g. for particle parallax). */
   onTransformRef?: (ref: React.RefObject<ViewTransform>) => void;
 }
 
+/** Focus mode: everything outside the focused category recedes. */
+function focusOpacity(node: LayoutNode, focusedCat: number | null): number {
+  if (focusedCat == null) return 1;
+  switch (node.kind) {
+    case 'center':
+      return 0.25;
+    case 'spotlight':
+      return 0.2;
+    case 'category':
+      return node.catIndex === focusedCat ? 1 : 0.3;
+    default:
+      return node.catIndex === focusedCat ? 1 : 0.12;
+  }
+}
+
 export function GraphStage({
-  graphData,
+  scene,
   viewRect,
   focusedCat,
   onCategoryClick,
   onBackgroundClick,
   onCenterImageClick,
+  onSpotlightClick,
   onTransformRef,
 }: GraphStageProps) {
-  const [fontsLoaded, setFontsLoaded] = useState(false);
   const nodeEls = useRef<Record<string, HTMLDivElement | null>>({});
   const rafRef = useRef<number | null>(null);
   const didInitialFit = useRef(false);
   const downPos = useRef<{ x: number; y: number } | null>(null);
+  const reducedMotion = useReducedMotion();
 
   const { containerRef, stageRef, transformRef, zoomToFit } = usePanZoom();
-
-  useEffect(() => {
-    let alive = true;
-    fontsReady().then(() => alive && setFontsLoaded(true));
-    return () => {
-      alive = false;
-    };
-  }, []);
 
   useEffect(() => {
     onTransformRef?.(transformRef);
   }, [onTransformRef, transformRef]);
 
-  const layout = useMemo(
-    () => (fontsLoaded ? computeForceLayout(graphData) : null),
-    [graphData, fontsLoaded],
+  const spec = useMemo(() => buildGraphSpec(scene), [scene]);
+  const { sizes, probe } = useMeasuredSizes(scene, spec);
+
+  const layout = useMemo(() => (sizes ? computeForceLayout(scene, sizes) : null), [scene, sizes]);
+  const choreography = useMemo(
+    () => (layout ? choreograph(layout, scene.presentation.mood) : null),
+    [layout, scene.presentation.mood],
   );
 
-  // Camera: fit the whole constellation, or the focused category subtree.
+  // Camera: fit the whole graph, or the focused category subtree.
   useEffect(() => {
     if (!layout) return;
     const bbox = focusedCat != null ? categoryBBox(layout, focusedCat) : layout.bbox;
@@ -67,15 +83,15 @@ export function GraphStage({
 
   // Organic float drift on top of the settled layout (amplitude < collision padding).
   useEffect(() => {
-    if (!layout) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!layout || reducedMotion) return;
+    const amp = floatAmplitude(scene.presentation.mood, scene.presentation.density);
     const keys = layout.nodes.map(n => n.id);
     const tick = (t: number) => {
       rafRef.current = requestAnimationFrame(tick);
       keys.forEach((key, k) => {
         const el = nodeEls.current[key];
         if (el) {
-          const { dx, dy } = floatOffset(k, t);
+          const { dx, dy } = floatOffset(k, t, amp);
           el.style.translate = `${dx}px ${dy}px`;
         }
       });
@@ -83,10 +99,13 @@ export function GraphStage({
     rafRef.current = requestAnimationFrame(tick);
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      // Switching to reduced motion mid-scene must not freeze nodes mid-drift.
+      for (const key of keys) {
+        const el = nodeEls.current[key];
+        if (el) el.style.translate = '';
+      }
     };
-  }, [layout]);
-
-  if (!layout) return null;
+  }, [layout, reducedMotion, scene.presentation.mood, scene.presentation.density]);
 
   return (
     <div
@@ -110,98 +129,67 @@ export function GraphStage({
         // Double-click on selectable text selects a word; don't refit the view.
         if ((e.target as HTMLElement).closest('[data-no-pan]')) return;
         onBackgroundClick();
-        zoomToFit(layout.bbox, viewRect, true);
+        if (layout) zoomToFit(layout.bbox, viewRect, true);
       }}
     >
-      <div
-        ref={stageRef}
-        style={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          width: 0,
-          height: 0,
-          transformOrigin: '0 0',
-          willChange: 'transform',
-        }}
-      >
-        <EdgeLayer layout={layout} focusedCat={focusedCat} />
+      {probe}
 
-        {layout.nodes.map(n => {
-          const isDimmed = focusedCat != null && n.catIndex !== focusedCat;
-          // Dim opacity lives on the OUTER wrapper and the spawn animation on
-          // an INNER one: a fill-mode animation would otherwise hold opacity
-          // at 1 forever and break focus dimming.
-          const baseStyle: React.CSSProperties = {
+      {layout && choreography && (
+        <div
+          ref={stageRef}
+          style={{
             position: 'absolute',
-            left: n.x - n.w / 2,
-            top: n.y - n.h / 2,
-            width: n.w,
-            transition: 'opacity 0.4s ease',
-          };
+            left: 0,
+            top: 0,
+            width: 0,
+            height: 0,
+            transformOrigin: '0 0',
+            willChange: 'transform',
+          }}
+        >
+          <EdgeLayer layout={layout} focusedCat={focusedCat} choreography={choreography} />
 
-          let content: React.ReactNode;
-          let style: React.CSSProperties;
-          let delay: string;
-
-          if (n.kind === 'center') {
-            style = { ...baseStyle, zIndex: 3, opacity: focusedCat != null ? 0.25 : 1 };
-            delay = '0.15s';
-            content = (
-              <CenterNode
-                title={graphData.title}
-                subtitle={graphData.subtitle}
-                imageUrl={graphData.image_url}
-                imageQuery={graphData.image_query}
-                onImageClick={onCenterImageClick}
-              />
-            );
-          } else if (n.kind === 'category') {
-            const cat = graphData.graph[n.catIndex];
-            style = {
-              ...baseStyle,
-              zIndex: focusedCat === n.catIndex ? 4 : 2,
-              opacity: isDimmed ? 0.3 : 1,
+          {layout.nodes.map(n => {
+            const opacity = focusOpacity(n, focusedCat);
+            const isLeaf = n.kind === 'fact' || n.kind === 'block';
+            // Dim opacity lives on the OUTER wrapper and the spawn animation on
+            // an INNER one: a fill-mode animation would otherwise hold opacity
+            // at 1 forever and break focus dimming.
+            const style: React.CSSProperties = {
+              position: 'absolute',
+              left: n.x - n.w / 2,
+              top: n.y - n.h / 2,
+              width: n.w,
+              transition: 'opacity 0.4s ease',
+              opacity,
+              zIndex: n.kind === 'category' ? (focusedCat === n.catIndex ? 4 : 2) : 3,
+              pointerEvents: isLeaf && opacity < 1 ? 'none' : 'auto',
             };
-            delay = `${0.6 + n.catIndex * 0.09}s`;
-            content = (
-              <CategoryNode
-                color={n.color}
-                label={cat?.category ?? ''}
-                imageQuery={cat?.image_query}
-                factCount={cat?.facts.length ?? 0}
-                focused={focusedCat === n.catIndex}
-                onClick={() => onCategoryClick(n.catIndex)}
-              />
-            );
-          } else {
-            const text = graphData.graph[n.catIndex]?.facts[n.factIndex] ?? '';
-            style = {
-              ...baseStyle,
-              zIndex: 3,
-              opacity: isDimmed ? 0.12 : 1,
-              pointerEvents: isDimmed ? 'none' : 'auto',
-            };
-            delay = `${0.9 + n.catIndex * 0.04 + n.factIndex * 0.05}s`;
-            content = <FactCard color={n.color} index={n.factIndex} text={text} />;
-          }
 
-          return (
-            <NodeDiv key={n.id} nodeKey={n.id} nodeEls={nodeEls} style={style}>
-              <div
-                className="node-spawn"
-                style={{
-                  animationDelay: delay,
-                  display: n.kind === 'category' ? 'flex' : 'block',
-                  justifyContent: 'center',
-                }}
-              >
-                {content}
-              </div>
-            </NodeDiv>
-          );
-        })}
-      </div>
+            return (
+              <NodeDiv key={n.id} nodeKey={n.id} nodeEls={nodeEls} style={style}>
+                <div
+                  className="node-spawn"
+                  style={{
+                    animationDelay: `${(choreography.delays.get(n.id) ?? 0).toFixed(3)}s`,
+                    display: n.kind === 'category' ? 'flex' : 'block',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <NodeContent
+                    node={n}
+                    scene={scene}
+                    focusedCat={focusedCat}
+                    onCategoryClick={onCategoryClick}
+                    onCenterImageClick={onCenterImageClick}
+                    onSpotlightClick={onSpotlightClick}
+                  />
+                </div>
+              </NodeDiv>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

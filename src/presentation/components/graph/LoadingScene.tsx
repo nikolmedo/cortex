@@ -9,14 +9,58 @@ const LOADING_STEPS: TranslationKey[] = [
   'loading.step3',
   'loading.step4',
   'loading.step5',
+  'loading.step6',
 ];
+
+const RING_DASHES = ['2 14', '', '4 8', '6 4', '2 6', '1 10'] as const;
+const RING_ALPHAS = ['10', '1e', '14', '1c', '24', '18'] as const;
 
 interface LoadingSceneProps {
   W: number;
   H: number;
+  /** Seeds the radar geometry so each query loads with its own signature. */
+  query: string;
 }
 
-export function LoadingScene({ W, H }: LoadingSceneProps) {
+/** FNV-1a 32-bit: cheap, deterministic, spreads short strings well. */
+function hashQuery(s: string): number {
+  let h = 0x811c9dc5;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 0x01000193);
+  }
+  return h >>> 0;
+}
+
+function radarVariant(query: string) {
+  const h = hashQuery(query.trim().toLowerCase());
+  const ringCount = 4 + (h % 3);
+  const armCount = 2 + ((h >>> 2) % 3);
+  const driftSpeed = 0.8 + ((h >>> 4) % 7) * 0.1;
+  const dialTracking = 2 + ((h >>> 8) % 5);
+  const armLead = (h >>> 12) % 360;
+
+  const rings = Array.from({ length: ringCount }, (_, i) => {
+    const step = (1.12 - 0.3) / (ringCount - 1);
+    return {
+      scale: 1.12 - i * step,
+      dash: RING_DASHES[(i + (h >>> 16)) % RING_DASHES.length],
+      width: i <= 1 ? 1 : 0.6,
+      alpha: RING_ALPHAS[(i + (h >>> 20)) % RING_ALPHAS.length],
+    };
+  });
+
+  const arms = Array.from({ length: armCount }, (_, i) => ({
+    dur: `${(3 + i * 1.3).toFixed(1)}s`,
+    offset: (armLead + (360 / armCount) * i) % 360,
+    opacity: 0.85 - i * 0.22,
+    width: 1.5 - i * 0.3,
+  }));
+
+  return { rings, arms, driftSpeed, dialTracking };
+}
+
+export function LoadingScene({ W, H, query }: LoadingSceneProps) {
   const { t } = useI18n();
   const availH = H - TOP_BAR_H;
   const cx = W / 2;
@@ -25,6 +69,7 @@ export function LoadingScene({ W, H }: LoadingSceneProps) {
 
   const [statusIdx, setStatusIdx] = useState(0);
   const [tick, setTick] = useState(0);
+  const variant = useMemo(() => radarVariant(query), [query]);
 
   useEffect(() => {
     const id = setInterval(() => setStatusIdx(i => (i + 1) % LOADING_STEPS.length), 1100);
@@ -48,25 +93,11 @@ export function LoadingScene({ W, H }: LoadingSceneProps) {
           driftX: -startR * Math.cos(rad) * 0.95,
           driftY: -startR * Math.sin(rad) * 0.95,
           delay: i * 0.18,
-          dur: 2.1 + (i % 4) * 0.3,
+          dur: (2.1 + (i % 4) * 0.3) / variant.driftSpeed,
         };
       }),
-    [cx, cy, r],
+    [cx, cy, r, variant.driftSpeed],
   );
-
-  const SWEEP_ARMS = [
-    { dur: '3s', offset: 0, opacity: 0.85, width: 1.5 },
-    { dur: '4.4s', offset: 120, opacity: 0.5, width: 1 },
-    { dur: '5.6s', offset: 240, opacity: 0.32, width: 0.8 },
-  ] as const;
-
-  const RINGS = [
-    { scale: 1.12, dash: '2 14', width: 1, alpha: '10' },
-    { scale: 1, dash: '', width: 1, alpha: '1e' },
-    { scale: 0.78, dash: '4 8', width: 0.6, alpha: '14' },
-    { scale: 0.55, dash: '6 4', width: 0.6, alpha: '1c' },
-    { scale: 0.32, dash: '2 6', width: 0.6, alpha: '24' },
-  ] as const;
 
   return (
     <>
@@ -79,7 +110,7 @@ export function LoadingScene({ W, H }: LoadingSceneProps) {
           </radialGradient>
         </defs>
 
-        {RINGS.map(({ scale, dash, width, alpha }, i) => (
+        {variant.rings.map(({ scale, dash, width, alpha }, i) => (
           <circle
             key={i}
             cx={cx}
@@ -92,7 +123,7 @@ export function LoadingScene({ W, H }: LoadingSceneProps) {
           />
         ))}
 
-        {SWEEP_ARMS.map(({ dur, offset, opacity, width }, i) => (
+        {variant.arms.map(({ dur, offset, opacity, width }, i) => (
           <g key={i} transform={`translate(${cx}, ${cy})`}>
             <g
               className="radar-sweep"
@@ -182,8 +213,8 @@ export function LoadingScene({ W, H }: LoadingSceneProps) {
               zIndex: 2,
             }}
           >
-            <div style={{ fontSize: 8, letterSpacing: 3, opacity: 0.7 }}>CORTEX</div>
-            <div style={{ fontSize: 12, letterSpacing: 4, marginTop: 2, fontWeight: 900 }}>SCAN</div>
+            <div style={{ fontSize: 8, letterSpacing: variant.dialTracking, opacity: 0.7 }}>CORTEX</div>
+            <div style={{ fontSize: 12, letterSpacing: variant.dialTracking + 1, marginTop: 2, fontWeight: 900 }}>SCAN</div>
           </div>
         </div>
       </div>

@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
-import { CYAN, MAGENTA } from '../../../infrastructure/constants';
+import { MOOD_METRICS } from '../../../layout/sceneMetrics';
+import { useSceneTheme } from '../../scene/SceneTheme';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 interface Particle {
   x: number;
@@ -7,7 +9,8 @@ interface Particle {
   depth: number;
   speed: number;
   size: number;
-  color: string;
+  /** 0 = primary palette color, 1 = accent (one in five). */
+  tone: 0 | 1;
   phase: number;
 }
 
@@ -19,11 +22,19 @@ interface ParticlesProps {
 
 export function Particles({ offsetRef, count = 60 }: ParticlesProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const { palette, presentation } = useSceneTheme();
+  const reducedMotion = useReducedMotion();
+
+  // The loop reads palette and speed through refs so a scene change retints
+  // in place instead of restarting every particle.
+  const paletteRef = useRef(palette);
+  paletteRef.current = palette;
+  const speedRef = useRef(1);
+  speedRef.current = MOOD_METRICS[presentation.mood].motionScale;
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!canvas || reducedMotion) return;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -43,7 +54,7 @@ export function Particles({ offsetRef, count = 60 }: ParticlesProps) {
       depth: 0.3 + Math.random() * 0.7,
       speed: 6 + Math.random() * 14,
       size: 1 + Math.random() * 1.5,
-      color: i % 5 === 0 ? MAGENTA : CYAN,
+      tone: i % 5 === 0 ? 1 : 0,
       phase: Math.random() * Math.PI * 2,
     }));
 
@@ -52,23 +63,23 @@ export function Particles({ offsetRef, count = 60 }: ParticlesProps) {
 
     const tick = (now: number) => {
       raf = requestAnimationFrame(tick);
-      const dt = Math.min((now - last) / 1000, 0.05);
+      const dt = Math.min((now - last) / 1000, 0.05) * speedRef.current;
       last = now;
 
       ctx.clearRect(0, 0, W, H);
       const px = (offsetRef?.current?.x ?? 0) * 0.05;
       const py = (offsetRef?.current?.y ?? 0) * 0.05;
+      const { primary, accent } = paletteRef.current;
 
       for (const p of particles) {
         p.y -= p.speed * p.depth * dt;
-        p.x += Math.sin(now * 0.0004 + p.phase) * 0.12;
+        p.x += Math.sin(now * 0.0004 + p.phase) * 0.12 * speedRef.current;
         if (p.y < -4) {
           p.y = H + 4;
           p.x = Math.random() * W;
         }
-        const alpha = 0.12 + p.depth * 0.3;
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = p.color;
+        ctx.globalAlpha = 0.12 + p.depth * 0.3;
+        ctx.fillStyle = p.tone ? accent : primary;
         ctx.beginPath();
         ctx.arc(p.x + px * p.depth, p.y + py * p.depth, p.size * p.depth, 0, Math.PI * 2);
         ctx.fill();
@@ -80,8 +91,9 @@ export function Particles({ offsetRef, count = 60 }: ParticlesProps) {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', onResize);
+      ctx.clearRect(0, 0, W, H);
     };
-  }, [offsetRef, count]);
+  }, [offsetRef, count, reducedMotion]);
 
   return (
     <canvas

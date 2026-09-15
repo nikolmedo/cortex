@@ -1,7 +1,32 @@
 .section {
-  border-left: 2px solid color-mix(in srgb, var(--c) 50%, transparent);
+  display: flex;
   margin-bottom: 8px;
+  break-inside: avoid;
+}
+
+.rail {
+  width: 22px;
+  flex-shrink: 0;
+  padding-top: 10px;
+  font-family: var(--font-display);
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: color-mix(in srgb, var(--c) 70%, transparent);
+  text-align: center;
+  border-right: 1px solid color-mix(in srgb, var(--c) 30%, transparent);
+  margin-right: 8px;
+  user-select: none;
+}
+
+.body {
+  flex: 1;
+  min-width: 0;
+  border-left: 2px solid color-mix(in srgb, var(--c) 50%, transparent);
   background: color-mix(in srgb, var(--c) 3%, transparent);
+}
+
+.section[data-rail] .body {
+  border-left-width: 1px;
 }
 
 .header {
@@ -16,13 +41,11 @@
   text-align: left;
 }
 
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--c);
-  box-shadow: 0 0 8px var(--c);
+.glyph {
+  display: flex;
+  color: var(--c);
   flex-shrink: 0;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--c) 60%, transparent));
 }
 
 .headerImage {
@@ -34,17 +57,31 @@
   filter: brightness(0.75) saturate(1.4);
 }
 
+.titles {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
 .name {
   font-family: var(--font-display);
   font-size: 10px;
   color: var(--c);
-  letter-spacing: 3px;
-  font-weight: 700;
-  flex: 1;
-  min-width: 0;
+  letter-spacing: var(--dossier-track, 3px);
+  font-weight: var(--dossier-weight, 700);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.headline {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.45;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
 }
 
 .count {
@@ -82,32 +119,23 @@
   color: var(--c);
 }
 
+/* Height animates via grid rows so composite kinds are never clipped. */
 .facts {
-  overflow: hidden;
-  max-height: 0;
-  transition: max-height 0.4s var(--ease-out-expo);
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.4s var(--ease-out-expo);
 }
 
 .factsOpen {
-  max-height: 600px;
+  grid-template-rows: 1fr;
 }
 
-.fact {
-  display: flex;
-  gap: 10px;
-  padding: 5px 12px 5px 14px;
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--text-body);
-  line-height: 1.6;
-  user-select: text;
+.factsInner {
+  overflow: hidden;
+  min-height: 0;
+  padding: 0 12px 0 14px;
 }
 
-.factIndex {
-  font-family: var(--font-display);
-  font-size: 8px;
-  color: color-mix(in srgb, var(--c) 60%, transparent);
-  padding-top: 4px;
-  flex-shrink: 0;
-  user-select: none;
+.factsOpen .factsInner {
+  padding-bottom: 10px;
 }

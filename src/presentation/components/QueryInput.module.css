@@ -47,6 +47,7 @@
   clip-path: var(--chamfer);
   border: 1px solid rgba(0, 212, 255, 0.22);
   transition: border-color 0.25s, box-shadow 0.25s;
+  overflow: hidden;
 }
 
 .field:focus-within {
@@ -54,7 +55,39 @@
   box-shadow: var(--glow-md);
 }
 
+.fieldOver,
+.fieldOver:focus-within {
+  border-color: rgba(255, 60, 110, 0.6);
+  box-shadow: 0 0 24px rgba(255, 60, 110, 0.25);
+}
+
+/* Enter ripple: a sweep from the prompt chevron across the field. */
+.ripple {
+  position: absolute;
+  left: 18px;
+  top: 50%;
+  width: 24px;
+  height: 24px;
+  margin-top: -12px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 212, 255, 0.45) 0%, rgba(0, 212, 255, 0.12) 45%, transparent 70%);
+  pointer-events: none;
+  animation: queryRipple 0.55s var(--ease-out-expo) both;
+}
+
+@keyframes queryRipple {
+  0% {
+    transform: scale(0.4);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(48);
+    opacity: 0;
+  }
+}
+
 .chevron {
+  position: relative;
   font-family: var(--font-mono);
   color: var(--cyan);
   font-size: 14px;
@@ -63,6 +96,7 @@
 }
 
 .input {
+  position: relative;
   flex: 1;
   min-width: 0;
   background: transparent;
@@ -81,12 +115,17 @@
 }
 
 .searchBtn {
+  position: relative;
   background: transparent;
   border: none;
   cursor: pointer;
   display: flex;
   padding: 4px;
   flex-shrink: 0;
+}
+
+.searchBtn:disabled {
+  cursor: not-allowed;
 }
 
 .underline {
@@ -96,14 +135,81 @@
   background: linear-gradient(90deg, transparent, var(--cyan), transparent);
   margin-top: 12px;
   box-shadow: 0 0 8px rgba(0, 212, 255, 0.35);
+  transition: background 0.3s;
+}
+
+.fieldOver + .underline {
+  background: linear-gradient(90deg, transparent, var(--magenta), transparent);
+  box-shadow: 0 0 8px rgba(255, 60, 110, 0.35);
+}
+
+.meta {
+  width: 100%;
+  max-width: 560px;
+  min-height: 20px;
+  margin-top: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-2xs);
+  letter-spacing: 0.4em;
 }
 
 .hint {
-  margin-top: 22px;
-  font-family: var(--font-mono);
-  font-size: var(--fs-2xs);
   color: rgba(0, 212, 255, 0.25);
-  letter-spacing: 0.4em;
+}
+
+.example {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+  letter-spacing: 0.12em;
+  color: rgba(0, 212, 255, 0.45);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.32s ease, transform 0.32s var(--ease-out-expo), color 0.2s;
+}
+
+.example:hover {
+  color: var(--cyan);
+}
+
+.exampleFading {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+
+.examplePrefix {
+  color: rgba(0, 212, 255, 0.7);
+  letter-spacing: 0;
+}
+
+.counter {
+  margin-left: auto;
+  letter-spacing: 1px;
+  color: rgba(0, 212, 255, 0.4);
+  font-variant-numeric: tabular-nums;
+  animation: fadeIn 0.2s ease both;
+}
+
+.counterOver {
+  color: var(--magenta);
+}
+
+.tooLong {
+  color: var(--magenta);
+  letter-spacing: 0.2em;
 }
 
 .history {

@@ -2,6 +2,10 @@
  * Cortex design tokens — "evolved cyberpunk" theme.
  * Hex values for --bg / --cyan / --purple / --magenta must stay in sync
  * with src/infrastructure/constants.ts (TS needs them for SVG/canvas attrs).
+ *
+ * Scene-driven tokens (--scene-*, --accent-rgb, mood and density) are
+ * overridden per scene by SceneTheme as inline custom properties; the values
+ * here are the defaults for the input phase and any element outside it.
  */
 :root {
   /* Palette */
@@ -13,17 +17,33 @@
   --text-body: #c3d0e2;
   --text-dim: #6b7a95;
 
+  /* Scene palette: hex plus space-separated RGB channels for rgb(var(--x-rgb) / a). */
+  --scene-primary: #00d4ff;
+  --scene-secondary: #7b2fbe;
+  --scene-accent: #ff3c6e;
+  --scene-primary-rgb: 0 212 255;
+  --scene-secondary-rgb: 123 47 190;
+  --scene-accent-rgb: 255 60 110;
+
+  /* Chrome accent: every hairline, glow and tint derives from this triplet. */
+  --accent-rgb: 0 212 255;
+  --accent: rgb(var(--accent-rgb));
+
+  /* Mood */
+  --motion-scale: 1;
+  --grain-opacity: 0.05;
+
   /* Glass recipe */
   --glass-bg: rgba(8, 14, 32, 0.55);
   --glass-bg-solid: rgba(6, 11, 26, 0.92);
   --glass-blur: blur(14px) saturate(1.5);
   --glass-blur-heavy: blur(20px) saturate(1.6);
-  --glass-border: rgba(0, 212, 255, 0.18);
+  --glass-border: rgb(var(--accent-rgb) / 0.18);
 
   /* Glow recipes */
-  --glow-sm: 0 0 12px rgba(0, 212, 255, 0.35);
-  --glow-md: 0 0 24px rgba(0, 212, 255, 0.45);
-  --glow-lg: 0 0 48px rgba(0, 212, 255, 0.5);
+  --glow-sm: 0 0 12px rgb(var(--accent-rgb) / 0.35);
+  --glow-md: 0 0 24px rgb(var(--accent-rgb) / 0.45);
+  --glow-lg: 0 0 48px rgb(var(--accent-rgb) / 0.5);
 
   /* Typography */
   --font-display: 'Orbitron', sans-serif;

@@ -6,37 +6,40 @@ import {
   forceSimulation,
   forceX,
   forceY,
-  type SimulationLinkDatum,
   type SimulationNodeDatum,
 } from 'd3-force';
-import { CYAN } from '../infrastructure/constants';
-import type { GraphData } from '../domain/GraphData';
-import {
-  CATEGORY_H,
-  CATEGORY_W,
-  CENTER_H,
-  CENTER_W,
-  FACT_CARD_W,
-  measureFactHeight,
-} from './measure';
-import { rectCollide } from './rectCollide';
-import type { BBox, LayoutEdge, LayoutNode, LayoutResult, NodeKind } from './types';
+import type { Scene, SceneArchetype, SceneDensity } from '../domain/Scene';
+import { RECIPES, type RecipeContext, type SimLink } from './archetypes';
+import { ROLE_W, sizeOf } from './measure';
+import { rectCollide, separateRects } from './rectCollide';
+import { DENSITY_METRICS } from './sceneMetrics';
+import { buildGraphSpec } from './sceneNodes';
+import type { BBox, LayoutNode, LayoutResult, NodeSizes, NodeSpec } from './types';
 
-export interface SimNode extends SimulationNodeDatum {
-  id: string;
-  kind: NodeKind;
+export interface SimNode extends SimulationNodeDatum, NodeSpec {
   w: number;
   h: number;
-  color: string;
-  catIndex: number;
-  factIndex: number;
+  /** Positional target and pull strength (forceX/forceY). */
+  tx: number;
+  ty: number;
+  sx: number;
+  sy: number;
+  /** Ring target and pull strength (forceRadial around the origin). */
+  tr: number;
+  sr: number;
 }
 
-const CATEGORY_ORBIT = 300;
-const FACT_LINK_DIST = 170;
-const SETTLE_TICKS = 320;
+interface LayoutOptions {
+  archetype?: SceneArchetype;
+  density?: SceneDensity;
+}
 
-export function computeBBox(nodes: LayoutNode[]): BBox {
+const BASE_ORBIT = 300;
+const BASE_LEAF_DIST = 170;
+const SETTLE_TICKS = 320;
+const RESOLVE_PASSES = 200;
+
+function computeBBox(nodes: LayoutNode[]): BBox {
   let minX = Infinity;
   let minY = Infinity;
   let maxX = -Infinity;
@@ -51,139 +54,106 @@ export function computeBBox(nodes: LayoutNode[]): BBox {
 }
 
 /**
- * Builds the node/edge lists from a GraphData tree and settles a force
- * simulation synchronously. Deterministic: nodes are seeded near the final
- * "mandala" shape and the simulation runs a fixed tick count with no timer.
+ * Settles the scene graph synchronously and deterministically: the archetype
+ * seeds every node near its final shape, a fixed tick count runs with no
+ * timer, and a final rectangle pass guarantees zero overlap regardless of
+ * the recipe. Sizes come from offscreen measurement (or stubs in scripts).
  */
-export function computeForceLayout(graphData: GraphData): LayoutResult {
-  const N = Math.max(graphData.graph.length, 1);
+export function computeForceLayout(scene: Scene, sizes: NodeSizes, options: LayoutOptions = {}): LayoutResult {
+  const archetype = options.archetype ?? scene.presentation.archetype;
+  const density = DENSITY_METRICS[options.density ?? scene.presentation.density];
+  const spec = buildGraphSpec(scene);
 
-  const nodes: SimNode[] = [];
-  const links: SimulationLinkDatum<SimNode>[] = [];
-  const edges: LayoutEdge[] = [];
-
-  const center: SimNode = {
-    id: 'center',
-    kind: 'center',
-    w: CENTER_W,
-    h: CENTER_H,
-    color: CYAN,
-    catIndex: -1,
-    factIndex: -1,
+  const nodes: SimNode[] = spec.nodes.map(n => ({
+    ...n,
+    ...sizeOf(sizes, n),
     x: 0,
     y: 0,
-    fx: 0,
-    fy: 0,
+    tx: 0,
+    ty: 0,
+    sx: 0,
+    sy: 0,
+    tr: 0,
+    sr: 0,
+  }));
+  const byId = new Map(nodes.map(n => [n.id, n]));
+  const center = byId.get('center')!;
+  center.fx = 0;
+  center.fy = 0;
+
+  const categories = nodes.filter(n => n.kind === 'category');
+  const leaves = categories.map(cat =>
+    nodes.filter(n => (n.kind === 'fact' || n.kind === 'block') && n.catIndex === cat.catIndex),
+  );
+  const allLeaves = leaves.flat();
+
+  const ctx: RecipeContext = {
+    center,
+    spotlight: byId.get('spotlight') ?? null,
+    categories,
+    leaves,
+    orbit: BASE_ORBIT * density.orbit,
+    leafDist: BASE_LEAF_DIST * density.link,
+    padding: density.padding,
+    categoryW: ROLE_W.category,
+    categoryH: Math.max(0, ...categories.map(n => n.h)),
+    centerH: center.h,
+    maxLeafW: Math.max(ROLE_W.fact, ...allLeaves.map(n => n.w)),
+    maxLeafH: Math.max(0, ...allLeaves.map(n => n.h)),
+    avgLeafH: allLeaves.length ? allLeaves.reduce((s, n) => s + n.h, 0) / allLeaves.length : 0,
+    leafArc: allLeaves.reduce((s, n) => s + n.w + density.padding * 2, 0),
   };
-  nodes.push(center);
+  const recipe = RECIPES[archetype](ctx);
 
-  graphData.graph.forEach((cat, i) => {
-    const angle = (2 * Math.PI * i) / N - Math.PI / 2;
-    const color = cat.color || CYAN;
-    const catNode: SimNode = {
-      id: `cat-${i}`,
-      kind: 'category',
-      w: CATEGORY_W,
-      h: CATEGORY_H,
-      color,
-      catIndex: i,
-      factIndex: -1,
-      x: CATEGORY_ORBIT * Math.cos(angle),
-      y: CATEGORY_ORBIT * Math.sin(angle),
-    };
-    nodes.push(catNode);
-    links.push({ source: 'center', target: catNode.id });
-    edges.push({
-      id: `e-c-${i}`,
-      sourceId: 'center',
-      targetId: catNode.id,
-      color,
-      catIndex: i,
-      factIndex: -1,
-    });
-
-    const M = cat.facts.length;
-    cat.facts.forEach((fact, j) => {
-      // Fan facts outward beyond their category, spread around its angle.
-      const spread = M > 1 ? (j / (M - 1) - 0.5) * 0.9 : 0;
-      const factAngle = angle + spread;
-      const factR = CATEGORY_ORBIT + FACT_LINK_DIST + (j % 2) * 60;
-      const factNode: SimNode = {
-        id: `fact-${i}-${j}`,
-        kind: 'fact',
-        w: FACT_CARD_W,
-        h: measureFactHeight(fact),
-        color,
-        catIndex: i,
-        factIndex: j,
-        x: factR * Math.cos(factAngle),
-        y: factR * Math.sin(factAngle),
-      };
-      nodes.push(factNode);
-      links.push({ source: catNode.id, target: factNode.id });
-      edges.push({
-        id: `e-f-${i}-${j}`,
-        sourceId: catNode.id,
-        targetId: factNode.id,
-        color,
-        catIndex: i,
-        factIndex: j,
-      });
-    });
-  });
+  const links: SimLink[] = spec.edges.map(e => ({ source: e.sourceId, target: e.targetId }));
 
   const sim = forceSimulation<SimNode>(nodes)
     .force(
       'link',
-      forceLink<SimNode, SimulationLinkDatum<SimNode>>(links)
+      forceLink<SimNode, SimLink>(links)
         .id(n => n.id)
-        .distance(l => ((l.source as SimNode).kind === 'center' ? 300 : FACT_LINK_DIST))
-        .strength(0.9),
+        .distance(recipe.linkDistance)
+        .strength(recipe.linkStrength),
     )
-    .force(
-      'charge',
-      forceManyBody<SimNode>().strength(n =>
-        n.kind === 'center' ? -900 : n.kind === 'category' ? -800 : -300,
-      ),
-    )
-    .force(
-      'orbit',
-      forceRadial<SimNode>(CATEGORY_ORBIT, 0, 0).strength(n => (n.kind === 'category' ? 0.35 : 0)),
-    )
+    .force('charge', forceManyBody<SimNode>().strength(recipe.charge))
+    .force('ring', forceRadial<SimNode>(n => n.tr, 0, 0).strength(n => n.sr))
+    .force('x', forceX<SimNode>(n => n.tx).strength(n => n.sx))
+    .force('y', forceY<SimNode>(n => n.ty).strength(n => n.sy))
     .force(
       'collide',
       forceCollide<SimNode>()
-        .radius(n => Math.hypot(n.w, n.h) / 2 + 14)
-        .strength(0.8),
+        .radius(n => Math.hypot(n.w, n.h) / 2 + density.padding)
+        .strength(0.7),
     )
-    .force('rect', rectCollide(14, 2))
-    .force('x', forceX<SimNode>(0).strength(0.02))
-    .force('y', forceY<SimNode>(0).strength(0.02))
+    .force('rect', rectCollide(density.padding, 2))
     .stop();
 
   for (let i = 0; i < SETTLE_TICKS; i++) sim.tick();
+  for (let i = 0; i < RESOLVE_PASSES && separateRects(nodes, density.padding) > 0; i++);
 
   const layoutNodes: LayoutNode[] = nodes.map(n => ({
     id: n.id,
     kind: n.kind,
+    color: n.color,
+    catIndex: n.catIndex,
+    factIndex: n.factIndex,
     w: n.w,
     h: n.h,
     x: n.x ?? 0,
     y: n.y ?? 0,
-    color: n.color,
-    catIndex: n.catIndex,
-    factIndex: n.factIndex,
   }));
 
   return {
+    archetype,
     nodes: layoutNodes,
     byId: new Map(layoutNodes.map(n => [n.id, n])),
-    edges,
+    edges: spec.edges,
     bbox: computeBBox(layoutNodes),
+    padding: density.padding,
   };
 }
 
-/** Bounding box of one category and its facts (camera target for focus mode). */
+/** Bounding box of one category and its leaves (camera target for focus mode). */
 export function categoryBBox(layout: LayoutResult, catIndex: number): BBox {
   const subtree = layout.nodes.filter(n => n.catIndex === catIndex);
   return computeBBox(subtree.length ? subtree : layout.nodes);

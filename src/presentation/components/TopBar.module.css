@@ -97,3 +97,15 @@
   composes: btn;
   padding: 6px 8px;
 }
+
+.signature {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+@media (max-width: 1100px) {
+  .signature {
+    display: none;
+  }
+}

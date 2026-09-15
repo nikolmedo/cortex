@@ -1,18 +1,21 @@
 import { useLayoutEffect, useRef } from 'react';
-import { CYAN } from '../../../infrastructure/constants';
 import type { LayoutResult } from '../../../layout/types';
+import { edgeDelay, type Choreography } from '../../scene/choreography';
+import { useSceneTheme } from '../../scene/SceneTheme';
+import { useReducedMotion } from '../../hooks/useReducedMotion';
 
 interface EdgeLayerProps {
   layout: LayoutResult;
   focusedCat: number | null;
+  choreography: Choreography;
 }
 
-/** Quadratic Bézier with the midpoint pushed ~12% perpendicular — organic, not spokes. */
-function edgePath(sx: number, sy: number, tx: number, ty: number): string {
+/** Quadratic Bézier with the midpoint pushed perpendicular by `bow` × length — organic, not spokes. */
+function edgePath(sx: number, sy: number, tx: number, ty: number, bow: number): string {
   const dx = tx - sx;
   const dy = ty - sy;
   const len = Math.hypot(dx, dy) || 1;
-  const bend = len * 0.12;
+  const bend = len * bow;
   const mx = (sx + tx) / 2 - (dy / len) * bend;
   const my = (sy + ty) / 2 + (dx / len) * bend;
   return `M${sx},${sy} Q${mx},${my} ${tx},${ty}`;
@@ -24,12 +27,14 @@ function DrawnPath({
   stroke,
   width,
   delay,
+  duration,
 }: {
   id: string;
   d: string;
   stroke: string;
   width: number;
   delay: number;
+  duration: number;
 }) {
   const ref = useRef<SVGPathElement | null>(null);
 
@@ -39,14 +44,17 @@ function DrawnPath({
     const length = el.getTotalLength();
     el.style.strokeDasharray = `${length}`;
     el.style.strokeDashoffset = `${length}`;
-    el.style.animation = `edgeDraw 0.85s cubic-bezier(0.5, 0, 0.5, 1) ${delay}s both`;
-  }, [d, delay]);
+    el.style.animation = `edgeDraw ${duration}s cubic-bezier(0.5, 0, 0.5, 1) ${delay}s both`;
+  }, [d, delay, duration]);
 
   return <path ref={ref} id={id} d={d} stroke={stroke} strokeWidth={width} fill="none" />;
 }
 
-export function EdgeLayer({ layout, focusedCat }: EdgeLayerProps) {
+export function EdgeLayer({ layout, focusedCat, choreography }: EdgeLayerProps) {
   const { byId, edges } = layout;
+  const { delays, curvature, motionScale } = choreography;
+  const { accent } = useSceneTheme();
+  const reducedMotion = useReducedMotion();
 
   return (
     <svg
@@ -71,7 +79,7 @@ export function EdgeLayer({ layout, focusedCat }: EdgeLayerProps) {
         {edges.map(edge => {
           const s = byId.get(edge.sourceId)!;
           const t = byId.get(edge.targetId)!;
-          const from = edge.sourceId === 'center' ? CYAN : edge.color;
+          const from = edge.sourceId === 'center' ? accent : edge.color;
           return (
             <linearGradient
               key={`g-${edge.id}`}
@@ -92,13 +100,12 @@ export function EdgeLayer({ layout, focusedCat }: EdgeLayerProps) {
       {edges.map(edge => {
         const s = byId.get(edge.sourceId)!;
         const t = byId.get(edge.targetId)!;
-        const d = edgePath(s.x, s.y, t.x, t.y);
-        const isTrunk = edge.factIndex === -1;
+        const fromCenter = edge.role !== 'leaf';
+        const d = edgePath(s.x, s.y, t.x, t.y, fromCenter ? curvature : curvature * 0.8);
         const dimmed = focusedCat != null && edge.catIndex !== focusedCat;
-        const delay = isTrunk
-          ? 0.45 + edge.catIndex * 0.08
-          : 0.9 + edge.catIndex * 0.04 + edge.factIndex * 0.05;
-        const showPulse = isTrunk || focusedCat === edge.catIndex;
+        const showPulse = !reducedMotion && (fromCenter || focusedCat === edge.catIndex);
+        const seq = Math.max(edge.catIndex, 0);
+        const pulseDur = (fromCenter ? 2.6 + seq * 0.28 : 1.8 + (seq + edge.factIndex) * 0.22) / motionScale;
 
         return (
           <g
@@ -110,19 +117,20 @@ export function EdgeLayer({ layout, focusedCat }: EdgeLayerProps) {
               id={edge.id}
               d={d}
               stroke={`url(#g-${edge.id})`}
-              width={isTrunk ? 1.2 : 0.9}
-              delay={delay}
+              width={fromCenter ? 1.2 : 0.9}
+              delay={edgeDelay(edge, delays)}
+              duration={0.85 / motionScale}
             />
             {showPulse && (
               <circle
-                r={isTrunk ? 3 : 2}
+                r={fromCenter ? 3 : 2}
                 fill={edge.color}
                 style={{ filter: `drop-shadow(0 0 4px ${edge.color})` }}
               >
                 <animateMotion
-                  dur={`${isTrunk ? 2.6 + edge.catIndex * 0.28 : 1.8 + (edge.catIndex + edge.factIndex) * 0.22}s`}
+                  dur={`${pulseDur.toFixed(2)}s`}
                   repeatCount="indefinite"
-                  begin={`${(edge.catIndex * 0.42 + Math.max(edge.factIndex, 0) * 0.28).toFixed(2)}s`}
+                  begin={`${(seq * 0.42 + Math.max(edge.factIndex, 0) * 0.28).toFixed(2)}s`}
                 >
                   <mpath href={`#${edge.id}`} />
                 </animateMotion>

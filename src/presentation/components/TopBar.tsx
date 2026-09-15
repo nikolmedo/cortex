@@ -1,10 +1,14 @@
 import { Maximize2, PanelRight, Settings } from 'lucide-react';
+import type { Scene } from '../../domain/Scene';
 import { useI18n } from '../../i18n/I18nContext';
+import { SceneSignature } from './shared/SceneSignature';
 import styles from './TopBar.module.css';
 
 interface TopBarProps {
   query: string;
   onNewQuery: () => void;
+  /** When present, a compact archetype · mood · kinds chip sits beside the query. */
+  scene?: Scene | null;
   hidden?: boolean;
   dossierOpen?: boolean;
   onToggleDossier?: () => void;
@@ -15,6 +19,7 @@ interface TopBarProps {
 export function TopBar({
   query,
   onNewQuery,
+  scene = null,
   hidden = false,
   dossierOpen = false,
   onToggleDossier,
@@ -29,6 +34,12 @@ export function TopBar({
       <span className={styles.divider}>|</span>
       <span className={`${styles.chevron} chevron-blink`}>&gt;&gt;</span>
       <span className={styles.query}>{query}</span>
+
+      {scene && (
+        <div className={styles.signature}>
+          <SceneSignature scene={scene} />
+        </div>
+      )}
 
       <div className={styles.actions}>
         {onToggleDossier && (

@@ -30,7 +30,7 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 212, 255, 0.18);
+  background: rgb(var(--accent-rgb) / 0.18);
   border-radius: 3px;
 }
 
@@ -334,8 +334,9 @@ body {
 
 /* ---- Shared animation classes (used across modules) ---- */
 
+/* Entrance duration follows the scene mood (--motion-scale is a speed multiplier). */
 .node-spawn {
-  animation: materialize 0.7s var(--ease-out-expo) both;
+  animation: materialize calc(0.7s / var(--motion-scale)) var(--ease-out-expo) both;
 }
 .hud-bracket {
   animation: hudBracketFadeIn 0.6s ease 0.1s both;
@@ -373,6 +374,9 @@ body {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    /* Entrance stagger is a delay, not a duration: without this nodes would
+       still pop in one by one over several seconds. */
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
