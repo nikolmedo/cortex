@@ -1,99 +1,95 @@
 /*
- * Cortex design tokens — "evolved cyberpunk" theme.
- * Hex values for --bg / --cyan / --purple / --magenta must stay in sync
- * with src/infrastructure/constants.ts (TS needs them for SVG/canvas attrs).
- *
- * Scene-driven tokens (--scene-*, --accent-rgb, mood and density) are
- * overridden per scene by SceneTheme as inline custom properties; the values
- * here are the defaults for the input phase and any element outside it.
+ * Cortex design tokens.
+ * Base ink is a deep blue-black; one cool hologram hue is the default accent and
+ * each scene replaces it through SceneTheme (inline --scene-* custom properties).
+ * Glow is reserved for live things (focus, the thinking core, streaming edges).
  */
+
+/* Registered so palette changes crossfade instead of snapping. */
+@property --scene-primary {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #7fd8ff;
+}
+@property --scene-secondary {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #8c9eff;
+}
+@property --scene-accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #5ef2c2;
+}
+
 :root {
-  /* Palette */
-  --bg: #030712;
-  --cyan: #00d4ff;
-  --purple: #7b2fbe;
-  --magenta: #ff3c6e;
-  --text-bright: #f2f7ff;
-  --text-body: #c3d0e2;
-  --text-dim: #6b7a95;
+  color-scheme: dark;
 
-  /* Scene palette: hex plus space-separated RGB channels for rgb(var(--x-rgb) / a). */
-  --scene-primary: #00d4ff;
-  --scene-secondary: #7b2fbe;
-  --scene-accent: #ff3c6e;
-  --scene-primary-rgb: 0 212 255;
-  --scene-secondary-rgb: 123 47 190;
-  --scene-accent-rgb: 255 60 110;
+  /* Ink */
+  --ink-0: #05070c;
+  --ink-1: #0a0f1a;
+  --surface: rgb(13 19 31 / 0.62);
+  --surface-strong: rgb(13 19 31 / 0.86);
+  --surface-raised: rgb(22 30 46 / 0.7);
+  --line: rgb(176 206 236 / 0.1);
+  --line-strong: rgb(176 206 236 / 0.2);
 
-  /* Chrome accent: every hairline, glow and tint derives from this triplet. */
-  --accent-rgb: 0 212 255;
-  --accent: rgb(var(--accent-rgb));
+  /* Text */
+  --text-hi: #eef4fa;
+  --text: #c5d0dd;
+  --text-dim: #8b98ab;
+  --text-faint: #5d6a80;
+  --danger: #ff8a7a;
 
-  /* Mood */
-  --motion-scale: 1;
-  --grain-opacity: 0.05;
+  /* Scene palette defaults (overridden per turn) */
+  --scene-primary: #7fd8ff;
+  --scene-secondary: #8c9eff;
+  --scene-accent: #5ef2c2;
 
-  /* Glass recipe */
-  --glass-bg: rgba(8, 14, 32, 0.55);
-  --glass-bg-solid: rgba(6, 11, 26, 0.92);
-  --glass-blur: blur(14px) saturate(1.5);
-  --glass-blur-heavy: blur(20px) saturate(1.6);
-  --glass-border: rgb(var(--accent-rgb) / 0.18);
+  /* Type */
+  --font-body: 'Hanken Grotesk', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Saira', 'Hanken Grotesk', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  --fs-caption: clamp(0.75rem, 0.72rem + 0.12vw, 0.8125rem);
+  --fs-small: clamp(0.8125rem, 0.79rem + 0.12vw, 0.875rem);
+  --fs-body: clamp(0.96875rem, 0.93rem + 0.2vw, 1.0625rem);
+  --fs-lead: clamp(1.125rem, 1.02rem + 0.5vw, 1.375rem);
+  --fs-h3: clamp(1.0625rem, 1rem + 0.3vw, 1.1875rem);
+  --fs-title: clamp(1.75rem, 1.35rem + 1.9vw, 2.875rem);
+  --fs-display: clamp(2.25rem, 1.6rem + 3vw, 4rem);
+  --fs-figure: clamp(1.875rem, 1.5rem + 1.8vw, 3rem);
+  --lh-body: 1.62;
 
-  /* Glow recipes */
-  --glow-sm: 0 0 12px rgb(var(--accent-rgb) / 0.35);
-  --glow-md: 0 0 24px rgb(var(--accent-rgb) / 0.45);
-  --glow-lg: 0 0 48px rgb(var(--accent-rgb) / 0.5);
-
-  /* Typography */
-  --font-display: 'Orbitron', sans-serif;
-  --font-mono: 'Space Mono', monospace;
-  --fs-2xs: 10px;
-  --fs-xs: 11px;
-  --fs-sm: 13px;
-  --fs-md: 16px;
-  --fs-lg: 22px;
-  --fs-xl: 32px;
-  --track-wide: 0.15em;
-  --track-wider: 0.3em;
-
-  /* Spacing scale */
-  --sp-1: 4px;
+  /* Space */
   --sp-2: 8px;
   --sp-3: 12px;
   --sp-4: 16px;
   --sp-5: 24px;
   --sp-6: 32px;
+  --sp-7: 48px;
+  --gutter: clamp(16px, 4vw, 40px);
+  --content-max: 1240px;
+  --reading-max: 68ch;
+  --top-h: 56px;
+  --hit: 44px;
 
-  /* Z-index scale */
-  --z-bg: 0;
-  --z-graph: 5;
-  --z-hud: 25;
-  --z-topbar: 30;
-  --z-panel: 35;
-  --z-float: 40;
-  --z-overlay: 60;
-  --z-toast: 70;
+  /* Shape */
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-pill: 999px;
+  --blur: blur(18px) saturate(1.3);
 
   /* Motion */
-  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --dur-fast: 180ms;
+  --dur-base: 360ms;
+  --dur-slow: 640ms;
 
-  /* Cyberpunk chamfered corners */
-  --chamfer: polygon(
-    10px 0,
-    100% 0,
-    100% calc(100% - 10px),
-    calc(100% - 10px) 100%,
-    0 100%,
-    0 10px
-  );
-  --chamfer-sm: polygon(
-    6px 0,
-    100% 0,
-    100% calc(100% - 6px),
-    calc(100% - 6px) 100%,
-    0 100%,
-    0 6px
-  );
+  /* Layers */
+  --z-ambient: 0;
+  --z-content: 1;
+  --z-dock: 40;
+  --z-top: 45;
+  --z-overlay: 60;
 }

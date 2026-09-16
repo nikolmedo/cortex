@@ -1,4 +1,4 @@
-export type ErrorCode = 'PARSE_FAILURE' | 'GEMINI_ERROR' | 'VALIDATION_ERROR' | 'INVALID_INPUT';
+export type ErrorCode = 'PARSE_FAILURE' | 'GEMINI_ERROR' | 'VALIDATION_ERROR' | 'INVALID_INPUT' | 'ABORTED';
 
 export class CortexError extends Error {
   constructor(

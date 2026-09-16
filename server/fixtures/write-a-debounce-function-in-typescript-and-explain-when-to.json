@@ -1,0 +1,186 @@
+{
+  "query": "Write a debounce function in TypeScript and explain when to use it",
+  "lang": "en",
+  "preface": {
+    "intent": "howto",
+    "title": "TypeScript Debounce Function and Usage",
+    "layout": "sequence",
+    "mood": "kinetic",
+    "palette": {
+      "primary": "#5391d5",
+      "secondary": "#61DAFB",
+      "accent": "#f8e230"
+    },
+    "plan": [
+      "Drafting generic debounce function in TypeScript",
+      "Typing parameters and return types correctly",
+      "Explaining optimal use cases like resize and input"
+    ]
+  },
+  "scene": {
+    "version": 3,
+    "intent": "howto",
+    "type": "concept",
+    "title": "Implementing Debounce in TypeScript",
+    "subtitle": "Optimizing function execution frequency",
+    "answer": {
+      "headline": "A debounce function delays execution until a set period of inactivity passes, preventing excessive function calls.",
+      "body": [
+        "Debouncing is a performance pattern used to ensure that time-consuming tasks do not fire too often. When you wrap a function in a debounce, it does not execute immediately when called. Instead, it starts a timer. If the function is called again before the timer expires, the previous timer is cancelled and a new one starts. Only when the timer finally completes does the original function execute.",
+        "This is critical for browser events that can fire hundreds of times per second, such as window resizing, scrolling, or user input in a search box. By implementing debounce, you conserve system resources and prevent redundant network requests or expensive DOM recalculations, ensuring a smoother user experience."
+      ],
+      "caveats": [
+        "The returned function maintains internal timer state, which persists across calls.",
+        "Debouncing can introduce a slight perceived lag since the function waits for a delay."
+      ]
+    },
+    "summary": "",
+    "image_url": "",
+    "image_query": "",
+    "meta": {
+      "Complexity": "Low",
+      "Language": "TypeScript",
+      "Pattern": "Functional"
+    },
+    "presentation": {
+      "layout": "sequence",
+      "mood": "kinetic",
+      "motif": "grid",
+      "density": "balanced",
+      "palette": {
+        "primary": "#5391d5",
+        "secondary": "#61DAFB",
+        "accent": "#f8e230"
+      }
+    },
+    "modules": [
+      {
+        "category": "Implementation",
+        "color": "#5391d5",
+        "image_query": "",
+        "kind": "code",
+        "facts": [],
+        "headline": "A generic TypeScript debounce implementation",
+        "body": "function debounce<T extends (...args: any[]) => void>(\n  func: T,\n  wait: number\n): (...args: Parameters<T>) => void {\n  let timeout: ReturnType<typeof setTimeout> | null = null;\n\n  return (...args: Parameters<T>) => {\n    if (timeout !== null) clearTimeout(timeout);\n    timeout = setTimeout(() => func(...args), wait);\n  };\n}",
+        "value": "typescript"
+      },
+      {
+        "category": "How it works",
+        "color": "#61DAFB",
+        "image_query": "",
+        "kind": "steps",
+        "facts": [],
+        "headline": "The logical flow of the debounce closure",
+        "items": [
+          {
+            "label": "Initialize closure",
+            "value": "State created",
+            "detail": "The function returns a wrapper that maintains a private 'timeout' variable in its scope."
+          },
+          {
+            "label": "Intercept call",
+            "value": "Reset timer",
+            "detail": "Every time the wrapper is called, it checks if a timer exists and clears it if it does."
+          },
+          {
+            "label": "Set new delay",
+            "value": "Timer active",
+            "detail": "A new setTimeout is created, resetting the countdown to zero."
+          },
+          {
+            "label": "Execute task",
+            "value": "Function runs",
+            "detail": "If no further calls interrupt, the original function finally runs after the delay period."
+          }
+        ]
+      },
+      {
+        "category": "When to use",
+        "color": "#f8e230",
+        "image_query": "",
+        "kind": "list",
+        "facts": [
+          "Search input fields to prevent API spam.",
+          "Window resize event handlers.",
+          "Scroll event listeners (e.g., infinite loading).",
+          "Auto-save features in text editors."
+        ],
+        "headline": "Common scenarios for debouncing",
+        "items": [
+          {
+            "label": "Search inputs"
+          },
+          {
+            "label": "Window resizing"
+          },
+          {
+            "label": "Auto-save triggers"
+          }
+        ]
+      },
+      {
+        "category": "Trade-offs",
+        "color": "#5391d5",
+        "image_query": "",
+        "kind": "proscons",
+        "facts": [],
+        "headline": "Advantages and limitations",
+        "items": [
+          {
+            "label": "Reduced server load",
+            "value": "Pro",
+            "detail": "Prevents redundant API calls by aggregating rapid requests into one."
+          },
+          {
+            "label": "Improved UI responsiveness",
+            "value": "Pro",
+            "detail": "Prevents main-thread blocking by limiting heavy recalculations."
+          },
+          {
+            "label": "Input latency",
+            "value": "Con",
+            "detail": "Users may perceive a slight delay as the application waits for the debounce window."
+          }
+        ]
+      },
+      {
+        "category": "Best practices",
+        "color": "#61DAFB",
+        "image_query": "",
+        "kind": "keyvalue",
+        "facts": [],
+        "headline": "Typical timing recommendations",
+        "items": [
+          {
+            "label": "Search input",
+            "value": "300ms - 500ms"
+          },
+          {
+            "label": "Window resize",
+            "value": "150ms - 250ms"
+          },
+          {
+            "label": "Button clicks",
+            "value": "500ms+"
+          }
+        ]
+      }
+    ],
+    "spotlight": {
+      "kind": "callout",
+      "label": "Use debounce when you only care about the final state of a sequence of rapid events rather than every intermediate state."
+    },
+    "followups": [
+      "What is the difference between debounce and throttle?",
+      "How do I cancel a pending debounce call?",
+      "How to handle the 'this' context in a debounce function?"
+    ]
+  },
+  "timing": {
+    "prefaceMs": 1058,
+    "researchMs": 608,
+    "firstPartialMs": 7760,
+    "sceneMs": 11323,
+    "sources": 0
+  }
+}

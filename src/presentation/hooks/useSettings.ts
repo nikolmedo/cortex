@@ -1,19 +1,16 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { Locale } from '../../i18n/translations';
 
-export type ViewMode = 'panel' | 'immersive';
 export type MotionMode = 'auto' | 'reduced';
 
 export interface Settings {
   locale: Locale;
-  defaultViewMode: ViewMode;
   motion: MotionMode;
 }
 
 export interface SettingsState {
   settings: Settings;
   setLocale: (locale: Locale) => void;
-  setDefaultViewMode: (mode: ViewMode) => void;
   setMotion: (motion: MotionMode) => void;
 }
 
@@ -21,7 +18,6 @@ const STORAGE_KEY = 'cortex.settings';
 
 const DEFAULT_SETTINGS: Settings = {
   locale: 'en',
-  defaultViewMode: 'panel',
   motion: 'auto',
 };
 
@@ -32,7 +28,6 @@ function loadSettings(): Settings {
     const parsed = JSON.parse(raw) as Partial<Settings>;
     return {
       locale: parsed.locale === 'es' ? 'es' : 'en',
-      defaultViewMode: parsed.defaultViewMode === 'immersive' ? 'immersive' : 'panel',
       motion: parsed.motion === 'reduced' ? 'reduced' : 'auto',
     };
   } catch {
@@ -56,7 +51,6 @@ export function useSettingsState(): SettingsState {
   return useMemo<SettingsState>(() => ({
     settings,
     setLocale: locale => setSettings(s => ({ ...s, locale })),
-    setDefaultViewMode: defaultViewMode => setSettings(s => ({ ...s, defaultViewMode })),
     setMotion: motion => setSettings(s => ({ ...s, motion })),
   }), [settings]);
 }

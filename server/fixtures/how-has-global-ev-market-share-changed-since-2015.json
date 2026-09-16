@@ -1,0 +1,234 @@
+{
+  "query": "How has global EV market share changed since 2015?",
+  "lang": "en",
+  "preface": {
+    "intent": "analysis",
+    "title": "Global Electric Vehicle Market Share Growth Since 2015",
+    "layout": "mosaic",
+    "mood": "kinetic",
+    "palette": {
+      "primary": "#29e9ff",
+      "secondary": "#7C4DFF",
+      "accent": "#69F0AE"
+    },
+    "plan": [
+      "Compiling annual EV sales data from IEA reports since 2015",
+      "Calculating regional growth rates for China, Europe, and USA",
+      "Assessing policy impacts and battery cost declines over time"
+    ]
+  },
+  "scene": {
+    "version": 3,
+    "intent": "analysis",
+    "type": "concept",
+    "title": "Global Electric Vehicle Market Share Growth",
+    "subtitle": "The evolution of EV adoption from 2015 to 2026",
+    "answer": {
+      "headline": "Global EV market share has seen exponential growth, surging from a negligible 1% in 2015 to approximately 25% by 2025.",
+      "body": [
+        "The transition toward electric mobility has accelerated significantly over the last decade. In 2015, electric vehicles—both battery-electric and plug-in hybrids—accounted for only a tiny fraction of global vehicle sales. This early phase was characterized by niche adoption, limited public charging infrastructure, and higher initial costs compared to internal combustion engines.",
+        "Post-2020, the market hit a distinct inflection point. Driven by stricter emissions regulations, rapidly improving battery technology, and a wider variety of affordable model availability, growth rates began to compound. By 2021, the global share doubled to 9%, eventually breaking the 20% threshold by 2024. As of 2025, one in four new cars sold globally is an electric vehicle, with market projections suggesting continued growth toward 27% to 29% by 2026."
+      ],
+      "caveats": [
+        "Projections for 2026 are based on current market trends and may be affected by changes in government subsidies, trade policies, or raw material supply chain constraints."
+      ]
+    },
+    "summary": "",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Top_PEV_global_markets_stock_2017_final_with_California.png/500px-Top_PEV_global_markets_stock_2017_final_with_California.png",
+    "image_query": "",
+    "meta": {},
+    "presentation": {
+      "layout": "mosaic",
+      "mood": "kinetic",
+      "motif": "grid",
+      "density": "balanced",
+      "palette": {
+        "primary": "#29e9ff",
+        "secondary": "#7C4DFF",
+        "accent": "#69F0AE"
+      }
+    },
+    "modules": [
+      {
+        "category": "Share Progression",
+        "color": "#29e9ff",
+        "image_query": "",
+        "kind": "chart",
+        "facts": [
+          "Starting at 1% in 2015",
+          "Reaching 25% by 2025"
+        ],
+        "headline": "The rapid ascent of EV adoption globally",
+        "items": [
+          {
+            "label": "2015",
+            "value": "1%",
+            "weight": 4
+          },
+          {
+            "label": "2019",
+            "value": "2.5%",
+            "weight": 10
+          },
+          {
+            "label": "2020",
+            "value": "4.6%",
+            "weight": 18
+          },
+          {
+            "label": "2021",
+            "value": "9%",
+            "weight": 36
+          },
+          {
+            "label": "2024",
+            "value": "20%",
+            "weight": 80
+          },
+          {
+            "label": "2025",
+            "value": "25%",
+            "weight": 100
+          },
+          {
+            "label": "2026 (proj)",
+            "value": "28%",
+            "weight": 100
+          }
+        ]
+      },
+      {
+        "category": "Key Milestones",
+        "color": "#7C4DFF",
+        "image_query": "",
+        "kind": "timeline",
+        "facts": [
+          "1% share in 2015",
+          "Doubled to 9% in 2021",
+          "Surpassed 20% in 2024"
+        ],
+        "headline": "Defining moments in the shift to electric",
+        "items": [
+          {
+            "label": "Early adoption phase",
+            "value": "2015"
+          },
+          {
+            "label": "Accelerated growth begins",
+            "value": "2020"
+          },
+          {
+            "label": "Global share hits 9%",
+            "value": "2021"
+          },
+          {
+            "label": "Mainstream adoption threshold",
+            "value": "2024"
+          },
+          {
+            "label": "One in four vehicles",
+            "value": "2025"
+          }
+        ]
+      },
+      {
+        "category": "Driving Forces",
+        "color": "#69F0AE",
+        "image_query": "",
+        "kind": "proscons",
+        "facts": [],
+        "headline": "Factors influencing adoption growth",
+        "items": [
+          {
+            "label": "Lower battery costs",
+            "value": "Pro",
+            "side": "a"
+          },
+          {
+            "label": "Government mandates",
+            "value": "Pro",
+            "side": "a"
+          },
+          {
+            "label": "Broad model variety",
+            "value": "Pro",
+            "side": "a"
+          },
+          {
+            "label": "Charging infrastructure gaps",
+            "value": "Con",
+            "side": "b"
+          },
+          {
+            "label": "Supply chain volatility",
+            "value": "Con",
+            "side": "b"
+          }
+        ]
+      },
+      {
+        "category": "Market Data",
+        "color": "#29e9ff",
+        "image_query": "",
+        "kind": "stats",
+        "facts": [
+          "Exponential growth pattern",
+          "Projected 2026 reaching 29%"
+        ],
+        "headline": "Quarter-over-quarter context",
+        "items": [
+          {
+            "label": "2015 to 2019 growth",
+            "value": "1.5%",
+            "weight": 20
+          },
+          {
+            "label": "2019 to 2021 growth",
+            "value": "6.5%",
+            "weight": 60
+          },
+          {
+            "label": "2021 to 2025 growth",
+            "value": "16%",
+            "weight": 100
+          }
+        ]
+      }
+    ],
+    "spotlight": {
+      "kind": "stat",
+      "label": "2025 Global EV Market Share",
+      "value": "25%"
+    },
+    "followups": [
+      "What factors have driven the massive growth in EV sales since 2020?",
+      "How does EV adoption compare across major regions like China, Europe, and the US?",
+      "What are the primary obstacles to reaching 50% global market share?"
+    ],
+    "sources": [
+      {
+        "title": "ourworldindata.org",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFbosjbGlotTQlLgiXFINGrVsrSfqXlevmYQmA01eZbfrEraGqfn7Z1zDU7E2TljYDhJZBCEWNdn1hWiUQyKpVCxLHzOXUldS_WAv0gqUi9Wj9NulWmHaVvt309ti4hfXOfsM0="
+      },
+      {
+        "title": "wikipedia.org",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHXqquahlf1fw5gWvRuzKvRvWWrqNFy8HBSE468Kc0cWQT_1CAJwePlfHNzm5fm9nmPbZcxnDwk4xl9OZRdyn5kgZkyDCmD1jv3YiX9IMTJJE7PKDoasQE40RculJW-CJpgCkuFFBtnxOjRYi3hFe0="
+      },
+      {
+        "title": "bnef.com",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHO-eJazVXLnRwW7Btm2mfJf_iBOu0CAhHt3MJ4vsh5pSyqB3dhXVeQ9fC2mXLMFhlh7HlMa_3ClZPaMZYROqx_o5DaXdJGYWiEgXmxwLT0nE5wfwPk8ADNRZLGMmI2TBfqsIsFf2jmwXkBHyuTjucpoS4Z_N_4iKdeYYC6YGH3JUIlqzdi-KLRhWtH2CYp0cNqVPSuRk7SQe-zSoWX6q3jZS6G-2uVLtknWXD3dFXm72O4PVYWtSmVBOwoC7BQ5M-TrSQz7BmrTEEIwfHzgs96aohrm9ykMoP-ur_rohKCgywvltWWDs4kxSGg9mP1iA=="
+      },
+      {
+        "title": "iea.org",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG87uUhjWYhKf_49rGdvSCZjwXX00SMj6mIMt6ShGtGQXQav01zjxN1h-DWfNe7MuYEpAKQovGqiMS2iRLoO9gUFItc4UCK8cI72OP-DgU6mQjqeOOwahmMFxj5GfssqX2IblDtrs5GLogz2wseewnx5zaOMfCOoDeV_n7tVeWp9KeaLhotpiT3Ug=="
+      }
+    ]
+  },
+  "timing": {
+    "prefaceMs": 1269,
+    "researchMs": 2603,
+    "firstPartialMs": 8695,
+    "sceneMs": 11767,
+    "sources": 4
+  }
+}

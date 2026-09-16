@@ -1,0 +1,187 @@
+{
+  "query": "Como funciona la inflacion y por que suben las tasas de interes?",
+  "lang": "es",
+  "preface": {
+    "intent": "explanation",
+    "title": "Inflación y tasas de interés",
+    "layout": "focus",
+    "mood": "volatile",
+    "palette": {
+      "primary": "#4fd9a7",
+      "secondary": "#fbc22d",
+      "accent": "#F87171"
+    },
+    "plan": [
+      "Analizando los impulsores del aumento generalizado de precios",
+      "Examinando el rol de los bancos centrales y la masa monetaria",
+      "Evaluando el impacto de subir tipos de interés en el crédito"
+    ]
+  },
+  "scene": {
+    "version": 3,
+    "intent": "explanation",
+    "type": "concept",
+    "title": "Inflación y tasas de interés",
+    "subtitle": "Mecanismos de la economía y política monetaria",
+    "answer": {
+      "headline": "La inflación es el aumento sostenido de precios que reduce tu poder de compra; los bancos centrales suben las tasas para encarecer el crédito, enfriar la demanda y frenar el alza de precios.",
+      "body": [
+        "La inflación representa el aumento generalizado y sostenido de los precios en una economía. Cuando los precios suben, cada unidad de moneda pierde capacidad de compra; esto significa que con la misma cantidad de dinero adquieres menos bienes y servicios que antes. No es simplemente que un producto sea caro, sino un fenómeno persistente que afecta a toda la cesta básica.",
+        "Existen dos causas principales para este fenómeno. La inflación por demanda ocurre cuando la gente y las empresas quieren comprar más de lo que la economía es capaz de producir, forzando los precios al alza. Por otro lado, la inflación por costes surge cuando los insumos esenciales como energía, materias primas o salarios se encarecen, obligando a las empresas a trasladar estos costes adicionales al precio final que pagamos.",
+        "Para controlar esta situación, los bancos centrales actúan como moderadores de la economía mediante la política monetaria. Al subir las tasas de interés, aumentan el coste del dinero: pedir préstamos para comprar casas, coches o expandir negocios se vuelve más caro. Esto desincentiva el consumo y la inversión financiada por deuda.",
+        "Al mismo tiempo, tasas más altas vuelven el ahorro más atractivo, ya que los bancos ofrecen mejores rendimientos por depositar el dinero. Este conjunto de acciones busca reducir la cantidad de dinero que circula en la economía y moderar la demanda agregada. Al haber menos presión por comprar, las empresas encuentran más difícil seguir subiendo precios, lo que ayuda a estabilizar la inflación hacia el objetivo deseado."
+      ],
+      "caveats": [
+        "Los efectos de las tasas de interés no son inmediatos y pueden tardar meses en reflejarse en la inflación real.",
+        "Las tasas altas pueden frenar tanto la inflación como el crecimiento económico, pudiendo causar recesión si se aplican excesivamente.",
+        "La política monetaria tiene poco efecto sobre la inflación causada por shocks externos de oferta, como guerras o desastres naturales."
+      ]
+    },
+    "summary": "",
+    "image_url": "",
+    "image_query": "",
+    "meta": {},
+    "presentation": {
+      "layout": "focus",
+      "mood": "volatile",
+      "motif": "flow",
+      "density": "balanced",
+      "palette": {
+        "primary": "#4FD9A7",
+        "secondary": "#FBC22D",
+        "accent": "#F87171"
+      }
+    },
+    "modules": [
+      {
+        "category": "Cadenas de causa-efecto",
+        "color": "#4FD9A7",
+        "image_query": "",
+        "kind": "steps",
+        "facts": [
+          "Aumento de tasas",
+          "Menos consumo",
+          "Menos demanda",
+          "Precios estables"
+        ],
+        "headline": "Cómo el banco central enfría la economía",
+        "items": [
+          {
+            "label": "Aumento de tasas",
+            "value": "Costo de crédito sube",
+            "detail": "El banco central eleva el tipo de interés base, haciendo que pedir prestado sea más costoso para bancos y consumidores."
+          },
+          {
+            "label": "Reducción del gasto",
+            "value": "Menos consumo e inversión",
+            "detail": "Familias y empresas posponen gastos grandes financiados con deuda debido a los altos intereses."
+          },
+          {
+            "label": "Enfriamiento de la demanda",
+            "value": "Demanda ‹ Oferta",
+            "detail": "La presión sobre los precios disminuye al haber menos compradores agresivos en el mercado."
+          },
+          {
+            "label": "Estabilización",
+            "value": "Inflación baja",
+            "detail": "La tasa de inflación desciende hacia el objetivo al eliminarse el exceso de presión sobre los precios."
+          }
+        ]
+      },
+      {
+        "category": "Fuentes de inflación",
+        "color": "#FBC22D",
+        "image_query": "",
+        "kind": "keyvalue",
+        "facts": [
+          "Inflación de demanda",
+          "Inflación de costes"
+        ],
+        "headline": "Principales motores del aumento de precios",
+        "items": [
+          {
+            "label": "Por demanda",
+            "value": "Exceso de compradores"
+          },
+          {
+            "label": "Por costes",
+            "value": "Energía y salarios altos"
+          }
+        ]
+      },
+      {
+        "category": "Efectos de tasas altas",
+        "color": "#F87171",
+        "image_query": "",
+        "kind": "list",
+        "facts": [
+          "Ahorro más rentable",
+          "Créditos caros",
+          "Enfriamiento de la economía"
+        ],
+        "headline": "Consecuencias directas para la economía",
+        "items": [
+          {
+            "label": "Ahorro más atractivo"
+          },
+          {
+            "label": "Préstamos y tarjetas más caros"
+          },
+          {
+            "label": "Menor crecimiento del consumo"
+          },
+          {
+            "label": "Reducción de inversión empresarial"
+          }
+        ]
+      }
+    ],
+    "spotlight": {
+      "kind": "stat",
+      "label": "Objetivo típico de inflación de los bancos centrales",
+      "value": "2%"
+    },
+    "followups": [
+      "¿Qué pasa si la inflación es demasiado baja o negativa?",
+      "¿Por qué los bancos centrales no mantienen las tasas siempre bajas?",
+      "¿Cómo afecta la inflación a los ahorros guardados en efectivo?"
+    ],
+    "sources": [
+      {
+        "title": "nafin.com",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEaN-NdFxZvXcE5vhP6YVhU88MCRqxGMj-7zoR4qyMARdpUBgCXfRWd1V6co6MjLjOv1HTA-1WYcBcO1orZ1UGzQA8gM-0SAFk1k_ocHNFpOCEx3T7Dcj79zycCFnRQGAyKT34TRtqo2g6B_scsU0f4AoHxMs0uJpXSB9SrS0K3rUOf7_47PSUz5X8o3hDIpK0nXPZP5pbAcKMUDWGo7SPcWeqJLUhq8I_H4LgGgy0cE_h24A=="
+      },
+      {
+        "title": "bbva.com",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHir0fLvhJPMDvjIaiRcKs2UbNNbDQz2M3WExOy9ju6VOBcba3Ov1m85jfC0FcJiLvc2AqEuBMo8LWRlU9dNo7RZf1voqy1QxaNtUitLenetuYq3TPfMqv-8QcSDXHEVglFGGcyZ5GPGbNYxyHwP-gDAVNR5VB0DZ6q2QV8de8s6zeCQjOJOUTqmWPuqQJ_di_iTMn-Dq0YjmK7f_cr"
+      },
+      {
+        "title": "banrep.gov.co",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFU-mGx3oWwSaY1u4wxZlSOfSdmC4Pai6khTN1TH3J_QX8aPWw9DqBNDkI8aaajYVKZ0bO-tdKIngoBwUgou5HQZbfGJ9OwS8d1GGWqRsCKxwZQNeLhDjC0_mLL9XfqlpPrcK6FkFYnBp6ZiWIFwE9r3wp153kpf0vYhnoo"
+      },
+      {
+        "title": "focus-economics.com",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGZJir5TEav9NJGtcuFUcMvnWULSu17VlAHW1kMo-bw74KkEzqqYgvEnMDet1iPju6W4zt1iY-MoKvCPAjPyCmaG7vevKWOJrMBJfvurO414Agpanq2s68ZrvmKYYT8dmZx-dHCU_RFm-8p2ghPfmHPtvTikLD_34UmiMYLBcw="
+      },
+      {
+        "title": "bancocooperativo.es",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGQmg1PcYzUKvmSEs-hvqGGJlIh8az34zcP6mnpRJw4IqvUAA_UrhhkVfm-q66xsqyWMa5oTCAXOLNzy1iimySpl4Iil6yUcU5fg5wQ4QiRKsTX2eVDXKUy3uRMkkFxKaL33putWGzdlh-g3BkGt-2odT27AFsHYq4rnkEmfouBEXXdJgH4nSVhXm0nLcn3U_mflRNC"
+      },
+      {
+        "title": "ig.com",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHGe7UeaXH0GF6MRLdNnmpecEYhwMmRV7ZD_P0R950CRN__lKPfnhLQNifHmTLhqv9nnqva6KNDnaUcx7yu67dpSe275pflhKRyNkOlOhdiBIDviUP1teNbsJyVlL3VFQYirht4u5v_RmKtyFKMGO_nIzqLydAqQe3Daj00ZGyJgg8ZK41XQ7IDLcTgPFnFsqm_cEKr6g2L70u0-zR8ghpJlYY="
+      },
+      {
+        "title": "microbank.com",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGeB0iRYhmou0nlhLA0LzHBfc71nc2lN7oh9wGzyQDSg4ncpWbfxP2auH8YMwluKugCTSLKN9akabIXLkI87T5ijQjIwPowUTIoZsFWO2uuX_ZAOWpBRhd5pwgDs4B0MZwadW0pv6Jgbhak07DaL8ZuAvcM-h364LQrViRSOnlhKKBJQe258e7z8n8CMJq0iH7D"
+      }
+    ]
+  },
+  "timing": {
+    "prefaceMs": 1177,
+    "researchMs": 2719,
+    "firstPartialMs": 6992,
+    "sceneMs": 10629,
+    "sources": 7
+  }
+}

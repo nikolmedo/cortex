@@ -1,0 +1,7 @@
+.item {
+  min-width: 0;
+}
+
+.enter {
+  animation: materialize var(--dur-slow) var(--ease) both;
+}

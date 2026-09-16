@@ -1,0 +1,179 @@
+{
+  "query": "Kyoto",
+  "lang": "en",
+  "preface": {
+    "intent": "entity",
+    "title": "Kyoto",
+    "layout": "dossier",
+    "mood": "archival",
+    "palette": {
+      "primary": "#29dbff",
+      "secondary": "#d9b84f",
+      "accent": "#d56953"
+    },
+    "plan": [
+      "Mapping ancient capital historical districts",
+      "Cataloging UNESCO World Heritage temples",
+      "Reviewing traditional wooden architecture preservation"
+    ]
+  },
+  "scene": {
+    "version": 3,
+    "intent": "entity",
+    "type": "place",
+    "title": "Kyoto",
+    "subtitle": "Former imperial capital of Japan · Kansai region",
+    "answer": {
+      "headline": "Kyoto is the cultural heart of Japan, serving as the nation's imperial capital for over a millennium and remaining a repository of traditional arts, architecture, and history.",
+      "body": [
+        "Located in the Kansai region of Honshu, Kyoto acted as the seat of the Japanese Emperor from 794 until 1868. This long tenure as the capital fostered a refined aesthetic culture that permeates the city, from its meticulous Zen gardens and wooden tea houses to the intricate rituals of the geisha districts.",
+        "Today, the city bridges the gap between historical preservation and modern urban life, housing a population of approximately 1.43 million. It remains globally significant for its dense concentration of cultural treasures, including 15 UNESCO World Heritage Sites that protect its irreplaceable shrines, temples, and historic districts."
+      ],
+      "caveats": [
+        "The 2025 census figure is the most recent official data provided."
+      ]
+    },
+    "summary": "Kyoto served as Japan's imperial capital from 794 to 1868, establishing it as the center of traditional Japanese culture. It is known for its historic temples, shrines, and gardens, currently home to roughly 1.43 million people.",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/e/e0/Kinkaku-ji_Kyoto_Japan.jpg",
+    "image_query": "Kinkaku-ji golden temple Kyoto",
+    "meta": {
+      "Capital period": "794–1868",
+      "Region": "Kansai, Honshu",
+      "Population": "1.43 million (2025)",
+      "Area": "827.8 km²"
+    },
+    "presentation": {
+      "layout": "dossier",
+      "mood": "archival",
+      "motif": "rings",
+      "density": "balanced",
+      "palette": {
+        "primary": "#29DBFF",
+        "secondary": "#D9B84F",
+        "accent": "#D56953"
+      }
+    },
+    "modules": [
+      {
+        "category": "Historical timeline",
+        "color": "#D9B84F",
+        "image_query": "",
+        "kind": "timeline",
+        "facts": [
+          "Established as capital in 794",
+          "Remained capital until 1868",
+          "Modern center of culture"
+        ],
+        "headline": "Over a millennium as the seat of power",
+        "items": [
+          {
+            "label": "Founding of Heian-kyo",
+            "value": "794"
+          },
+          {
+            "label": "Meiji Restoration (Capital moves)",
+            "value": "1868"
+          }
+        ]
+      },
+      {
+        "category": "Cultural footprint",
+        "color": "#D56953",
+        "image_query": "",
+        "kind": "list",
+        "facts": [
+          "15 UNESCO World Heritage sites",
+          "Thousands of temples and shrines",
+          "Center of traditional crafts"
+        ],
+        "headline": "Significant heritage designations",
+        "items": [
+          {
+            "label": "UNESCO World Heritage Sites",
+            "value": "15 locations"
+          },
+          {
+            "label": "Traditional Arts",
+            "value": "Tea ceremony, Ikebana, Kabuki"
+          }
+        ]
+      },
+      {
+        "category": "Key demographics",
+        "color": "#29DBFF",
+        "image_query": "",
+        "kind": "stats",
+        "facts": [
+          "Population: 1.43 million",
+          "Area: 827.8 sq km"
+        ],
+        "headline": "Modern urban metrics",
+        "items": [
+          {
+            "label": "Population (2025)",
+            "value": "1.43 million",
+            "weight": 80
+          },
+          {
+            "label": "Area (sq km)",
+            "value": "827.8",
+            "weight": 60
+          }
+        ]
+      },
+      {
+        "category": "Cultural essence",
+        "color": "#D56953",
+        "image_query": "",
+        "kind": "quote",
+        "facts": [
+          "Preserved historical character",
+          "Synthesis of old and new"
+        ],
+        "headline": "The enduring legacy of the city",
+        "items": [
+          {
+            "label": "Kyoto is the soul of Japan; it is a city where every corner whispers the history of the nation.",
+            "value": "Anonymous",
+            "detail": "Often cited regarding Kyoto's cultural significance"
+          }
+        ]
+      }
+    ],
+    "spotlight": {
+      "kind": "stat",
+      "label": "UNESCO World Heritage Sites",
+      "value": "15"
+    },
+    "followups": [
+      "What are some of the most famous UNESCO sites in Kyoto?",
+      "How does the Gion district reflect Kyoto's history?",
+      "What is the best time of year to visit Kyoto?"
+    ],
+    "sources": [
+      {
+        "title": "wikipedia.org",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQG5J999d-zMp9gYAJ16W9KsKkfZdtfdx6bupAmesQmocy0jE0LTciKQZ44qLJkQgUQ6au65tsxAkEzscOXb9WXwz_vAjnbCUcxvXA5B2V3MnM-jjkFlDwQX"
+      },
+      {
+        "title": "worldcitiesexplorer.com",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFlhiAWdYDF3NihsEpb3rWA55iiY0inHphkNuqMUKSRvUwhVWK64P-UtZAd6l_T9jbqDmp36-n6DGxe4VxFnLoRithH01PjlRv4Y_qYb_5OdxUJ4MJvqCUg5RF23JC2P7zp1HBGC4ArowQ="
+      },
+      {
+        "title": "citypopulation.de",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFz8PFc5PkYDryz_PN5Onzte4WsXXLRFScWPExcw4lfWu7eRiCj4aFnKvKjCniWk_PpUy7OQeGCJOymMCxRK-hN_YNd_gL9MIPpvlh-oobhCxCN5n4KSFW8ZAUemsmiY_yJ4fou8ng6keWZtce4ma9M1MerpNQ2"
+      },
+      {
+        "title": "kyoto.lg.jp",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQEvaUbjE3dLq5R66PxVI8qf3qtC1CRfbIcfXWuDzSalMgcbBvJIekTIZSym2TebX71bMJVbwYrTsojbaQWXHCPthRAujoiWkyyJhNfusbHnLb01BpFKf-_ALUBD37wdJVGn89o="
+      }
+    ]
+  },
+  "timing": {
+    "prefaceMs": 1403,
+    "researchMs": 2278,
+    "firstPartialMs": 4332,
+    "sceneMs": 7343,
+    "sources": 4
+  }
+}

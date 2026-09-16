@@ -1,24 +1,16 @@
-import { useEffect, useState } from 'react';
-import { Settings } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
 import { useCortex } from './application/useCortex';
-import { I18nProvider, useI18n } from './i18n/I18nContext';
-import type { ViewTransform } from './layout/fitView';
-import { Nebula } from './presentation/components/background/Nebula';
-import { Particles } from './presentation/components/background/Particles';
-import { DesktopScene } from './presentation/components/DesktopScene';
-import { LoadingScene } from './presentation/components/graph/LoadingScene';
-import { HexGrid } from './presentation/components/HexGrid';
-import { HUDFrame } from './presentation/components/HUDFrame';
-import { MobileExplorer } from './presentation/components/mobile/MobileExplorer';
-import { QueryHistory } from './presentation/components/QueryHistory';
-import { QueryInput } from './presentation/components/QueryInput';
-import { SettingsMenu } from './presentation/components/settings/SettingsMenu';
-import { EmptyState } from './presentation/components/shared/EmptyState';
-import { TopBar } from './presentation/components/TopBar';
-import { useIsMobile } from './presentation/hooks/useBreakpoint';
+import { I18nProvider } from './i18n/I18nContext';
+import { AmbientField } from './presentation/canvas/AmbientField';
+import { CommandBar } from './presentation/components/command/CommandBar';
+import { Landing } from './presentation/components/landing/Landing';
+import { SessionStream } from './presentation/components/session/SessionStream';
+import { SettingsMenu } from './presentation/components/shell/SettingsMenu';
+import { TopBar } from './presentation/components/shell/TopBar';
+import { useRecentQueries } from './presentation/hooks/useRecentQueries';
+import { useReducedMotion } from './presentation/hooks/useReducedMotion';
 import { SettingsContext, useSettings, useSettingsState } from './presentation/hooks/useSettings';
-import { SceneTheme } from './presentation/scene/SceneTheme';
-import styles from './Cortex.module.css';
+import { turnPresentation } from './presentation/scene/presentation';
 
 export default function Cortex() {
   const settingsState = useSettingsState();
@@ -33,132 +25,63 @@ export default function Cortex() {
 
 function CortexApp() {
   const { settings } = useSettings();
-  const { t } = useI18n();
-  const isMobile = useIsMobile();
+  const reduced = useReducedMotion();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [graphTransformRef, setGraphTransformRef] =
-    useState<React.RefObject<ViewTransform> | null>(null);
+  const { turns, submit, retry, cancel, clearSession } = useCortex(settings.locale);
+  const { recent, remember } = useRecentQueries();
 
-  const { query, phase, scene, history, error, viewport, handleSubmit, handleNewQuery } =
-    useCortex(settings.locale);
-  const { W, H } = viewport;
+  const latest = turns.length > 0 ? turns[turns.length - 1] : undefined;
+  // Any turn can be in flight, not just the last one: retrying an older turn
+  // must still show ambient activity and offer Stop instead of Send.
+  const busy = turns.some(t => t.status === 'thinking' || t.status === 'streaming');
+  const ambient = turnPresentation(latest);
 
-  // Portaled overlays live outside .cortex-root, so the hook goes on <html>.
+  // Portaled overlays live outside the app root, so the hooks go on <html>.
   useEffect(() => {
     const root = document.documentElement;
     if (settings.motion === 'reduced') root.dataset.motion = 'reduced';
     else delete root.dataset.motion;
   }, [settings.motion]);
 
-  const retry = () => handleSubmit(query);
-  const emptyScene = phase === 'graph' && scene != null && scene.graph.length === 0;
+  useEffect(() => {
+    document.documentElement.lang = settings.locale;
+  }, [settings.locale]);
 
-  const gearButton = (
-    <button
-      className={styles.gearBtn}
-      onClick={() => setSettingsOpen(true)}
-      aria-label={t('topbar.settings')}
-    >
-      <Settings size={16} />
-    </button>
-  );
+  const ask = useCallback((query: string) => {
+    const q = query.trim();
+    if (!q) return;
+    remember(q);
+    submit(q);
+  }, [remember, submit]);
 
-  const overlays = (
-    <>
-      {settingsOpen && <SettingsMenu onClose={() => setSettingsOpen(false)} />}
-      {error && <div className={styles.errorToast} role="alert">{t(error)}</div>}
-    </>
-  );
-
-  if (isMobile) {
-    return (
-      <SceneTheme scene={scene}>
-        <div className={`cortex-root ${phase === 'graph' ? 'cortex-root--scroll' : ''}`}>
-          <Nebula />
-          {phase === 'input' && (
-            <>
-              <QueryInput
-                onSubmit={handleSubmit}
-                historySlot={<QueryHistory history={history} onSelect={handleSubmit} variant="inline" />}
-              />
-              {gearButton}
-            </>
-          )}
-          {phase === 'loading' && (
-            <div className={styles.loadingWrap}>
-              <LoadingScene W={W} H={H} query={query} />
-            </div>
-          )}
-          {phase === 'graph' && scene && (
-            <MobileExplorer
-              query={query}
-              scene={scene}
-              onNewQuery={handleNewQuery}
-              onRetry={retry}
-              onToggleSettings={() => setSettingsOpen(true)}
-            />
-          )}
-          {overlays}
-        </div>
-      </SceneTheme>
-    );
-  }
+  const openSettings = useCallback(() => setSettingsOpen(true), []);
+  const closeSettings = useCallback(() => setSettingsOpen(false), []);
+  const newSession = useCallback(() => {
+    clearSession();
+    window.scrollTo({ top: 0 });
+  }, [clearSession]);
 
   return (
-    <SceneTheme scene={scene}>
-      <div className="cortex-root">
-        <Nebula />
-        <HexGrid W={W} H={H} />
-        <Particles offsetRef={graphTransformRef ?? undefined} />
-
-        {phase === 'input' && (
-          <>
-            <QueryInput
-              onSubmit={handleSubmit}
-              historySlot={<QueryHistory history={history} onSelect={handleSubmit} variant="inline" />}
-            />
-            {gearButton}
-          </>
-        )}
-
-        {phase === 'loading' && (
-          <>
-            <TopBar query={query} onNewQuery={handleNewQuery} />
-            <div className={styles.loadingWrap}>
-              <LoadingScene W={W} H={H} query={query} />
-            </div>
-          </>
-        )}
-
-        {emptyScene && scene && (
-          <>
-            <TopBar
-              query={query}
-              scene={scene}
-              onNewQuery={handleNewQuery}
-              onToggleSettings={() => setSettingsOpen(true)}
-            />
-            <HUDFrame />
-            <EmptyState query={query} onRetry={retry} onNewQuery={handleNewQuery} />
-          </>
-        )}
-
-        {phase === 'graph' && scene && !emptyScene && (
-          <DesktopScene
-            query={query}
-            scene={scene}
-            history={history}
-            W={W}
-            H={H}
-            onSubmit={handleSubmit}
-            onNewQuery={handleNewQuery}
-            onToggleSettings={() => setSettingsOpen(true)}
-            onTransformRef={setGraphTransformRef}
-          />
-        )}
-
-        {overlays}
-      </div>
-    </SceneTheme>
+    <>
+      <AmbientField
+        palette={ambient.palette}
+        mood={ambient.mood}
+        motif={ambient.motif}
+        active={busy}
+        reduced={reduced}
+      />
+      <TopBar session={turns.length > 0} onNewSession={newSession} onOpenSettings={openSettings} />
+      {turns.length === 0 ? (
+        <Landing recent={recent} reduced={reduced} onSubmit={ask} />
+      ) : (
+        <>
+          <main>
+            <SessionStream turns={turns} reduced={reduced} onRetry={retry} onFollowup={ask} />
+          </main>
+          <CommandBar docked busy={busy} onSubmit={ask} onStop={cancel} />
+        </>
+      )}
+      {settingsOpen ? <SettingsMenu onClose={closeSettings} /> : null}
+    </>
   );
 }

@@ -30,11 +30,13 @@ export function sourcesFromGrounding(custom: unknown): GroundingSource[] {
     if (url === '') continue;
 
     const parsed = new URL(url);
-    const key = `${parsed.host}${parsed.pathname}`.toLowerCase();
+    // Every chunk URL is a vertexaisearch redirect, so host + path never repeats;
+    // `web.title` carries the real site (e.g. "reuters.com") and is the useful key.
+    const title = typeof web?.title === 'string' && web.title.trim() !== '' ? web.title.trim() : parsed.host;
+    const key = title.toLowerCase();
     if (seen.has(key)) continue;
     seen.add(key);
 
-    const title = typeof web?.title === 'string' && web.title.trim() !== '' ? web.title.trim() : parsed.host;
     out.push({ title, url });
     if (out.length >= LIMITS.maxSources) break;
   }

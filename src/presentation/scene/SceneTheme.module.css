@@ -1,4 +1,7 @@
-/* Box-less wrapper: custom properties inherit through it, layout is untouched. */
 .root {
-  display: contents;
+  position: relative;
+  transition:
+    --scene-primary var(--dur-slow) var(--ease),
+    --scene-secondary var(--dur-slow) var(--ease),
+    --scene-accent var(--dur-slow) var(--ease);
 }
