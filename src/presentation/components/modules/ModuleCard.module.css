@@ -1,0 +1,129 @@
+.card {
+  --m: var(--scene-primary);
+  /*
+   * Signal colour. A neutral card signals with the module's own colour; a tone
+   * swaps in one of four fixed recipes, so the valence of a card never depends
+   * on a colour the model chose, and the model can never supply a colour here.
+   */
+  --tone: var(--m);
+  container-type: inline-size;
+  position: relative;
+  height: 100%;
+  padding: clamp(16px, 1.2rem + 0.4vw, 24px);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--line);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--m) 7%, transparent), transparent 140px),
+    var(--surface);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.035);
+}
+
+/* Fine luminous hairline along the top edge, tinted by the module color. */
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0 24px auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--tone) 55%, transparent), transparent);
+  pointer-events: none;
+}
+
+/* Tone: four fixed recipes mixed against the scene palette and the two semantic
+   tokens the pros/cons columns already use, so a valence reads the same way
+   wherever it appears. */
+.card[data-tone='positive'] {
+  --tone: color-mix(in srgb, var(--scene-accent) 70%, white);
+}
+
+.card[data-tone='caution'] {
+  --tone: color-mix(in srgb, #f2c46b 75%, var(--scene-secondary));
+}
+
+.card[data-tone='critical'] {
+  --tone: color-mix(in srgb, var(--danger) 80%, white);
+}
+
+/* A toned card also carries an edge mark, so the valence survives a greyscale
+   or colour-blind read instead of living in hue alone. */
+.card:is([data-tone='positive'], [data-tone='caution'], [data-tone='critical'])::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: clamp(16px, 1.2rem + 0.4vw, 24px);
+  width: 2px;
+  height: 28px;
+  border-radius: 0 2px 2px 0;
+  background: var(--tone);
+  pointer-events: none;
+}
+
+/* Emphasis changes how much presence a card has, never what it contains. */
+.card[data-emphasis='lead'] {
+  border-color: color-mix(in srgb, var(--tone) 28%, var(--line));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--m) 12%, transparent), transparent 180px),
+    var(--surface-strong);
+}
+
+.card[data-emphasis='lead'] .title {
+  font-size: var(--fs-lead);
+  font-weight: 500;
+}
+
+.card[data-emphasis='quiet'] {
+  background: transparent;
+  border-color: color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+.card[data-emphasis='quiet'] .title {
+  font-size: var(--fs-small);
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.card[data-emphasis='quiet']::before {
+  opacity: 0.5;
+}
+
+.head {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-4);
+}
+
+.icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  color: color-mix(in srgb, var(--tone) 80%, white);
+  background: color-mix(in srgb, var(--tone) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone) 22%, transparent);
+}
+
+.titles {
+  min-width: 0;
+  padding-top: 3px;
+}
+
+.title {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-hi);
+  overflow-wrap: anywhere;
+}
+
+.headline {
+  margin-top: 2px;
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  color: var(--text-dim);
+}
+
+.body {
+  min-width: 0;
+}

@@ -1,4 +1,4 @@
-/* Cortex global styles: reset, shared classes, keyframes, reduced motion. */
+/* Cortex global styles: reset, document flow, shared keyframes, reduced motion. */
 
 *,
 *::before,
@@ -8,119 +8,150 @@
   padding: 0;
 }
 
-html,
-body,
-#root {
-  width: 100%;
-  height: 100%;
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: calc(var(--top-h) + 12px);
 }
 
 body {
-  background: var(--bg);
-  font-family: var(--font-mono);
-  color: var(--text-body);
+  min-height: 100dvh;
+  background: radial-gradient(120% 80% at 50% 0%, var(--ink-1) 0%, var(--ink-0) 60%) fixed, var(--ink-0);
+  font-family: var(--font-body);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  color: var(--text);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-kerning: normal;
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: none;
+  border: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+a {
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--scene-primary) 80%, white);
+  outline-offset: 2px;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--scene-primary) 35%, transparent);
+  color: var(--text-hi);
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgb(var(--accent-rgb) / 0.18);
-  border-radius: 3px;
+  background: var(--line-strong);
+  border-radius: 8px;
 }
 
-.cortex-root {
-  position: fixed;
-  inset: 0;
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
   overflow: hidden;
-  background: var(--bg);
-}
-
-/* Mobile tree scrolls as a document instead of being a fixed canvas. */
-.cortex-root--scroll {
-  position: relative;
-  min-height: 100%;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-/* ---- Shared recipes ---- */
-
-.glass {
-  background: var(--glass-bg);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
-}
-
-.glass-heavy {
-  background: var(--glass-bg-solid);
-  backdrop-filter: var(--glass-blur-heavy);
-  -webkit-backdrop-filter: var(--glass-blur-heavy);
-}
-
-.chamfer {
-  clip-path: var(--chamfer);
-}
-
-.chamfer-sm {
-  clip-path: var(--chamfer-sm);
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
 }
 
 /* ---- Keyframes ---- */
 
-@keyframes pulseRing {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  50% {
-    transform: scale(1.3);
-    opacity: 0.18;
-  }
-}
-@keyframes pulseRing2 {
-  0%,
-  100% {
-    transform: scale(1.1);
-    opacity: 0.45;
-  }
-  50% {
-    transform: scale(1.55);
-    opacity: 0.06;
-  }
-}
-@keyframes hexPan {
-  0% {
-    transform: translate(0, 0);
-  }
-  100% {
-    transform: translate(-60px, -34px);
-  }
-}
-@keyframes scanLine {
-  0% {
-    transform: translateY(-100%);
-  }
-  100% {
-    transform: translateY(100%);
-  }
-}
-@keyframes fadeInUp {
+/*
+ * Entrance families. One per way a piece can arrive; the scene's layout picks
+ * the default through --enter and Materialize can override it per element.
+ * Travel and blur come from --rise/--reveal-blur so the mood sets the amount,
+ * and every family ends on identity so they all resolve to the same still page.
+ */
+
+@keyframes materialize {
   from {
     opacity: 0;
-    transform: translateY(12px) scale(0.96);
+    transform: translateY(var(--rise, 12px)) scale(var(--enter-scale, 1));
+    filter: blur(var(--reveal-blur, 6px));
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: none;
+    filter: blur(0);
   }
 }
+
+/* Drops into place from above: the piece was already there and has now landed. */
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--rise, 12px))) scale(var(--enter-scale, 1));
+    filter: blur(var(--reveal-blur, 6px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+/* Opens along its own height, so a run of steps reads as one following another. */
+@keyframes unfurl {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--rise, 12px) * 0.35)) scaleY(0.96) scale(var(--enter-scale, 1));
+    filter: blur(var(--reveal-blur, 6px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+/* Slides in from the inline start: two of these arriving together read as sides. */
+@keyframes edge {
+  from {
+    opacity: 0;
+    transform: translateX(calc(-1 * var(--rise, 12px))) scale(var(--enter-scale, 1));
+    filter: blur(var(--reveal-blur, 6px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+@keyframes phraseIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes fadeIn {
   from {
     opacity: 0;
@@ -129,255 +160,44 @@ body {
     opacity: 1;
   }
 }
-@keyframes chevronBlink {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.2;
-  }
-}
-@keyframes inputFadeIn {
+
+@keyframes shimmer {
   from {
-    opacity: 0;
-    transform: translateY(-24px);
+    transform: translateX(-100%);
   }
   to {
-    opacity: 1;
-    transform: translateY(0);
+    transform: translateX(100%);
   }
 }
-@keyframes graphStageIn {
-  from {
-    opacity: 0;
-    transform: scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-@keyframes hudSlideLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-@keyframes hudSlideRight {
-  from {
-    opacity: 0;
-    transform: translateX(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-@keyframes scanningDot {
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-@keyframes radarSweep {
-  from {
-    transform: rotate(0deg);
-  }
+
+@keyframes orbit {
   to {
     transform: rotate(360deg);
   }
 }
-@keyframes expandIn {
-  from {
-    opacity: 0;
-    transform: scale(0.88) translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-@keyframes backBtnIn {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -8px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-}
-@keyframes materialize {
-  0% {
-    opacity: 0;
-    filter: blur(8px) brightness(2.4);
-  }
-  60% {
-    opacity: 1;
-    filter: blur(0) brightness(1.2);
-  }
-  100% {
-    opacity: 1;
-    filter: blur(0) brightness(1);
-  }
-}
-@keyframes edgeDraw {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-@keyframes hudBracketFadeIn {
-  from {
-    opacity: 0;
-    transform: scale(0.85);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-@keyframes statusBlink {
-  0%,
-  100% {
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-@keyframes particleDrift {
-  0% {
-    opacity: 0;
-    transform: translate(0, 0) scale(0.4);
-  }
-  20% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: var(--drift, translate(40px, -60px)) scale(1.4);
-  }
-}
-@keyframes ringExpand {
-  0% {
-    transform: scale(0);
-    opacity: 0.7;
-  }
-  100% {
-    transform: scale(1.8);
-    opacity: 0;
-  }
-}
-@keyframes nebulaDriftA {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1);
-  }
-  50% {
-    transform: translate(6vw, 4vh) scale(1.15);
-  }
-}
-@keyframes nebulaDriftB {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(1.1);
-  }
-  50% {
-    transform: translate(-7vw, -3vh) scale(0.95);
-  }
-}
-@keyframes nebulaDriftC {
-  0%,
-  100% {
-    transform: translate(0, 0) scale(0.95);
-  }
-  50% {
-    transform: translate(4vw, -5vh) scale(1.12);
-  }
-}
-@keyframes monogramSpin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-@keyframes lightboxReveal {
-  from {
-    clip-path: inset(46% 46% 46% 46%);
-    opacity: 0;
-  }
-  to {
-    clip-path: inset(0 0 0 0);
-    opacity: 1;
-  }
-}
-@keyframes sheetUp {
-  from {
-    opacity: 0;
-    transform: translate(-50%, 40px);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, 0);
-  }
-}
 
-/* ---- Shared animation classes (used across modules) ---- */
-
-/* Entrance duration follows the scene mood (--motion-scale is a speed multiplier). */
-.node-spawn {
-  animation: materialize calc(0.7s / var(--motion-scale)) var(--ease-out-expo) both;
-}
-.hud-bracket {
-  animation: hudBracketFadeIn 0.6s ease 0.1s both;
-}
-.status-blink {
-  animation: statusBlink 1.4s ease-in-out infinite;
-}
-.ring-expand {
-  animation: ringExpand 2.2s ease-out infinite;
-  transform-origin: center;
-}
-.hex-grid {
-  animation: hexPan 20s linear infinite;
-}
-.chevron-blink {
-  animation: chevronBlink 1.2s ease-in-out infinite;
-}
-.center-pulse-1 {
-  animation: pulseRing 3s ease-in-out infinite;
-  transform-origin: center;
-}
-.center-pulse-2 {
-  animation: pulseRing2 3s ease-in-out infinite 1s;
-  transform-origin: center;
-}
-.radar-sweep {
-  animation: radarSweep 3s linear infinite;
-  transform-origin: 0 0;
-}
-
-/* ---- Reduced motion ---- */
+/* ---- Reduced motion (OS preference or the in-app setting) ---- */
 
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
-    /* Entrance stagger is a delay, not a duration: without this nodes would
-       still pop in one by one over several seconds. */
     animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
   }
+}
+
+:root[data-motion='reduced'] *,
+:root[data-motion='reduced'] *::before,
+:root[data-motion='reduced'] *::after {
+  animation-duration: 0.01ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  transition-delay: 0ms !important;
+  scroll-behavior: auto !important;
 }

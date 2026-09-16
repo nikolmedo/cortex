@@ -1,0 +1,213 @@
+/* Bars */
+
+.bars {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.barRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 12px;
+  row-gap: 6px;
+  align-items: baseline;
+}
+
+.barLabel {
+  font-size: var(--fs-small);
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.barValue {
+  font-family: var(--font-display);
+  font-size: var(--fs-small);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-hi);
+}
+
+.barSvg {
+  grid-column: 1 / -1;
+  width: 100%;
+  display: block;
+  overflow: visible;
+}
+
+.barTrack {
+  fill: var(--line-strong);
+}
+
+.barMark {
+  fill: color-mix(in srgb, var(--m) 85%, white);
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: grow var(--dur-slow) var(--ease) calc(var(--i, 0) * var(--stagger, 60ms)) both;
+}
+
+@keyframes grow {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+/* Line */
+
+.lineFigure {
+  /* The beat the line is drawn on. Derived from the scene's own tempo so a
+     volatile turn draws its line as briskly as it grows its bars. The area and
+     markers derive their delays from this, keeping the whole chart in step. */
+  --draw: calc(var(--dur-slow) * 1.3);
+  position: relative;
+  padding-bottom: 28px;
+}
+
+.plot {
+  position: relative;
+  height: clamp(140px, 30cqi, 220px);
+  margin-top: 20px;
+}
+
+/* Inset so edge markers and the peak label stay inside the plot box. */
+.plotInner {
+  position: absolute;
+  inset: 0 6px;
+}
+
+.lineSvg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.grid {
+  stroke: var(--line);
+  stroke-width: 1;
+}
+
+.area {
+  fill: color-mix(in srgb, var(--m) 16%, transparent);
+  /* Fills in only once the line that bounds it has finished drawing. */
+  animation: fadeIn var(--dur-base) var(--ease) var(--draw) both;
+}
+
+.stroke {
+  fill: none;
+  stroke: color-mix(in srgb, var(--m) 90%, white);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+/*
+ * The draw: a clip rect opening left to right across the plot. Same gesture as
+ * `.barMark` above, so a line chart and a bar chart build the same way. The
+ * settled state is the untransformed rect, so dropping the animation leaves the
+ * whole line showing, which is what the kill rules below rely on.
+ */
+.wipe {
+  transform-box: fill-box;
+  transform-origin: left center;
+  animation: wipe var(--draw) var(--ease) both;
+}
+
+.marker,
+.markerStrong {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 50%;
+  background: var(--ink-1);
+  border: 2px solid color-mix(in srgb, var(--m) 70%, transparent);
+  /* Each marker catches up with the line as it passes that point. */
+  animation: markerIn var(--dur-base) var(--ease) calc(var(--draw) * 0.6 + var(--i, 0) * var(--stagger, 60ms)) both;
+}
+
+.markerStrong {
+  width: 10px;
+  height: 10px;
+  margin: -5px 0 0 -5px;
+  background: color-mix(in srgb, var(--m) 90%, white);
+  border-color: var(--ink-1);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--m) 50%, transparent);
+}
+
+.callout {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 10px));
+  max-width: 100%;
+  font-family: var(--font-display);
+  font-size: var(--fs-small);
+  color: var(--text-hi);
+  white-space: nowrap;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: var(--surface-strong);
+  border: 1px solid var(--line);
+}
+
+.callout[data-edge='end'] {
+  transform: translate(-100%, calc(-100% - 10px));
+}
+
+.callout[data-edge='start'] {
+  transform: translate(0, calc(-100% - 10px));
+}
+
+.axis {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 0;
+  height: 20px;
+}
+
+.tick {
+  position: absolute;
+  bottom: 0;
+  transform: translateX(-50%);
+  font-size: var(--fs-caption);
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+
+.tick[data-edge='start'] {
+  transform: none;
+}
+
+.tick[data-edge='end'] {
+  transform: translateX(-100%);
+}
+
+/* Reveal choreography */
+
+@keyframes wipe {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes markerIn {
+  from {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+}
+
+/* See kinds.module.css: a settled turn renders the base rule and never replays. */
+[data-reveal='false'] :is(.barMark, .wipe, .area, .marker, .markerStrong) {
+  animation: none;
+}
+
+/*
+ * `reveal: fade` asks for a card that simply appears, and kinds.module.css
+ * already drops every inner draw for it. A chart is the loudest of those draws,
+ * so it has to honour the directive too.
+ */
+[data-enter='fade'] :is(.barMark, .wipe, .area, .marker, .markerStrong) {
+  animation: none;
+}

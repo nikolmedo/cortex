@@ -1,0 +1,233 @@
+.turn {
+  padding-block: var(--sp-6) var(--sp-7);
+}
+
+.turn + .turn {
+  border-top: 1px solid var(--line);
+}
+
+.latest {
+  min-height: calc(100dvh - var(--top-h) - var(--dock-h, 128px) - env(safe-area-inset-top));
+}
+
+.frame {
+  position: relative;
+  scroll-margin-top: calc(var(--top-h) + env(safe-area-inset-top) + 8px);
+}
+
+/* The turn's single core canvas; positioned by transform only. */
+.core {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  transform-origin: 0 0;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.core[data-ready='true'] {
+  transition: transform var(--dur-slow) var(--ease);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sp-3);
+  margin-bottom: var(--sp-5);
+}
+
+.glyph {
+  flex: none;
+}
+
+.query {
+  flex: 1;
+  min-width: 0;
+  padding-top: 7px;
+  max-width: 80ch;
+  color: var(--text-dim);
+  line-height: 1.5;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.iconBtn {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--hit);
+  height: var(--hit);
+  margin-top: -2px;
+  margin-left: auto;
+  border-radius: 50%;
+  color: var(--text-faint);
+  transition: color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+
+.iconBtn:hover {
+  color: var(--text-hi);
+  background: var(--line);
+}
+
+/* Stage: the core at full size with the live plan beside it */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-5);
+  padding-block: var(--sp-3) var(--sp-6);
+  text-align: center;
+}
+
+.coreSlot {
+  flex: none;
+}
+
+.stageText {
+  min-width: 0;
+  width: 100%;
+  max-width: 560px;
+}
+
+.status {
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.workingTitle {
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-weight: 400;
+  font-stretch: 92%;
+  font-size: clamp(1.375rem, 1.1rem + 1.2vw, 1.875rem);
+  line-height: 1.2;
+  color: var(--text-hi);
+  text-wrap: balance;
+  animation: materialize var(--dur-slow) var(--ease) both;
+}
+
+.plan {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: var(--sp-4);
+  text-align: left;
+}
+
+.planStep {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  font-size: var(--fs-small);
+  line-height: 1.45;
+  color: var(--text);
+  animation: materialize var(--dur-slow) var(--ease) both;
+}
+
+.planText {
+  min-width: 0;
+}
+
+.planMark {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  margin-top: 2px;
+  border-radius: 50%;
+  border: 1.5px solid var(--line-strong);
+}
+
+.planStep[data-state='active'] .planMark {
+  border-color: color-mix(in srgb, var(--scene-primary) 25%, transparent);
+  border-top-color: var(--scene-primary);
+  animation: orbit 1.1s linear infinite;
+}
+
+.planStep[data-state='done'] .planMark {
+  border-color: var(--scene-primary);
+  background: var(--scene-primary);
+}
+
+@media (min-width: 768px) {
+  .stage {
+    flex-direction: row;
+    align-items: center;
+    gap: var(--sp-6);
+    text-align: left;
+    padding-block: var(--sp-3) var(--sp-6);
+  }
+}
+
+/* Error and empty notices */
+
+.notice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--sp-3) var(--sp-4);
+  align-items: start;
+  padding: var(--sp-5);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  animation: materialize var(--dur-slow) var(--ease) both;
+}
+
+.notice:not(:has(.noticeIcon)) {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.noticeIcon {
+  color: var(--danger);
+  margin-top: 2px;
+}
+
+.noticeText {
+  min-width: 0;
+}
+
+.noticeTitle {
+  color: var(--text-hi);
+  font-weight: 600;
+}
+
+.noticeBody {
+  margin-top: 2px;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.retry {
+  grid-column: 1 / -1;
+  justify-self: start;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: var(--hit);
+  padding: 0 18px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--ink-0);
+  background: color-mix(in srgb, var(--scene-primary) 88%, white);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.retry:active {
+  transform: scale(0.97);
+}
+
+@media (min-width: 768px) {
+  .notice {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+  }
+  .notice:not(:has(.noticeIcon)) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .retry {
+    grid-column: auto;
+  }
+}

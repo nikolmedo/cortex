@@ -1,47 +1,32 @@
-import type { ScenePresentation } from '../../domain/Scene';
-import { DEFAULT_PALETTE, DEFAULT_PRESENTATION, isHex } from '../../domain/Scene';
-import { MOOD_METRICS } from '../../layout/sceneMetrics';
+import type { ScenePresentation, SceneMood } from '../../domain/Scene';
+import { DEFAULT_PALETTE, isHex } from '../../domain/Scene';
+import { motionFor } from './motionProfile';
 
-/** '#00D4FF' -> '0 212 255'; falls back to the brand primary for anything that is not a 6-digit hex. */
-function hexToRgbTriplet(hex: string): string {
-  const safe = isHex(hex) ? hex : DEFAULT_PALETTE.primary;
-  const n = parseInt(safe.slice(1), 16);
-  return `${(n >> 16) & 255} ${(n >> 8) & 255} ${n & 255}`;
-}
+/** Ambient field speed multiplier per mood (1 = neutral). */
+export const MOOD_SPEED: Record<SceneMood, number> = {
+  calm: 0.7,
+  kinetic: 1.25,
+  archival: 0.5,
+  volatile: 1.5,
+};
 
 type SceneCssVars = Record<`--${string}`, string>;
 
-/**
- * Inline custom properties for one scene. Motion numbers come from
- * sceneMetrics.ts, the same table the layout and float loop read, so
- * simulation and stylesheet always agree. Density only affects layout
- * geometry and is exposed as data-density, not as a CSS variable.
- */
-export function sceneCssVars(p: ScenePresentation): SceneCssVars {
-  const mood = MOOD_METRICS[p.mood];
-  const primaryRgb = hexToRgbTriplet(p.palette.primary);
-  return {
-    '--scene-primary': p.palette.primary,
-    '--scene-secondary': p.palette.secondary,
-    '--scene-accent': p.palette.accent,
-    '--scene-primary-rgb': primaryRgb,
-    '--scene-secondary-rgb': hexToRgbTriplet(p.palette.secondary),
-    '--scene-accent-rgb': hexToRgbTriplet(p.palette.accent),
-    '--accent-rgb': primaryRgb,
-    '--motion-scale': String(mood.motionScale),
-    '--grain-opacity': String(mood.grainOpacity),
-  };
+function safeHex(value: string, fallback: string): string {
+  return isHex(value) ? value : fallback;
 }
 
-export function isDefaultPresentation(p: ScenePresentation): boolean {
-  const d = DEFAULT_PRESENTATION;
-  return (
-    p.archetype === d.archetype &&
-    p.mood === d.mood &&
-    p.motif === d.motif &&
-    p.density === d.density &&
-    p.palette.primary === d.palette.primary &&
-    p.palette.secondary === d.palette.secondary &&
-    p.palette.accent === d.palette.accent
-  );
+/**
+ * The turn's whole CSS surface: validated palette colors plus the motion
+ * properties looked up from the mood/density/layout tables. Both halves are
+ * closed sets, so these stay the sole model-derived values reaching CSS.
+ */
+export function sceneCssVars(presentation: ScenePresentation): SceneCssVars {
+  const { palette } = presentation;
+  return {
+    '--scene-primary': safeHex(palette.primary, DEFAULT_PALETTE.primary),
+    '--scene-secondary': safeHex(palette.secondary, DEFAULT_PALETTE.secondary),
+    '--scene-accent': safeHex(palette.accent, DEFAULT_PALETTE.accent),
+    ...motionFor(presentation),
+  };
 }

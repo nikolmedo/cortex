@@ -1,0 +1,753 @@
+/* Shared text roles */
+
+.label {
+  color: var(--text-hi);
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.detail {
+  margin-top: 4px;
+  font-size: var(--fs-small);
+  line-height: 1.55;
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
+/* List */
+
+.list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.listItem {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  column-gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.listItem:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  margin-top: 0.55em;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--m) 85%, white);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--m) 18%, transparent);
+}
+
+.listText {
+  min-width: 0;
+}
+
+.listValue {
+  grid-column: 2;
+  margin-top: 2px;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+@container (min-width: 420px) {
+  .listItem {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .listValue {
+    grid-column: 3;
+    margin: 0 0 0 16px;
+    text-align: right;
+    max-width: 22ch;
+  }
+}
+
+/* Timeline */
+
+.timeline {
+  list-style: none;
+  position: relative;
+  padding-left: 22px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 8px;
+  bottom: 8px;
+  width: 1px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--m) 60%, transparent), var(--line));
+  /* One rail for the whole list, so it draws top-down without a per-item index. */
+  transform-origin: top;
+  animation: railDraw var(--dur-slow) var(--ease) both;
+}
+
+.tlItem {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 18px;
+}
+
+.tlItem:last-child {
+  padding-bottom: 0;
+}
+
+.tlNode {
+  position: absolute;
+  left: -22px;
+  top: 6px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--ink-1);
+  border: 1.5px solid color-mix(in srgb, var(--m) 85%, white);
+  /* Dots land behind the rail: it has a head start, then each node pops in turn. */
+  animation: nodeIn var(--dur-base) var(--ease) calc(var(--dur-slow) * 0.45 + var(--i, 0) * var(--stagger, 60ms)) both;
+}
+
+.tlDate {
+  font-family: var(--font-display);
+  font-stretch: 92%;
+  font-size: var(--fs-small);
+  color: color-mix(in srgb, var(--m) 70%, var(--text-hi));
+  line-height: 1.5;
+}
+
+/* Stats */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px 20px;
+}
+
+.stat {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: 0;
+}
+
+.statText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.gauge {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  margin-top: 4px;
+}
+
+.gaugeTrack {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 3;
+}
+
+.gaugeFill {
+  fill: none;
+  stroke: color-mix(in srgb, var(--m) 85%, white);
+  stroke-width: 3;
+  stroke-linecap: round;
+  /* pathLength is 100, so --dash is the swept percentage the renderer computed. */
+  stroke-dasharray: var(--dash, 0) 100;
+  animation: sweep var(--dur-slow) var(--ease) calc(var(--i, 0) * var(--stagger, 60ms)) both;
+}
+
+.figure {
+  font-family: var(--font-display);
+  font-stretch: 92%;
+  font-weight: 400;
+  font-size: var(--fs-figure);
+  line-height: 1.05;
+  color: var(--text-hi);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.statLabel {
+  margin-top: 4px;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+  line-height: 1.4;
+}
+
+/* Comparison */
+
+.rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 2px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.row:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.rowKey {
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.rowValue {
+  color: var(--text-hi);
+  overflow-wrap: anywhere;
+}
+
+@container (min-width: 520px) {
+  .row {
+    grid-template-columns: minmax(140px, 1fr) minmax(0, 2.4fr);
+    gap: 20px;
+  }
+}
+
+.sides {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 20px;
+}
+
+@container (min-width: 480px) {
+  .sides {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sideHead {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--text-hi);
+  padding-bottom: 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--m) 40%, transparent);
+}
+
+.side[data-side='b'] .sideHead {
+  border-bottom-color: color-mix(in srgb, var(--scene-secondary) 45%, transparent);
+}
+
+.sideCell {
+  display: flex;
+  flex-direction: column;
+}
+
+.sideValue {
+  font-size: var(--fs-small);
+  color: var(--text);
+}
+
+/* Quote */
+
+.quotes {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.quote {
+  padding-left: 16px;
+  border-left: 2px solid color-mix(in srgb, var(--m) 60%, transparent);
+}
+
+.quoteText {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: var(--fs-lead);
+  line-height: 1.4;
+  color: var(--text-hi);
+}
+
+.cite {
+  margin-top: 6px;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+/* Ranking and progress bars */
+
+.ranking {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.rankRow {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  column-gap: 10px;
+  row-gap: 6px;
+  align-items: baseline;
+}
+
+.rankNum {
+  font-family: var(--font-display);
+  font-size: var(--fs-small);
+  color: var(--text-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.rankLabel {
+  color: var(--text-hi);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+.rankValue {
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+  text-align: right;
+}
+
+.rankRow .track {
+  grid-column: 2 / -1;
+}
+
+.track {
+  display: block;
+  position: relative;
+  height: 4px;
+  border-radius: 4px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.fill {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--m) 55%, transparent), color-mix(in srgb, var(--m) 95%, white));
+  transform-origin: left center;
+  transform: scaleX(var(--w, 0));
+  animation: fillIn var(--dur-slow) var(--ease) calc(var(--i, 0) * var(--stagger, 60ms)) both;
+}
+
+@keyframes fillIn {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+.progress {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.progRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.progHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.progValue {
+  font-family: var(--font-display);
+  color: var(--text-hi);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Key-value */
+
+.kv {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.kvPair {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 0;
+  border-top: 1px solid var(--line);
+}
+
+.kvPair:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.kvKey {
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+  overflow-wrap: anywhere;
+}
+
+.kvValue {
+  color: var(--text-hi);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+
+@container (min-width: 560px) {
+  .kv {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    column-gap: 28px;
+  }
+  .kvPair:nth-child(2) {
+    border-top: 0;
+    padding-top: 0;
+  }
+}
+
+/* Tags */
+
+.tags {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  max-width: 100%;
+  padding: 5px 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-small);
+  color: var(--text);
+  background: color-mix(in srgb, var(--m) 9%, transparent);
+  border: 1px solid color-mix(in srgb, var(--m) 22%, transparent);
+  overflow-wrap: anywhere;
+}
+
+.tagValue {
+  color: var(--text-dim);
+}
+
+/* Steps */
+
+.steps {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.step {
+  position: relative;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  column-gap: 14px;
+  padding-bottom: 20px;
+}
+
+.step:last-child {
+  padding-bottom: 0;
+}
+
+.step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 15.5px;
+  top: 34px;
+  bottom: 4px;
+  width: 1px;
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--m) 45%, transparent), var(--line));
+  /* One segment per step, so each draws after its own number has appeared. */
+  transform-origin: top;
+  animation: railDraw var(--dur-base) var(--ease) calc(var(--i, 0) * var(--stagger, 60ms) + var(--dur-fast)) both;
+}
+
+.stepNum {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-family: var(--font-display);
+  font-size: var(--fs-small);
+  color: var(--text-hi);
+  background: color-mix(in srgb, var(--m) 12%, var(--ink-1));
+  border: 1px solid color-mix(in srgb, var(--m) 45%, transparent);
+  font-variant-numeric: tabular-nums;
+  animation: nodeIn var(--dur-base) var(--ease) calc(var(--i, 0) * var(--stagger, 60ms)) both;
+}
+
+.stepBody {
+  min-width: 0;
+  padding-top: 4px;
+}
+
+.stepHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.stepLabel {
+  color: var(--text-hi);
+  font-weight: 600;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.stepResult {
+  font-size: var(--fs-small);
+  line-height: 1.35;
+  padding: 1px 10px;
+  border-radius: var(--r-pill);
+  color: color-mix(in srgb, var(--m) 60%, var(--text-hi));
+  background: color-mix(in srgb, var(--m) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--m) 26%, transparent);
+  overflow-wrap: anywhere;
+}
+
+@container (min-width: 560px) {
+  .stepHead {
+    flex-wrap: nowrap;
+    justify-content: space-between;
+  }
+  .stepResult {
+    flex: none;
+    max-width: 45%;
+    text-align: right;
+  }
+}
+
+/* Formula */
+
+.formulas {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.formula {
+  min-width: 0;
+}
+
+.formulaExpr {
+  font-family: var(--font-mono);
+  font-size: clamp(0.95rem, 0.9rem + 0.4vw, 1.15rem);
+  line-height: 1.6;
+  color: var(--text-hi);
+  padding: 14px 16px;
+  border-radius: var(--r-md);
+  background: var(--ink-0);
+  border: 1px solid var(--line);
+  overflow-x: auto;
+  white-space: pre;
+  tab-size: 2;
+}
+
+.formulaCaption {
+  margin-top: 8px;
+}
+
+.formulaName {
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* Code */
+
+.code {
+  border-radius: var(--r-md);
+  border: 1px solid var(--line);
+  background: var(--ink-0);
+  overflow: hidden;
+}
+
+.codeBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.codeLang {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  color: var(--text-dim);
+}
+
+.copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--hit);
+  padding: 0 12px;
+  border-radius: var(--r-sm);
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+  transition: color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+
+.copy:hover {
+  color: var(--text-hi);
+  background: var(--line);
+}
+
+.codePre {
+  margin: 0;
+  padding: 14px 16px 16px;
+  font-family: var(--font-mono);
+  font-size: 0.8125rem;
+  line-height: 1.65;
+  color: var(--text-hi);
+  white-space: pre;
+  tab-size: 2;
+  overflow-x: auto;
+  max-height: 480px;
+}
+
+/* Prose */
+
+.prose p {
+  line-height: var(--lh-body);
+  color: var(--text);
+}
+
+.prose p + p {
+  margin-top: 0.9em;
+}
+
+/* Pros and cons */
+
+.pc {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 18px;
+}
+
+@container (min-width: 480px) {
+  .pc {
+    grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+    gap: 24px;
+  }
+}
+
+.pcCol {
+  min-width: 0;
+}
+
+.pcHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-small);
+  font-weight: 600;
+  color: var(--text-hi);
+  margin-bottom: 10px;
+}
+
+.pcHead svg {
+  width: 20px;
+  height: 20px;
+  padding: 3px;
+  border-radius: 50%;
+  color: var(--ink-0);
+  background: color-mix(in srgb, var(--scene-accent) 85%, white);
+}
+
+.pcCol[data-side='con'] .pcHead svg {
+  background: color-mix(in srgb, var(--danger) 85%, white);
+}
+
+.pcList {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.pcItem {
+  padding: 10px 0 10px 12px;
+  border-left: 1px solid color-mix(in srgb, var(--scene-accent) 40%, transparent);
+}
+
+.pcCol[data-side='con'] .pcItem {
+  border-left-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+
+.pcItemHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 10px;
+}
+
+.pcValue {
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+/* Reveal choreography */
+
+@keyframes railDraw {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes nodeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes sweep {
+  from {
+    stroke-dasharray: 0 100;
+  }
+}
+
+/*
+ * A settled turn must not replay. Every reveal above is a one-shot that would
+ * otherwise restart on each mount, so an old turn scrolling back into the tree
+ * would animate as if it had just arrived. The settled state is the base rule
+ * in every case, so dropping the animation lands exactly where it should.
+ */
+[data-reveal='false'] :is(.fill, .gaugeFill, .tlNode, .stepNum),
+[data-reveal='false'] .timeline::before,
+[data-reveal='false'] .step:not(:last-child)::before {
+  animation: none;
+}
+
+/*
+ * `reveal: fade` asks for a card that simply appears. The card itself still
+ * takes an entrance from Materialize; this drops the second layer, so nothing
+ * inside it draws, sweeps or counts its way in on top of that.
+ */
+[data-enter='fade'] :is(.fill, .gaugeFill, .tlNode, .stepNum),
+[data-enter='fade'] .timeline::before,
+[data-enter='fade'] .step:not(:last-child)::before {
+  animation: none;
+}

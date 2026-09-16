@@ -1,0 +1,150 @@
+{
+  "query": "A train leaves at 3pm at 80 km/h and another at 4pm at 100 km/h from the same station on the same track; when and where does the second catch up? Show the reasoning.",
+  "lang": "en",
+  "preface": {
+    "intent": "problem",
+    "title": "Train Catch-Up Calculation",
+    "layout": "focus",
+    "mood": "calm",
+    "palette": {
+      "primary": "#38BDF8",
+      "secondary": "#818CF8",
+      "accent": "#F472B6"
+    },
+    "plan": [
+      "Calculate the distance traveled by the first train in one hour",
+      "Determine the closing speed between the two trains",
+      "Compute the time and location of the intercept"
+    ]
+  },
+  "scene": {
+    "version": 3,
+    "intent": "problem",
+    "type": "concept",
+    "title": "Train catch-up calculation",
+    "subtitle": "Relative motion and kinematic problem",
+    "answer": {
+      "headline": "The second train catches up at 8:00 PM at a distance of 400 km from the station.",
+      "body": [
+        "The first train leaves at 3:00 PM at 80 km/h, meaning that by 4:00 PM, when the second train starts its journey, it has already covered 80 km. From this point, the second train must close this 80 km gap.",
+        "Since the second train travels at 100 km/h and the first at 80 km/h, the second train gains 20 km on the first train every hour. To close the 80 km lead, it takes 80 km ÷ 20 km/h = 4 hours of travel time.",
+        "Adding these 4 hours to the second train's 4:00 PM start time results in an 8:00 PM catch-up time. At this time, the second train has traveled for 4 hours at 100 km/h, covering exactly 400 km."
+      ],
+      "caveats": [
+        "Assumes both trains maintain constant speeds.",
+        "Assumes the track length is sufficient to accommodate the 400 km distance.",
+        "Ignores acceleration/deceleration times."
+      ]
+    },
+    "summary": "",
+    "image_url": "",
+    "image_query": "",
+    "meta": {},
+    "presentation": {
+      "layout": "focus",
+      "mood": "calm",
+      "motif": "grid",
+      "density": "balanced",
+      "palette": {
+        "primary": "#38BDF8",
+        "secondary": "#818CF8",
+        "accent": "#F472B6"
+      }
+    },
+    "modules": [
+      {
+        "category": "Givens",
+        "color": "#38BDF8",
+        "image_query": "",
+        "kind": "keyvalue",
+        "facts": [],
+        "headline": "Known variables for the journey",
+        "items": [
+          {
+            "label": "Train A speed",
+            "value": "80 km/h"
+          },
+          {
+            "label": "Train B speed",
+            "value": "100 km/h"
+          },
+          {
+            "label": "Head start",
+            "value": "1 hour"
+          },
+          {
+            "label": "Gap at 4:00 PM",
+            "value": "80 km"
+          }
+        ]
+      },
+      {
+        "category": "Worked solution",
+        "color": "#818CF8",
+        "image_query": "",
+        "kind": "steps",
+        "facts": [],
+        "headline": "Calculating time and distance",
+        "items": [
+          {
+            "label": "Calculate head start",
+            "value": "80 km",
+            "detail": "Train A travels for 1 hour before Train B starts at 80 km/h."
+          },
+          {
+            "label": "Determine relative speed",
+            "value": "20 km/h",
+            "detail": "Train B closes the distance at 100 km/h - 80 km/h = 20 km/h."
+          },
+          {
+            "label": "Calculate time to close gap",
+            "value": "4 hours",
+            "detail": "80 km gap / 20 km/h relative speed = 4 hours."
+          },
+          {
+            "label": "Final time and distance",
+            "value": "8:00 PM / 400 km",
+            "detail": "4:00 PM + 4 hours = 8:00 PM; 4 hours × 100 km/h = 400 km."
+          }
+        ]
+      },
+      {
+        "category": "Equations",
+        "color": "#F472B6",
+        "image_query": "",
+        "kind": "formula",
+        "facts": [],
+        "headline": "Physics of chasing motion",
+        "items": [
+          {
+            "label": "d = v × t",
+            "value": "Kinematics",
+            "detail": "Distance equals speed multiplied by time."
+          },
+          {
+            "label": "t = Δd / Δv",
+            "value": "Closing time",
+            "detail": "Time to close a gap (Δd) at a speed difference (Δv)."
+          }
+        ]
+      }
+    ],
+    "spotlight": {
+      "kind": "stat",
+      "label": "Time to catch up",
+      "value": "4 hours after departure"
+    },
+    "followups": [
+      "What if the first train stopped for 30 minutes?",
+      "How does a constant acceleration change the time calculation?",
+      "Calculate the scenario if the second train left at 5:00 PM."
+    ]
+  },
+  "timing": {
+    "prefaceMs": 1054,
+    "researchMs": 555,
+    "firstPartialMs": 4573,
+    "sceneMs": 7134,
+    "sources": 0
+  }
+}

@@ -1,0 +1,150 @@
+{
+  "query": "A tank holds 1200 litres and drains at 15 litres per minute while a pump refills it at 4 litres per minute; how long until it is empty? Show the reasoning.",
+  "lang": "en",
+  "preface": {
+    "intent": "problem",
+    "title": "Tank Drainage Calculation",
+    "layout": "focus",
+    "mood": "calm",
+    "palette": {
+      "primary": "#38BDF8",
+      "secondary": "#818CF8",
+      "accent": "#4fd9a7"
+    },
+    "plan": [
+      "Calculating net outflow rate per minute",
+      "Setting up the linear drainage equation",
+      "Computing total time until the tank is empty"
+    ]
+  },
+  "scene": {
+    "version": 3,
+    "intent": "problem",
+    "type": "concept",
+    "title": "Tank drainage time calculation",
+    "subtitle": "Calculating net flow rate and time to empty",
+    "answer": {
+      "headline": "It takes approximately 109.09 minutes, or 1 hour and 49 minutes, for the tank to empty completely.",
+      "body": [
+        "The net rate at which water leaves the tank is the difference between the rate of drainage and the rate of the pump. Since water is draining at 15 litres per minute and being added at 4 litres per minute, the tank loses a net volume of 11 litres every minute.",
+        "To determine how long it takes for the tank to empty, we divide the total capacity of 1200 litres by the net loss rate of 11 litres per minute. This calculation results in approximately 109.09 minutes, indicating that the system will reach zero volume in just under two hours."
+      ],
+      "caveats": [
+        "Assumes flow rates remain constant until the tank is empty.",
+        "Assumes the tank is full at the start of the process."
+      ]
+    },
+    "summary": "",
+    "image_url": "",
+    "image_query": "",
+    "meta": {},
+    "presentation": {
+      "layout": "focus",
+      "mood": "calm",
+      "motif": "grid",
+      "density": "balanced",
+      "palette": {
+        "primary": "#38BDF8",
+        "secondary": "#818CF8",
+        "accent": "#4FD9A7"
+      }
+    },
+    "modules": [
+      {
+        "category": "Problem parameters",
+        "color": "#38BDF8",
+        "image_query": "",
+        "kind": "keyvalue",
+        "facts": [
+          "Tank volume: 1200 litres",
+          "Drain rate: 15 L/min",
+          "Refill rate: 4 L/min"
+        ],
+        "items": [
+          {
+            "label": "Total Capacity",
+            "value": "1200 L"
+          },
+          {
+            "label": "Drainage Rate",
+            "value": "15 L/min"
+          },
+          {
+            "label": "Pump Rate",
+            "value": "4 L/min"
+          }
+        ],
+        "slot": "rail",
+        "emphasis": "quiet"
+      },
+      {
+        "category": "Worked solution",
+        "color": "#818CF8",
+        "image_query": "",
+        "kind": "steps",
+        "facts": [
+          "Net flow: 11 L/min",
+          "Total time: 109.09 min",
+          "Converted: 1h 49m"
+        ],
+        "headline": "Determining net flow and total drainage duration",
+        "items": [
+          {
+            "label": "Determine net flow rate",
+            "value": "15 - 4 = 11 L/min",
+            "detail": "Subtract the pump input rate from the drainage outflow rate to find the actual rate of depletion."
+          },
+          {
+            "label": "Calculate time to empty",
+            "value": "1200 / 11 ≈ 109.09 min",
+            "detail": "Divide the total capacity of 1200 litres by the net depletion rate of 11 litres per minute."
+          },
+          {
+            "label": "Convert to human time",
+            "value": "1 hour 49 minutes",
+            "detail": "109.09 minutes is equivalent to 1 hour (60 minutes) plus 49.09 minutes."
+          }
+        ],
+        "span": "wide",
+        "emphasis": "lead",
+        "reveal": "draw"
+      },
+      {
+        "category": "Governing formulas",
+        "color": "#4FD9A7",
+        "image_query": "",
+        "kind": "formula",
+        "facts": [
+          "Net flow rate formula",
+          "Time duration formula"
+        ],
+        "items": [
+          {
+            "label": "R_net = R_out - R_in",
+            "detail": "The net rate of change is the difference between outflows and inflows."
+          },
+          {
+            "label": "t = C / R_net",
+            "detail": "Time required to drain a container of capacity C at a net rate of R_net."
+          }
+        ],
+        "span": "compact",
+        "reveal": "rise"
+      }
+    ],
+    "spotlight": {
+      "kind": "stat",
+      "label": "Time to reach zero volume",
+      "value": "≈ 109.09 minutes"
+    },
+    "followups": [
+      "What would happen if the pump rate increased to 15 L/min?",
+      "How does the shape of the tank affect the drainage rate over time?",
+      "If the tank were half-full, how would the time required to empty change?"
+    ]
+  },
+  "timing": {
+    "prefaceMs": 1204,
+    "sceneMs": 30462
+  }
+}

@@ -1,0 +1,166 @@
+{
+  "query": "PostgreSQL vs MongoDB for an event-sourced system",
+  "lang": "en",
+  "preface": {
+    "intent": "comparison",
+    "title": "PostgreSQL vs MongoDB for an Event-Sourced System",
+    "layout": "split",
+    "mood": "kinetic",
+    "palette": {
+      "primary": "#6199c7",
+      "secondary": "#6ec95f",
+      "accent": "#f4a134"
+    },
+    "plan": [
+      "Evaluating append-only event log storage in PostgreSQL",
+      "Assessing MongoDB document schema design for event streams",
+      "Comparing ACID guarantees and projection performance"
+    ]
+  },
+  "scene": {
+    "version": 3,
+    "intent": "comparison",
+    "type": "concept",
+    "title": "PostgreSQL vs MongoDB for Event Sourcing",
+    "subtitle": "Relational consistency vs document flexibility in event-sourced architecture",
+    "answer": {
+      "headline": "PostgreSQL is generally preferred for strict data consistency in event sourcing, while MongoDB offers high flexibility for ingestion-heavy, schema-evolving workloads.",
+      "body": [
+        "Event sourcing requires reliable storage of ordered immutable event streams. PostgreSQL handles this via relational tables that offer strict ACID guarantees, ensuring complex domain invariants are protected during event processing. Its robust indexing, JSONB support, and window functions make querying and projecting historical states highly performant and predictable, making it a standard choice for systems where business logic and relational integrity are paramount.",
+        "MongoDB is a strong contender when the primary need is high-throughput ingestion of varying event structures. Its document-oriented nature excels at handling polymorphic events without rigid schema migrations. However, managing strict consistency across multiple aggregate streams or complex relational projections requires more application-level logic compared to PostgreSQL’s native SQL support, which provides powerful transactional tools to handle these constraints out of the box."
+      ],
+      "caveats": [
+        "Both databases now support ACID transactions, but PostgreSQL's implementation is traditionally more battle-tested for complex multi-table relationships.",
+        "Event sourcing performance is heavily dependent on index management and hardware; results will vary based on specific write volumes and projection complexity."
+      ]
+    },
+    "summary": "",
+    "image_url": "",
+    "image_query": "",
+    "meta": {},
+    "presentation": {
+      "layout": "split",
+      "mood": "kinetic",
+      "motif": "grid",
+      "density": "balanced",
+      "palette": {
+        "primary": "#6199c7",
+        "secondary": "#6ec95f",
+        "accent": "#f4a134"
+      }
+    },
+    "modules": [
+      {
+        "category": "Key technical differences",
+        "color": "#6199c7",
+        "image_query": "",
+        "kind": "comparison",
+        "facts": [],
+        "headline": "Core features compared",
+        "items": [
+          {
+            "label": "Data Integrity",
+            "value": "Strict relational ACID",
+            "side": "a"
+          },
+          {
+            "label": "Data Integrity",
+            "value": "Document-level ACID",
+            "side": "b"
+          },
+          {
+            "label": "Schema Handling",
+            "value": "Structured/JSONB",
+            "side": "a"
+          },
+          {
+            "label": "Schema Handling",
+            "value": "Flexible BSON documents",
+            "side": "b"
+          },
+          {
+            "label": "Querying",
+            "value": "SQL window functions",
+            "side": "a"
+          },
+          {
+            "label": "Querying",
+            "value": "Aggregation pipelines",
+            "side": "b"
+          }
+        ]
+      },
+      {
+        "category": "Trade-offs",
+        "color": "#f4a134",
+        "image_query": "",
+        "kind": "proscons",
+        "facts": [],
+        "headline": "Evaluating the operational impact",
+        "items": [
+          {
+            "label": "PostgreSQL Stability",
+            "value": "Mature transaction controls",
+            "side": "a"
+          },
+          {
+            "label": "PostgreSQL Complexity",
+            "value": "Requires schema migrations",
+            "side": "b"
+          },
+          {
+            "label": "MongoDB Velocity",
+            "value": "High-throughput ingestion",
+            "side": "a"
+          },
+          {
+            "label": "MongoDB Consistency",
+            "value": "Manual application-level locks",
+            "side": "b"
+          }
+        ]
+      },
+      {
+        "category": "Decision guide",
+        "color": "#6ec95f",
+        "image_query": "",
+        "kind": "keyvalue",
+        "facts": [],
+        "headline": "When to select each database",
+        "items": [
+          {
+            "label": "Choose PostgreSQL if",
+            "value": "You need complex multi-table invariants and reliable SQL analytics."
+          },
+          {
+            "label": "Choose MongoDB if",
+            "value": "Your event schemas evolve rapidly and you need high ingestion speed."
+          }
+        ]
+      }
+    ],
+    "spotlight": {
+      "kind": "callout",
+      "label": "Architectural priority defines the choice: choose PostgreSQL for complex domain rules, MongoDB for rapid iteration and high-velocity ingestion.",
+      "source": "System design trade-off analysis"
+    },
+    "followups": [
+      "What are the best practices for PostgreSQL event store indexing?",
+      "How to handle schema versioning in an event-sourced MongoDB setup?",
+      "Can PostgreSQL JSONB columns replace a document store?"
+    ],
+    "sources": [
+      {
+        "title": "dev.to",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGacYobGUoZ2ZErxoDMZj23mlgC_KN5DzL7HGoB26JKhwwBgXVtZoEzlbnT1m1G3ruKxLFLlKgQcSDDqlw-e1HlemVOX5sfsg2U2-PxsQPd_nidbUBf4-CStQpNnZrT623N-sKEs6HtO8R5_Bta8zCT58sD_H7d-CwXDBYhogyiokyNbpwXIg6EsVNhSMWvI5oa3YoobIoV9kgQ0KR6HVg="
+      }
+    ]
+  },
+  "timing": {
+    "prefaceMs": 1152,
+    "researchMs": 2419,
+    "firstPartialMs": 8067,
+    "sceneMs": 10811,
+    "sources": 1
+  }
+}

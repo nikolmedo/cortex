@@ -1,64 +1,100 @@
 # CORTEX
 
-A generative knowledge graph visualizer. Type any query — a person, place, film, company, concept — and a Gemini model returns a *Scene*: the facts about the subject plus a presentation spec (layout archetype, mood, motif, palette, fact kinds) that a fixed set of components renders as an animated, interactive node graph.
+An answer engine that builds its own interface. Ask anything — a person, a place, a worked physics
+problem, a procedure, a comparison, today's news — and a Gemini model returns a *Scene*: the complete
+answer plus a presentation spec (intent, layout, mood, motif, density, palette, module kinds) that a
+fixed set of React components renders. The answer streams in: a fast router themes the interface in
+about a second, a grounded research pass brings back real sources, and the scene materialises piece by
+piece instead of appearing after a spinner.
 
-<img src="docs/screenshots/hero-kyoto-orbital.png" width="100%" alt="Cortex rendering the query Kyoto as an orbital constellation with the dossier panel open">
+<img src="docs/screenshots/kyoto-1440.png" width="100%" alt="Cortex answering the query Kyoto as a dossier: key figure, attributes, timeline and cultural modules">
 
 ---
 
 ## What it does
 
-- Submits your query to a Gemini model with structured output and Google Search grounding
-- Validates the reply into a Scene and renders it as a graph: subject at the center, categories around it, every fact visible with zero overlap
-- The model chooses the presentation from the nature of the subject:
-  - **Archetype** (spatial layout): `constellation`, `orbital`, `spine`, `mosaic`, `spiral`
-  - **Mood** (motion and tone): `calm`, `kinetic`, `archival`, `volatile`
-  - **Motif** (background pattern): `hex`, `lattice`, `wave`, `rings`, `none`
-  - **Density**: `sparse`, `balanced`, `dense`
-  - **Palette**: three hex colors the whole UI is tinted with
-- Each category has a **kind** that drives its renderer: `list`, `timeline`, `stats`, `comparison`, `quote`, `ranking`, `progress`, `keyvalue`, `tags`
-- A **spotlight** node (stat, quote or callout) hangs off the center; grounding **sources** are listed in the dossier
-- Pan, zoom (wheel / trackpad pinch / touch pinch) and auto fit-to-view for any graph size
-- Dossier panel: a research sidebar with the hero image, spotlight, summary, metadata, every category and the sources — selectable and copyable
-- Immersive mode (`i` key or toggle): hides all chrome; category details open in a glass bottom sheet
-- Click any image to open it in a lightbox; failed images fall back to an animated monogram
-- Settings: default view mode (panel / immersive), language (EN / ES, also the language Gemini answers in) and motion (auto / reduced)
-- Mobile (<768px): an ordered layout — hero card, scene signature, spotlight, summary, metadata, category accordions, sources
+- **Answers first.** Every scene starts with `answer.headline` (the direct answer in one sentence) and
+  `answer.body` (up to 8 paragraphs that stand on their own), then modules that support it.
+- **Chooses its own composition.** The model classifies the question and the interface follows:
+
+  | Intent | Layout | Reads as |
+  |---|---|---|
+  | `entity` | `dossier` | identity, hero media, attribute rail |
+  | `explanation`, `problem`, `analysis` | `focus` | answer-first reading column with a readout rail |
+  | `howto`, `current` | `sequence` | ordered procedure or chronology |
+  | `comparison` | `split` | two sides, A/B tabs on mobile |
+  | data-heavy subjects | `mosaic` | dense tile grid |
+
+- **Module kinds** drive the renderers: `list`, `timeline`, `stats`, `comparison`, `quote`, `ranking`,
+  `progress`, `keyvalue`, `tags`, `steps`, `formula`, `code`, `prose`, `proscons`, `chart`.
+- **Presentation** carries `mood` (calm / kinetic / archival / volatile), `motif` (the ambient field:
+  flow / rings / grid / none), `density` and a three-colour `palette` that tints the whole turn.
+- **Multi-turn session.** Each question becomes a turn in an infinite vertical stream; older turns keep
+  their own palette, follow-up chips append new turns, and only the newest turn is ever in flight.
+- **Responsive by design**, not by squeezing: one composition per layout at 360–430, 768–1024 and
+  ≥1280 px, 44 px touch targets, no horizontal scroll, `dvh` + safe-area aware command bar.
+- **Reduced motion** (OS preference or the in-app setting) stills the canvases and the entrance stagger.
+- **EN / ES** for the whole UI and for the model's answers.
+
+---
+
+## How an answer arrives
+
+`POST /api/cortex/stream` is a server-sent event stream:
+
+| Event | When | Payload |
+|---|---|---|
+| `preface` | ~1.2 s | `intent`, `title`, `layout`, `mood`, `palette`, 3 research steps — themes the UI and fills the plan |
+| `research` | ~2.5 s | how many searches ran and how many sources came back |
+| `partial` | from ~4 s | a scene with only the fields the model has finished writing |
+| `scene` | 7–13 s | the authoritative, validated scene |
+| `error` / `done` | end | error code, or the timing summary |
+
+Three model calls, in two stages:
+
+1. **Preface** (`gemini-3.5-flash-lite`, thinking `MINIMAL`, no tools) and **research**
+   (`gemini-3.5-flash-lite` + `google_search`, plain text, no schema) start together at t=0.
+2. **The main call** (`gemini-3.8-flash`, structured output, thinking `LOW`, `MEDIUM` for `problem`)
+   starts with the research notes in its prompt and streams the scene.
+
+Grounding lives in the research stage on purpose: with the full Scene prompt **or** the Scene schema
+attached, `gemini-3.8-flash` never invokes `google_search` (measured across schema / no-schema /
+`MEDIUM` thinking / explicit instructions — zero searches every time), while the short research prompt
+searches on every question that needs it and correctly skips pure arithmetic. Sources come from
+`groundingMetadata.groundingChunks`, https-only, deduped, capped at 8.
+
+Partials are throttled to ~130 ms and only carry settled values: the last key of an object and the last
+element of an array can still be mid-write, so they are held back, and a module appears only once it is
+complete. Paragraphs grow phrase by phrase; text already on screen never re-animates.
+
+Client disconnects abort the upstream call. `POST /api/cortex` (non-streamed, final scene only) still works.
 
 ---
 
 ## Screenshots
 
-Every scene below is a real model response. The same query can come back with a different archetype, palette and mix of kinds, so no two runs look alike.
+Every scene below is real model output captured through the fixture replay (`npm run shots`).
 
 <table>
 <tr>
-<td width="50%"><img src="docs/screenshots/ada-lovelace-spine.png" alt="Ada Lovelace rendered as a spine layout with the dossier closed"></td>
-<td width="50%"><img src="docs/screenshots/sony-xm5-mosaic.png" alt="Sony WH-1000XM5 rendered as a mosaic layout with the dossier open"></td>
+<td width="50%"><img src="docs/screenshots/a-train-leaves-at-1440.png" alt="A worked train catch-up problem in the focus layout"></td>
+<td width="50%"><img src="docs/screenshots/how-has-global-ev-1440.png" alt="Global EV market share rendered as a mosaic with a line chart"></td>
 </tr>
 <tr>
-<td><b>Ada Lovelace</b> — <code>spine</code> · <code>archival</code> · <code>hex</code>, dossier closed: a <code>timeline</code> block, two <code>quote</code> cards and a <code>tags</code> cluster.</td>
-<td><b>Sony WH-1000XM5</b> — <code>mosaic</code> · <code>kinetic</code>, dossier open: <code>stats</code> chips, a <code>comparison</code> block against the XM4 and a <code>timeline</code>.</td>
+<td><b>Worked problem</b> — <code>focus</code> · <code>calm</code>: key figure and givens in the rail, the worked solution and the equations under the answer.</td>
+<td><b>Analysis</b> — <code>mosaic</code> · <code>kinetic</code>: a <code>chart</code> series, milestones, drivers and grounded sources.</td>
 </tr>
 <tr>
-<td><img src="docs/screenshots/focus-mode-kyoto.png" alt="Focus mode zoomed into one category subtree with the rest of the graph dimmed"></td>
-<td><img src="docs/screenshots/immersive-blade-runner.png" alt="Immersive mode with the category detail sheet open"></td>
+<td><img src="docs/screenshots/streaming-1440.png" alt="A turn mid-stream: headline and paragraphs rendered, modules still arriving"></td>
+<td><img src="docs/screenshots/searching-1440.png" alt="The thinking core with the live research plan"></td>
 </tr>
 <tr>
-<td><b>Focus mode</b> — Kyoto, <code>orbital</code> · <code>calm</code>: clicking the <code>list</code> category zooms the camera to that subtree and dims everything else.</td>
-<td><b>Immersive mode</b> — Blade Runner 2049, <code>spiral</code> · <code>kinetic</code>: chrome hidden, a <code>keyvalue</code> category open in the glass sheet.</td>
+<td><b>Mid-stream</b> — partial scenes: the headline and the first paragraphs are live while the modules are still being written.</td>
+<td><b>Thinking</b> — the core takes the preface palette and the three plan steps light up on real events.</td>
 </tr>
 <tr>
-<td><img src="docs/screenshots/query-input.png" alt="The Cortex query screen with a cycling example query"></td>
-<td><img src="docs/screenshots/loading-scan.png" alt="The radar loading scene while the model answers"></td>
-</tr>
-<tr>
-<td><b>Query screen</b> — the example query under the input cycles while you type.</td>
-<td><b>Loading</b> — the radar scan runs through parse / connect / aggregate while the model answers.</td>
-</tr>
-<tr>
-<td align="center"><img src="docs/screenshots/mobile-explorer.png" width="260" alt="The mobile explorer layout for the Kyoto scene"></td>
-<td valign="top"><b>Mobile</b> — the same Kyoto <code>orbital</code> · <code>calm</code> scene under 768px: the graph is replaced by an ordered document — hero card, scene signature, <code>stat</code> spotlight, summary, metadata, one accordion per category (the first open) and the grounding sources.</td>
+<td align="center"><img src="docs/screenshots/postgresql-vs-mongodb-for-390.png" width="280" alt="A comparison rendered on a 390px screen"></td>
+<td valign="top"><b>Mobile</b> — the same compositions at 390 px: single column in reading order, the two sides of a <code>split</code> as A/B tabs, everything above 44 px. <code>landing-390.png</code>, <code>streaming-390.png</code> and one capture per fixture live in <code>docs/screenshots/</code> at 390, 768 and 1440.</td>
 </tr>
 </table>
 
@@ -69,134 +105,130 @@ Every scene below is a real model response. The same query can come back with a 
 | Layer | Choice |
 |---|---|
 | Frontend | React 19.3 + Vite 8.3 + TypeScript 6 (strict) |
-| Layout engine | `d3-force` (settled synchronously) + custom rectangle collision, one recipe per archetype |
 | Styling | CSS Modules + design tokens (`tokens.css`) — no CSS framework |
-| i18n | Typed in-house module (`src/i18n/translations.ts`), EN default + ES |
-| Backend | Node.js + Express 5 |
-| AI runtime | Genkit 1.42 + `@genkit-ai/google-genai` |
-| AI model | Gemini 3.8 Flash by default (configurable via `GEMINI_MODEL`) |
-| Model output | Structured output (`output.schema`, zod) + `googleSearch` grounding |
-| Rendering | SVG edges + absolute-positioned HTML nodes on a pan/zoom stage |
-| Fonts | Orbitron + Space Mono (Google Fonts) |
+| Canvas | One rAF ticker driving the thinking core and the ambient field (2D canvas, transform + opacity only) |
+| i18n | Typed in-house module (`src/i18n/translations.ts`), EN + ES |
+| Backend | Node.js + Express 5, SSE over POST |
+| AI runtime | Genkit 1.42 + `@genkit-ai/google-genai` (zod 3 via `import { z } from 'genkit'`) |
+| Models | `gemini-3.8-flash` (answer), `gemini-3.5-flash-lite` (preface and research) |
+| Fonts | Hanken Grotesk (body), Saira (display), JetBrains Mono (code) |
 | Icons | lucide-react |
 
 ---
 
 ## Setup
 
-**1. Install dependencies**
-
 ```bash
 npm install
 ```
 
-**2. Create `.env`**
+Create `.env`:
 
 ```env
 GEMINI_API_KEY=AIza...
-GEMINI_MODEL=gemini-3.8-flash
 PORT=3001
-GEMINI_TIMEOUT_MS=75000
 ```
 
-Get an API key at [aistudio.google.com](https://aistudio.google.com). The variable must be named `GEMINI_API_KEY` — a `VITE_`-prefixed key is never read by the server.
-
-**3. Run**
+Get a key at [aistudio.google.com](https://aistudio.google.com). The variable must be named
+`GEMINI_API_KEY`; a `VITE_`-prefixed key is never read by the server and never reaches the browser.
 
 ```bash
 npm run dev
 ```
 
-This opens the backend (API on port 3001) and the frontend in **two separate
-terminal windows**. Wait for `Cortex server running on http://localhost:3001 (model: …)`
-in the SERVER window, then open [http://localhost:5173](http://localhost:5173).
+The backend (port 3001) and the frontend open in **two terminal windows** — `tsx watch` needs its own
+TTY, and running both through `concurrently` in one pane is unreliable on Windows. Then open
+[http://localhost:5173](http://localhost:5173). `npm run dev:concurrent` uses a single pane;
+`npm run dev:server` and `npm run dev:client` run each side separately.
 
-> Why two windows? `tsx watch` needs its own console (TTY). Running both
-> processes through `concurrently` in one pane is unreliable on Windows — the
-> server's watch child fails to keep the port bound and the client gets
-> `ECONNREFUSED`. Separate windows sidestep that.
+`GET /api/health` reports the resolved models and whether fixtures are on.
 
-Prefer a single pane? `npm run dev:concurrent` still uses `concurrently`, or run
-each side yourself: `npm run dev:server` and `npm run dev:client`.
+### Environment variables
 
-`GET /api/health` returns `{ ok, model }` so you can confirm which model the server resolved.
+| Variable | Default | Purpose |
+|---|---|---|
+| `GEMINI_API_KEY` | — | Required unless `CORTEX_FIXTURES=1` |
+| `GEMINI_MODEL` | `gemini-3.8-flash` | The answer model (needs structured output) |
+| `GEMINI_PREFACE_MODEL` | `gemini-3.5-flash-lite` | Fast router for the preface |
+| `GEMINI_RESEARCH_MODEL` | `gemini-3.5-flash-lite` | Grounded research stage (needs `google_search`) |
+| `GEMINI_TIMEOUT_MS` | `75000` | Upstream cap for the main call |
+| `CORTEX_PREFACE_TIMEOUT_MS` | `8000` | The preface never blocks the answer |
+| `CORTEX_RESEARCH_TIMEOUT_MS` | `15000` | On timeout the answer is written ungrounded (no sources) |
+| `CORTEX_FIXTURES` | off | `1` replays saved scenes through the same SSE path, no paid calls. Needs `NODE_ENV=development` |
+| `CORTEX_FIXTURES_DIR` | `server/fixtures` | Where the replay reads from |
+| `CORTEX_CAPTURE_DIR` | off | Writes every real answer (preface + scene + timings) as a fixture. Needs `NODE_ENV=development` |
+| `PORT` | `3001` | API port |
 
 ---
 
-## Switching models
+## Development
 
-Change `GEMINI_MODEL` in `.env` and restart the dev server. Any Gemini model that supports structured output and the `google_search` grounding tool works:
+```bash
+npm run typecheck                  # client + server
+npm run build                      # tsc (server) + vite build (client)
+npx tsx scripts/drift-check.mts    # server/domain/Scene.ts vs src/domain/Scene.ts must not drift
+npm run shots                      # screenshots + overflow audit at 390, 768 and 1440
+```
 
-| Model | Notes |
-|---|---|
-| `gemini-3.8-flash` | Default — fast, good quality |
-| `gemini-3.5-flash-lite` | Cheaper, slightly lighter |
-| `gemini-3.1-pro-preview` | Best quality, slower, preview |
+`npm run shots` starts the API with `CORTEX_FIXTURES=1` and the Vite client, then captures the landing
+screen, the thinking state, a mid-stream state and every fixture at the three sizes into
+`docs/screenshots/`. Each capture asserts there is no horizontal page scroll and lists any element
+whose content overflows its box. Options: `--sizes=390,1440`, `--only=kyoto`, `--out=…`,
+`--fixtures-dir=…`, `--no-servers`.
 
-`gemini-2.0-flash` (the previous default) was shut down on 2026-06-01; older `.env` files pointing at it must be updated.
+To refresh the fixtures with real output:
+
+```bash
+NODE_ENV=development CORTEX_CAPTURE_DIR=server/fixtures npm run dev:server
+```
+
+Both fixture modes fail closed and log why when refused: they run only when `NODE_ENV` is
+`development`. `npm run shots` sets that itself; every other entry point, including `npm run dev`,
+needs it spelled out on the command line.
+
+Every query you then run is saved as `server/fixtures/<slug>.json`.
 
 ---
 
 ## The Scene contract
 
-The model returns one JSON object. Field names are fixed; the values drive both the content and the presentation:
+One JSON object, validated twice — `server/domain/Scene.ts` and its byte-for-byte mirror
+`src/domain/Scene.ts` (the drift check enforces it):
 
 ```
-type · title · subtitle · summary · image_url · image_query · meta[{key, value}]
-presentation { archetype, mood, motif, density, palette { primary, secondary, accent } }
+version · intent · type · title · subtitle
+presentation { layout, mood, motif, density, palette { primary, secondary, accent } }
+answer { headline, body[], caveats[] }
 spotlight { kind: stat | quote | callout, label, value?, source? }
-graph[]
-├── category · color · image_query · kind · headline? · facts[]
+summary · image_url · image_query · meta{}
+modules[]  (0–8)
+├── category · color · kind · headline? · facts[] · body? · value?
 │   └── items[] { label, value?, detail?, weight?, side? }   (shape depends on kind)
-└── ...
-sources[] { title, url }   (from grounding metadata, server-side)
+followups[]  ·  sources[] { title, url }   (from grounding, server-side)
 ```
 
-The model returns 4–8 categories depending on how information-rich the subject is, and must mix kinds. `facts` is always filled as the plain-text fallback; `items` carries the structured form each kind renders (dates for `timeline`, weights for `stats` / `ranking` / `progress`, sides for `comparison`).
-
-The request body is `{ query: string, lang?: 'en' | 'es' }`. Human-readable values come back in the requested language; JSON field names, enum values and `image_query` always stay in English.
+`presentation` is written before `answer` on purpose: the interface can theme itself from the first
+chunk of the stream.
 
 ### Safety
 
-The model never emits HTML, CSS or JavaScript — it only chooses among a fixed set of components. Two schemas enforce that (`server/domain/Scene.ts`, mirrored in `src/domain/Scene.ts`):
+The model never emits HTML, CSS or JavaScript — it only picks among fixed components.
 
-- **Wire schema** (OpenAPI subset) is handed to Gemini as `output.schema`; its descriptions are the model's field-level guidance.
-- **Strict schema** validates and normalises the untrusted reply: enums fall back to defaults, text is bounded (title 120, subtitle 160, summary 900, fact / label 160, value 80, detail 240, headline 140, category name 40), lists are capped (8 categories, 6 items or 12 tags, 8 meta, 8 sources), weights are clamped to 0–100. Only a missing `title` or a non-array `graph` fails the parse.
-- URLs must be `https:` (anything else becomes `''` and the image cascade takes over); colors must be 6-digit hex; control characters are stripped and angle brackets neutralised.
-- The client runs `sanitizeScene` on every response again, so the UI never trusts the wire directly.
-- The API limits JSON bodies to 16 KB and queries to 200 characters. Error codes: `400 INVALID_INPUT`, `422 PARSE_FAILURE` / `VALIDATION_ERROR`, `502 GEMINI_ERROR`, `500` otherwise.
-
-Server flow (`server/application/cortexFlow.ts`): structured output with low thinking and `googleSearch` grounding; when the API rejects that request shape with a 400, the request is retried as plain-text JSON extraction (`parseScene.ts`) and that shape is kept for the rest of the process. Sources are read from `groundingMetadata.groundingChunks`, https-only, deduped by host + path and capped at 8 (`grounding.ts`).
-
-### The no-overlap guarantee
-
-Nodes have variable heights (text is never truncated) and heterogeneous roles — category cards, one card per item, one composite block per `timeline` / `comparison` / `ranking` / `progress` category, plus the spotlight — so the layout is solved, not positioned:
-
-1. Every node's real React content is rendered offscreen at its role width and measured from the DOM once `document.fonts.ready` resolves (`useMeasuredSizes`); the probe and the stage share one renderer, so measured and rendered boxes cannot drift
-2. The archetype recipe seeds positions and force targets (`src/layout/archetypes.ts`); a `d3-force` simulation (link + charge + radial + positional + circle collision + a custom rectangle pass) is settled synchronously with a fixed tick count, then a final rectangle-separation pass guarantees zero intersections — deterministic per dataset
-3. The ambient float drift is capped below half the collision padding, so nodes never touch while drifting
-4. The union bounding box is fitted to the viewport (`fitView`), and refitted on resize, dossier toggle, immersive toggle and focus
-
-`npx tsx scripts/layout-check.mts` asserts zero rectangle intersections on 45 synthetic cases (5 archetypes × 3 densities × 3 dataset sizes, with composite blocks and a spotlight).
-
----
-
-## Interactions
-
-| Action | Effect |
-|---|---|
-| Type query + Enter | Submits search (200 characters max, counter from 140), plays the choreographed reveal |
-| Drag / wheel / pinch | Pan and zoom the graph |
-| Double-click background | Re-fit the whole graph |
-| Click category node | Focus mode — camera zooms to that subtree, the rest dims (Esc to exit) |
-| Click category node (immersive) | Opens the category detail sheet |
-| Click spotlight node | Opens the dossier and scrolls to the spotlight block |
-| Click center image / hero image | Opens the lightbox |
-| `i` | Toggle immersive mode |
-| Signature chip (top bar) | Shows archetype · mood · kind glyphs of the current scene |
-| Click query chip | Re-runs a previous query |
-| Gear icon | Settings: default view mode, language, motion |
-| NEW QUERY | Returns to the input screen (rotating example queries) |
+- The **wire schema** (OpenAPI 3.0 subset) is handed to Gemini as `output.schema`; its descriptions are
+  the field-level guidance.
+- The **strict schema** validates and normalises the reply: enums fall back, text is bounded and cut at
+  a word boundary, lists are capped, weights clamp to 0–100. Only a missing `title` or a non-array
+  `modules` fails the parse; everything else degrades.
+- Colours must be 6 hex digits (a bare `RRGGBB` is accepted and prefixed) and are lifted into a
+  luminous band so they stay readable on near-black; URLs must be `https:`; control characters are
+  stripped and angle brackets neutralised.
+- `sanitizeCode` (code bodies and formula labels only) keeps `<`, `>` and indentation and is rendered
+  exclusively as React text inside `<pre>`. Inline `**bold**` and `` `code` `` are parsed into React
+  nodes — there is no `dangerouslySetInnerHTML` anywhere.
+- The client re-runs `sanitizeScene` on every partial and on the final scene, so the UI never trusts
+  the wire.
+- Bodies are limited to 16 KB and queries to 2000 characters. Error codes: `400 INVALID_INPUT`,
+  `422 PARSE_FAILURE` / `VALIDATION_ERROR`, `502 GEMINI_ERROR`, `499` on client abort.
 
 ---
 
@@ -204,57 +236,38 @@ Nodes have variable heights (text is never truncated) and heterogeneous roles �
 
 ```
 cortex/
-├── server/                    # Node.js/Express backend
-│   ├── index.ts               # Entry point — loads dotenv, starts Express
+├── server/
+│   ├── index.ts                     # Express entry point
 │   ├── application/
-│   │   ├── cortexFlow.ts      # Genkit flow — structured output, grounding, fallback
-│   │   └── prompt.ts          # System prompt: Scene shape + presentation rules
-│   ├── domain/
-│   │   ├── Scene.ts           # Wire schema + strict schema (zod)
-│   │   ├── GraphData.ts       # Entity types
-│   │   └── errors.ts          # CortexError codes
-│   ├── infrastructure/
-│   │   ├── geminiClient.ts    # Genkit + googleAI plugin setup, model resolution
-│   │   ├── parseScene.ts      # JSON extraction from free text
-│   │   └── grounding.ts       # Sources from grounding metadata
+│   │   ├── cortexStream.ts          # SSE orchestration + fixture replay with simulated partials
+│   │   ├── research.ts              # Grounded search stage (brief + sources + entity image)
+│   │   ├── preface.ts               # Fast router call
+│   │   ├── cortexFlow.ts            # Main streamed call, profile fallback, source merge
+│   │   ├── partial.ts               # Settled-value extraction from half-parsed stream output
+│   │   └── prompt.ts                # System prompt, routing rules, research prompt, main turn
+│   ├── domain/Scene.ts              # Wire schema + strict schema (zod 3 via genkit)
+│   ├── infrastructure/              # Genkit client, grounding, JSON recovery, fixtures
+│   └── presentation/cortexRouter.ts # POST /api/cortex, POST /api/cortex/stream, GET /api/health
+├── src/
+│   ├── application/                 # SSE client + multi-turn session hook
+│   ├── domain/Scene.ts              # Mirror of the contract + client sanitizers
+│   ├── i18n/                        # All UI strings (EN + ES)
 │   └── presentation/
-│       └── cortexRouter.ts    # POST /api/cortex, GET /api/health
-├── src/                       # React frontend
-│   ├── main.tsx               # React root mount + global CSS imports
-│   ├── Cortex.tsx             # Root: providers, SceneTheme, desktop/mobile branch
-│   ├── application/           # useCortex hook + API client (sanitizeScene)
-│   ├── domain/                # Scene contract mirror + type colors
-│   ├── i18n/                  # translations.ts (all UI strings) + context
-│   ├── infrastructure/        # Color constants + image URL presets
-│   ├── layout/                # forceLayout, archetypes, sceneNodes, sceneMetrics, fitView
-│   └── presentation/
-│       ├── styles/            # tokens.css + global.css
-│       ├── scene/             # SceneTheme, sceneTokens, choreography, sceneSignature
-│       ├── hooks/             # panZoom, settings, ui state, breakpoint, reduced motion
-│       └── components/
-│           ├── HexGrid.tsx    # Background motif layer (hex, lattice, wave, rings)
-│           ├── graph/         # GraphStage, EdgeLayer, nodes, useMeasuredSizes
-│           ├── facts/         # Kind renderers (list, timeline, stats, ...)
-│           ├── dossier/       # Research panel, spotlight, sources, dossierLayout
-│           ├── overlay/       # Lightbox, NodeDetailSheet
-│           ├── settings/      # SettingsMenu
-│           ├── shared/        # SceneSignature, EmptyState, Monogram
-│           ├── mobile/        # MobileExplorer, HeroCard
-│           └── background/    # Nebula, Particles
-├── scripts/layout-check.mts   # No-overlap assertion on synthetic datasets
-├── index.html
-├── vite.config.ts
-└── .env                       # Your API key (gitignored)
+│       ├── canvas/                  # ThinkingCore, AmbientField, shared rAF ticker
+│       ├── components/              # command bar, session stream, compositions, module kinds
+│       ├── scene/                   # SceneTheme (per-turn CSS vars), tokens
+│       └── styles/                  # tokens.css + global.css
+├── scripts/shots.mts                # Screenshot + overflow pass
+├── scripts/drift-check.mts          # Contract mirror check
+└── server/fixtures/                 # Captured real scenes for offline iteration
 ```
 
 ---
 
 ## Notes
 
-- The Gemini API key lives server-side only — it is never exposed to the browser.
-- `GEMINI_TIMEOUT_MS` (optional, default `75000`) caps how long the server waits for the model before answering `502 GEMINI_ERROR`; the browser gives up after 90 s.
-- Images cascade: direct URL from the model → keyword fallback (loremflickr) → animated monogram. Nothing ever renders broken.
-- All user-visible UI strings live in `src/i18n/translations.ts` — components never hardcode visible text.
-- Settings persist in `localStorage` under `cortex.settings`.
-- Reduced motion (the OS preference or the in-app MOTION setting, stamped as `data-motion="reduced"` on `<html>`) disables the float loop, particles, entrance stagger and long transitions.
-- A scene with no categories renders an empty state with retry instead of a blank stage.
+- The API key is server-side only.
+- Settings (language, motion) persist in `localStorage` under `cortex.settings`.
+- The client gives up after 20 s without a first event or 45 s of silence; the server sends a heartbeat
+  every 15 s.
+- A scene that comes back with nothing to show renders an empty state with retry, never a blank stage.

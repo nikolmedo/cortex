@@ -1,4 +1,12 @@
-/* Box-less wrapper: custom properties inherit through it, layout is untouched. */
+/*
+ * The crossfade takes the turn's tempo but not its curve: a kinetic --ease
+ * overshoots past its endpoint, which is right for an entrance and wrong for a
+ * colour, where it would carry the channel out of gamut and clamp mid-fade.
+ */
 .root {
-  display: contents;
+  position: relative;
+  transition:
+    --scene-primary var(--dur-slow) cubic-bezier(0.22, 1, 0.36, 1),
+    --scene-secondary var(--dur-slow) cubic-bezier(0.22, 1, 0.36, 1),
+    --scene-accent var(--dur-slow) cubic-bezier(0.22, 1, 0.36, 1);
 }

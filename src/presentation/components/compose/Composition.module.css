@@ -1,0 +1,312 @@
+/*
+ * Layout compositions. DOM order is reading order:
+ *   hero, head, rail(spotlight, meta, rail modules), main(body, main modules), foot.
+ * Mobile and tablet flatten rail/main with display: contents and sequence the
+ * pieces with `order`; desktop places them in a per-layout grid.
+ */
+
+.composition {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-5);
+  min-width: 0;
+}
+
+.rail,
+.main {
+  display: contents;
+}
+
+.hero {
+  order: 0;
+}
+.head {
+  order: 1;
+}
+.spotlight {
+  order: 2;
+}
+.meta {
+  order: 3;
+}
+.body {
+  order: 4;
+}
+.mainModules {
+  order: 5;
+}
+.railModules {
+  order: 6;
+}
+.pending {
+  order: 7;
+}
+.foot {
+  order: 9;
+}
+
+/* Non-dossier layouts: facts that frame the answer come after the explanation. */
+.composition:not([data-layout='dossier']) .meta {
+  order: 6;
+}
+
+.mainModules,
+.railModules {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  min-width: 0;
+}
+
+/*
+ * The streaming placeholder joins the modules grid as its trailing cell rather
+ * than sitting under it, so a half-width card waiting for its neighbour keeps
+ * the row it is already in instead of stretching and snapping back.
+ */
+.pendingCell {
+  min-width: 0;
+}
+
+.foot {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-6);
+  margin-top: var(--sp-3);
+}
+
+/* ---------- Tablet: 768–1279 ---------- */
+
+@media (min-width: 768px) {
+  .composition {
+    gap: var(--sp-6);
+  }
+
+  .mainModules,
+  .railModules {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-4);
+  }
+
+  .mainModules > [data-span='wide'],
+  .railModules > [data-span='wide'] {
+    grid-column: 1 / -1;
+  }
+
+  .composition[data-layout='split'] .spotlight {
+    max-width: 640px;
+  }
+
+  .foot {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    column-gap: var(--sp-7);
+  }
+}
+
+/*
+ * The wrapper cap has to track the figure's own cap in blocks.module.css, and
+ * that one rises to 560px at 1280. Left open at the top end this rule pinned the
+ * wrapper to 420 while the figure inside it was allowed 560, so a portrait hero
+ * (the ratio clamp floor is 0.7) would have hung ~140px out of its grid row.
+ * Above 1280 the figure's own cap governs and the wrapper just takes its height.
+ */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .composition[data-layout='dossier'] .hero {
+    max-height: min(70vh, 420px);
+  }
+}
+
+/* ---------- Desktop: ≥1280 ---------- */
+
+@media (min-width: 1280px) {
+  .composition {
+    display: grid;
+    column-gap: var(--sp-7);
+    row-gap: var(--sp-6);
+    align-items: start;
+  }
+
+  .rail {
+    display: flex;
+    flex-direction: column;
+    gap: var(--sp-5);
+    min-width: 0;
+  }
+
+  .hero {
+    grid-area: hero;
+  }
+  .head {
+    grid-area: head;
+  }
+  .rail {
+    grid-area: rail;
+  }
+  /*
+   * The reading column and the modules are separate rows: the rail sits beside
+   * the answer, and the modules take the full width once the rail ends, so a
+   * short rail never leaves a tall empty gutter next to a long list of modules.
+   */
+  .main {
+    display: contents;
+  }
+  .body {
+    grid-area: body;
+  }
+  .mainModules {
+    grid-area: modules;
+  }
+  .pending {
+    grid-area: pending;
+  }
+  .foot {
+    grid-area: foot;
+  }
+
+  .railModules {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .mainModules {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* Cards keep their natural height: stretching the shorter one only moves the
+       empty space inside it. */
+    align-items: start;
+    gap: var(--sp-4);
+  }
+
+  .mainModules > [data-span='wide'] {
+    grid-column: 1 / -1;
+  }
+
+  /* focus: answer-first reading column with a readout rail beside it from the top */
+  .composition[data-layout='focus'] {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+    grid-template-areas:
+      'head rail'
+      'body rail'
+      'modules modules'
+      'pending pending'
+      'foot foot';
+  }
+
+  /* sequence: the track (steps, timeline) leads, context on the side */
+  .composition[data-layout='sequence'] {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    grid-template-areas:
+      'head rail'
+      'body rail'
+      'modules modules'
+      'pending pending'
+      'foot foot';
+  }
+
+  /* dossier: hero media beside the identity, attributes rail under it */
+  .composition[data-layout='dossier'] {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    grid-template-areas:
+      'hero head'
+      'rail body'
+      'modules modules'
+      'pending pending'
+      'foot foot';
+  }
+
+  .composition[data-layout='dossier'][data-hero='false'] {
+    grid-template-areas:
+      'head head'
+      'rail body'
+      'modules modules'
+      'pending pending'
+      'foot foot';
+  }
+
+  .composition[data-layout='dossier'] .head {
+    align-self: end;
+  }
+
+  /* split: verdict and key figure side by side, the two options next to each other */
+  .composition[data-layout='split'] {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 380px);
+    grid-template-areas:
+      'head rail'
+      'body body'
+      'modules modules'
+      'pending pending'
+      'foot foot';
+  }
+
+  .composition[data-layout='split'] .rail {
+    align-self: end;
+  }
+
+  .composition[data-layout='split'] .body > * {
+    max-width: none;
+  }
+
+  .composition[data-layout='split'] .body > * > div:first-child {
+    columns: 2;
+    column-gap: var(--sp-7);
+  }
+
+  .composition[data-layout='split'] .body p {
+    break-inside: avoid-column;
+  }
+
+  .composition[data-layout='split'] .mainModules {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sp-4);
+  }
+
+  .composition[data-layout='split'] .mainModules > :not([data-span='pair']) {
+    grid-column: 1 / -1;
+  }
+
+  /* mosaic: dense tiles on a 12-column grid */
+  .composition[data-layout='mosaic'] {
+    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    grid-template-areas:
+      'head rail'
+      'body body'
+      'modules modules'
+      'pending pending'
+      'foot foot';
+  }
+
+  .composition[data-layout='mosaic'] .mainModules {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-auto-flow: dense;
+    align-items: start;
+    gap: var(--sp-4);
+  }
+
+  .composition[data-layout='mosaic'] .mainModules > * {
+    grid-column: span 4;
+  }
+
+  .composition[data-layout='mosaic'] .mainModules > [data-span='wide'] {
+    grid-column: span 8;
+  }
+
+  .foot {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* A rail holding only the key figure stays in view beside the reading column. */
+@media (min-width: 1280px) {
+  .composition:is([data-layout='focus'], [data-layout='sequence'])[data-rail='short'] .rail {
+    position: sticky;
+    top: calc(var(--top-h) + env(safe-area-inset-top) + var(--sp-5));
+  }
+}
+
+/* A foot with only follow-ups uses the full row. */
+.foot > :only-child {
+  grid-column: 1 / -1;
+}

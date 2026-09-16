@@ -1,0 +1,198 @@
+{
+  "query": "Latest on the EU AI Act",
+  "lang": "en",
+  "preface": {
+    "intent": "current",
+    "title": "EU AI Act Implementation Status",
+    "layout": "sequence",
+    "mood": "volatile",
+    "palette": {
+      "primary": "#3399FF",
+      "secondary": "#ffd429",
+      "accent": "#FF3366"
+    },
+    "plan": [
+      "Checking compliance deadlines for general-purpose AI",
+      "Reviewing European Artificial Intelligence Office updates",
+      "Analyzing member state enforcement actions"
+    ]
+  },
+  "scene": {
+    "version": 3,
+    "intent": "current",
+    "type": "concept",
+    "title": "EU AI Act",
+    "subtitle": "The world's first comprehensive horizontal legal framework for artificial intelligence",
+    "answer": {
+      "headline": "The EU AI Act is currently being phased in, with core obligations now in effect and high-risk system deadlines extended to 2027 and 2028.",
+      "body": [
+        "The EU AI Act officially entered into force on August 1, 2024, establishing a tiered risk-based regulatory framework. Since then, the legislation has been progressively implemented, with initial prohibitions on unacceptable-risk AI systems and literacy requirements coming online in early 2025.",
+        "As of August 2, 2026, the regulation has entered a more intensive enforcement phase. This includes new transparency obligations for AI-generated content—such as watermarking for deepfakes and mandatory disclosures for chatbots—alongside the activation of full enforcement powers for the EU AI Office.",
+        "Significant timeline shifts occurred in mid-2026 following the Digital Omnibus amendments, which deferred compliance deadlines for high-risk AI systems. Operators now have until December 2027 for stand-alone systems and until August 2028 for systems integrated into other products, allowing developers more time to align with safety standards.",
+        "Non-compliance carries substantial financial risks, with potential fines reaching up to 35 million Euros or 7 percent of a company's total worldwide annual turnover, whichever is higher, reflecting the EU's commitment to strict enforcement."
+      ],
+      "caveats": [
+        "The timeline for specific Annexes remains subject to future regulatory adjustments.",
+        "Compliance requirements may vary based on individual member state implementation of national sandboxes."
+      ]
+    },
+    "summary": "",
+    "image_url": "",
+    "image_query": "",
+    "meta": {
+      "Entered force": "August 1, 2024",
+      "Enforcement body": "EU AI Office",
+      "Scope": "Global AI providers"
+    },
+    "presentation": {
+      "layout": "sequence",
+      "mood": "volatile",
+      "motif": "grid",
+      "density": "balanced",
+      "palette": {
+        "primary": "#3399FF",
+        "secondary": "#ffd429",
+        "accent": "#FF3366"
+      }
+    },
+    "modules": [
+      {
+        "category": "Implementation Timeline",
+        "color": "#3399FF",
+        "image_query": "",
+        "kind": "timeline",
+        "facts": [],
+        "headline": "Progressive roll-out of legal requirements through 2028",
+        "items": [
+          {
+            "label": "Act enters into force",
+            "value": "August 1, 2024"
+          },
+          {
+            "label": "Prohibitions and AI literacy",
+            "value": "February 2, 2025"
+          },
+          {
+            "label": "GPAI model governance",
+            "value": "August 2, 2025"
+          },
+          {
+            "label": "Transparency & AI Office enforcement",
+            "value": "August 2, 2026"
+          },
+          {
+            "label": "Stand-alone high-risk deadline",
+            "value": "December 2, 2027"
+          },
+          {
+            "label": "Product-integrated high-risk deadline",
+            "value": "August 2, 2028"
+          }
+        ]
+      },
+      {
+        "category": "Regulatory Framework",
+        "color": "#ffd429",
+        "image_query": "",
+        "kind": "keyvalue",
+        "facts": [],
+        "headline": "Categories of AI governance based on risk profile",
+        "items": [
+          {
+            "label": "Unacceptable Risk",
+            "value": "Prohibited"
+          },
+          {
+            "label": "High-Risk Systems",
+            "value": "Strict conformity assessments"
+          },
+          {
+            "label": "General-Purpose AI",
+            "value": "Transparency and copyright rules"
+          },
+          {
+            "label": "Transparency",
+            "value": "Mandatory deepfake labeling"
+          }
+        ]
+      },
+      {
+        "category": "Operational Deadlines",
+        "color": "#FF3366",
+        "image_query": "",
+        "kind": "list",
+        "facts": [],
+        "headline": "Key dates for institutional and technical compliance",
+        "items": [
+          {
+            "label": "Mandatory AI regulatory sandboxes",
+            "value": "Must be operational by August 2, 2026"
+          },
+          {
+            "label": "Transparency requirements (Art 50)",
+            "value": "Live as of August 2, 2026"
+          }
+        ]
+      },
+      {
+        "category": "Enforcement Penalties",
+        "color": "#3399FF",
+        "image_query": "",
+        "kind": "stats",
+        "facts": [],
+        "headline": "Financial consequences for regulatory non-compliance",
+        "items": [
+          {
+            "label": "Maximum administrative fine",
+            "value": "€35,000,000",
+            "weight": 80
+          },
+          {
+            "label": "Maximum % global turnover",
+            "value": "7%",
+            "weight": 100
+          }
+        ]
+      }
+    ],
+    "spotlight": {
+      "kind": "stat",
+      "label": "Maximum penalty for non-compliance",
+      "value": "€35M or 7% turnover"
+    },
+    "followups": [
+      "What defines a high-risk AI system under the Act?",
+      "What are the transparency rules for General-Purpose AI models?",
+      "How does the AI Office enforce these regulations?"
+    ],
+    "sources": [
+      {
+        "title": "europa.eu",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHUcxIITorF14Xxr25xtLtas3kPvAqz-8KiJiC6B004i0N_q-zzCfgudxkNrPvFiUpyf_0ZRhbp2yDxsIIfwdn6um0KOkGqg7CzAo-FBFwD4acqXzS7Ung1Bg5u1qs0gWUY3NQkcElE1jrnLpfjKMgq2zzTke-WeofoC2x7x_Z8ZNswLEf1avw1sEGxvKV-Ma-iGF8="
+      },
+      {
+        "title": "responsibleailabs.ai",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQGUaiq0EP_Ku1Cnsc2YSCAJRwmyY_VCnvg95tRs4JuFk22ELYy9e91dhqbY4QJTtdS-MnJiMcBZr57mS_YtyxJLIvviTfxP-Bh3L7--m_ZxJPYZhx09GuqN_tN9HFgrEGbIfNuEyLZ7juO3khDiAhR2Jq1SwEpS05wamoH0rlKOj0YB1aSGu-oyJpk="
+      },
+      {
+        "title": "jamf.com",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQHQAf9oZ4tepWJ5UicaEjmdF4zcUp3Uj5M_kEDL8mJ_6s2-81z08d_XWlt-h1s4u1m8M_U3VWUhJbP2zVPi-lAc9EB_oimRQWRMarGc_s6bl5G2dtJZDtDOm_EZfjeRaajA-OHYkPW0cQItXkVjaxjgRAi0ugciBzEHinGY4Q=="
+      },
+      {
+        "title": "youtube.com",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFsC3DMjHOU8rQzckVDZpvEf1IdJRq8MkBbo3sxI8BC-p05CHDrdVcZrnu0jWInxs-3gxM6fQzOqMxC0Fu2aFuG0OqbRAcsPcu4WxmzwIAWfZpJqHUHlMv51MP5yEOLVHLj"
+      },
+      {
+        "title": "morganlewis.com",
+        "url": "https://vertexaisearch.cloud.google.com/grounding-api-redirect/AUZIYQFV55ANG0sg9l0833gVBuazeA_qEuZ1_CYS6UntP5ILwJpx_2yzXkSf8EtRLoOGe3P5UY8fdA4z4KHXLjQq2Uu_Ogxc6NBYD3rwfoiDKapfmvjFMjxiiz0eWMirKKoNkk6-g2kvG9AJq--CqxsFgKBAgzoOKF2idNl0A1jgyByCCBh61dU-pd54-35n2tBpIvVlMpVF_8Ccs7FMXbthotljEh1M6XQiGNq6z_kZjYT_Pfn5S6uCmADusP0zgCIvJiih5Ctj"
+      }
+    ]
+  },
+  "timing": {
+    "prefaceMs": 1151,
+    "researchMs": 2773,
+    "firstPartialMs": 9431,
+    "sceneMs": 12664,
+    "sources": 5
+  }
+}

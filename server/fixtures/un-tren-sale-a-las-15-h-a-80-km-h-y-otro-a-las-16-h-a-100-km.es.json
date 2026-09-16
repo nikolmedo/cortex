@@ -1,0 +1,157 @@
+{
+  "query": "Un tren sale a las 15 h a 80 km/h y otro a las 16 h a 100 km/h desde la misma estación y la misma vía. ¿Cuándo y dónde lo alcanza? Mostrá el razonamiento.",
+  "lang": "es",
+  "preface": {
+    "intent": "problem",
+    "title": "Alcance entre dos trenes con distintas horas de salida y velocidades",
+    "layout": "focus",
+    "mood": "calm",
+    "palette": {
+      "primary": "#55d3c7",
+      "secondary": "#63B3ED",
+      "accent": "#F6AD55"
+    },
+    "plan": [
+      "Calculando la distancia inicial del primer tren a las 16 h",
+      "Estableciendo la ecuación de movimiento para ambos trenes",
+      "Resolviendo el tiempo de alcance y la posición final"
+    ]
+  },
+  "scene": {
+    "version": 3,
+    "intent": "problem",
+    "type": "concept",
+    "title": "Encuentro de dos trenes",
+    "subtitle": "Cálculo de alcance con velocidades constantes",
+    "answer": {
+      "headline": "El segundo tren alcanza al primero a las 20:00 h, tras haber recorrido 400 km desde la estación.",
+      "body": [
+        "Para resolver este problema, establecemos un sistema de referencia donde el primer tren sale a las 15:00 h (t = 0) a una velocidad de 80 km/h. Su posición en cualquier momento t se define como 80t. El segundo tren parte a las 16:00 h, es decir, una hora después, por lo que su tiempo de viaje es (t - 1) a una velocidad de 100 km/h.",
+        "Igualamos las distancias recorridas por ambos trenes para encontrar el punto de encuentro: 80t = 100(t - 1). Al expandir la ecuación, obtenemos 80t = 100t - 100, lo que simplifica a 20t = 100. Despejando t, encontramos que t = 5 horas después de la salida del primer tren.",
+        "Sumando esas 5 horas a la hora de salida original (15:00 h), el encuentro ocurre exactamente a las 20:00 h. La distancia desde la estación se calcula multiplicando la velocidad del primer tren por su tiempo total de viaje: 80 km/h × 5 h = 400 km."
+      ],
+      "caveats": [
+        "Se asume que ambos trenes mantienen una velocidad constante durante todo el trayecto.",
+        "No se consideran paradas intermedias ni el tiempo de aceleración."
+      ]
+    },
+    "summary": "",
+    "image_url": "",
+    "image_query": "",
+    "meta": {},
+    "presentation": {
+      "layout": "focus",
+      "mood": "calm",
+      "motif": "grid",
+      "density": "balanced",
+      "palette": {
+        "primary": "#29dbff",
+        "secondary": "#ffdd29",
+        "accent": "#FF5733"
+      }
+    },
+    "modules": [
+      {
+        "category": "Datos del problema",
+        "color": "#29dbff",
+        "image_query": "",
+        "kind": "keyvalue",
+        "facts": [
+          "Tren 1: 15:00 h, 80 km/h",
+          "Tren 2: 16:00 h, 100 km/h"
+        ],
+        "headline": "Variables conocidas para el cálculo",
+        "items": [
+          {
+            "label": "Velocidad Tren 1",
+            "value": "80 km/h"
+          },
+          {
+            "label": "Velocidad Tren 2",
+            "value": "100 km/h"
+          },
+          {
+            "label": "Diferencia de tiempo",
+            "value": "1 hora"
+          }
+        ],
+        "slot": "rail",
+        "emphasis": "quiet",
+        "reveal": "fade"
+      },
+      {
+        "category": "Resolución paso a paso",
+        "color": "#ffdd29",
+        "image_query": "",
+        "kind": "steps",
+        "facts": [
+          "80t = 100(t - 1)",
+          "20t = 100",
+          "t = 5 horas"
+        ],
+        "headline": "Igualación de las ecuaciones de movimiento",
+        "items": [
+          {
+            "label": "Planteamiento",
+            "value": "80t = 100(t - 1)",
+            "detail": "Igualamos las distancias recorridas. t es el tiempo del primer tren."
+          },
+          {
+            "label": "Distribución",
+            "value": "80t = 100t - 100",
+            "detail": "Aplicamos la propiedad distributiva al segundo término."
+          },
+          {
+            "label": "Despeje de t",
+            "value": "20t = 100",
+            "detail": "Agrupamos los términos con t y movemos las constantes."
+          },
+          {
+            "label": "Cálculo final",
+            "value": "t = 5 h",
+            "detail": "El tiempo transcurrido desde las 15:00 h."
+          }
+        ],
+        "emphasis": "lead",
+        "reveal": "draw"
+      },
+      {
+        "category": "Fórmulas",
+        "color": "#FF5733",
+        "image_query": "",
+        "kind": "formula",
+        "facts": [
+          "d = v × t",
+          "v1t1 = v2t2"
+        ],
+        "headline": "Modelos cinemáticos utilizados",
+        "items": [
+          {
+            "label": "d = v × t",
+            "value": "d = v × t",
+            "detail": "Distancia igual a velocidad por tiempo."
+          },
+          {
+            "label": "t2 = t1 - Δt",
+            "value": "t2 = t1 - 1",
+            "detail": "El segundo tren viaja una hora menos."
+          }
+        ]
+      }
+    ],
+    "spotlight": {
+      "kind": "stat",
+      "label": "Distancia al punto de encuentro",
+      "value": "400 km"
+    },
+    "followups": [
+      "¿Qué pasaría si el segundo tren saliera 30 minutos más tarde?",
+      "¿Cómo cambia el problema si los trenes van en direcciones opuestas?",
+      "¿Cuál sería el encuentro si el primer tren fuera a 120 km/h?"
+    ]
+  },
+  "timing": {
+    "prefaceMs": 1498,
+    "sceneMs": 10202
+  }
+}

@@ -1,0 +1,207 @@
+{
+  "query": "How do I brew pour-over coffee properly?",
+  "lang": "en",
+  "preface": {
+    "intent": "howto",
+    "title": "Pour-Over Coffee Brewing Guide",
+    "layout": "sequence",
+    "mood": "calm",
+    "palette": {
+      "primary": "#E0A96D",
+      "secondary": "#c47a64",
+      "accent": "#F4D06F"
+    },
+    "plan": [
+      "Measuring coffee-to-water ratio and grind size",
+      "Executing the bloom phase for optimal degassing",
+      "Pouring technique and target extraction time"
+    ]
+  },
+  "scene": {
+    "version": 3,
+    "intent": "howto",
+    "type": "concept",
+    "title": "Brewing Pour-Over Coffee",
+    "subtitle": "Achieving clarity and balance through manual extraction",
+    "answer": {
+      "headline": "Brew excellent pour-over coffee by using a 1:16 coffee-to-water ratio, filtered water at 93°C, and a steady, circular pouring technique.",
+      "body": [
+        "Pour-over coffee is a method that highlights the nuanced flavors of specialty beans by allowing precise control over extraction variables. The process relies on gravity to slowly pass hot water through a bed of ground coffee in a filter, ensuring a clean cup with high clarity.",
+        "The keys to success are consistency in your grind size, temperature control, and agitation management. By pouring in stages—a small initial bloom followed by controlled pulses of water—you release trapped CO2 and ensure an even extraction that avoids bitterness while preventing under-extracted sourness."
+      ],
+      "caveats": [
+        "Results vary based on your specific dripper geometry.",
+        "Coffee roast profile may require slight adjustments to grind size.",
+        "Water quality significantly impacts final flavor profile."
+      ]
+    },
+    "summary": "",
+    "image_url": "",
+    "image_query": "",
+    "meta": {
+      "Time": "3-4 minutes",
+      "Difficulty": "Intermediate",
+      "Ratio": "1:16"
+    },
+    "presentation": {
+      "layout": "sequence",
+      "mood": "calm",
+      "motif": "flow",
+      "density": "balanced",
+      "palette": {
+        "primary": "#E0A96D",
+        "secondary": "#c47a64",
+        "accent": "#F4D06F"
+      }
+    },
+    "modules": [
+      {
+        "category": "Preparation",
+        "color": "#E0A96D",
+        "image_query": "",
+        "kind": "list",
+        "facts": [
+          "Use a burr grinder for consistent particles.",
+          "Filtered water prevents mineral interference.",
+          "A scale is mandatory for precision."
+        ],
+        "headline": "Essential tools for a perfect pour",
+        "items": [
+          {
+            "label": "Coffee dripper (V60, Kalita)",
+            "value": "Vessel"
+          },
+          {
+            "label": "Paper filter",
+            "value": "Filtration"
+          },
+          {
+            "label": "Digital scale",
+            "value": "Measurement"
+          },
+          {
+            "label": "Gooseneck kettle",
+            "value": "Flow control"
+          },
+          {
+            "label": "Fresh roasted coffee",
+            "value": "Ingredients"
+          }
+        ]
+      },
+      {
+        "category": "Procedure",
+        "color": "#c47a64",
+        "image_query": "",
+        "kind": "steps",
+        "facts": [
+          "Rinse the filter to remove paper taste.",
+          "Bloom with double the weight of coffee.",
+          "Pour in gentle, steady circles."
+        ],
+        "headline": "Step-by-step brewing guide",
+        "items": [
+          {
+            "label": "Pre-rinse",
+            "value": "Ready",
+            "detail": "Place the filter in the dripper and rinse it with hot water to remove any paper taste and warm your vessel."
+          },
+          {
+            "label": "Grind coffee",
+            "value": "Medium-fine",
+            "detail": "Grind your beans to a consistency resembling sea salt; use 20g of coffee for 320g of water."
+          },
+          {
+            "label": "Bloom",
+            "value": "30 seconds",
+            "detail": "Pour 40g of water (double the dry weight) over the grounds and wait for the gas to escape."
+          },
+          {
+            "label": "Pour",
+            "value": "Steady stream",
+            "detail": "Pour the remaining water in slow, circular motions, avoiding the very edges of the filter to prevent bypassing."
+          },
+          {
+            "label": "Draw down",
+            "value": "Finished",
+            "detail": "Allow the water to pass through the bed; the total time from first pour should be around 3:00 to 3:30."
+          }
+        ]
+      },
+      {
+        "category": "Variables",
+        "color": "#F4D06F",
+        "image_query": "",
+        "kind": "keyvalue",
+        "facts": [
+          "Water temperature influences acidity.",
+          "Grind size determines draw down time.",
+          "Agitation extracts more body."
+        ],
+        "headline": "Guidelines for consistent extraction",
+        "items": [
+          {
+            "label": "Brew temperature",
+            "value": "90°C - 95°C"
+          },
+          {
+            "label": "Coffee to water ratio",
+            "value": "1:15 to 1:17"
+          },
+          {
+            "label": "Grind consistency",
+            "value": "Medium-fine"
+          },
+          {
+            "label": "Total brew time",
+            "value": "2:30 - 3:30"
+          }
+        ]
+      },
+      {
+        "category": "Common Mistakes",
+        "color": "#c47a64",
+        "image_query": "",
+        "kind": "proscons",
+        "facts": [
+          "Bitter? Grind coarser.",
+          "Sour? Grind finer.",
+          "Weak? Use more coffee."
+        ],
+        "headline": "How to troubleshoot your brew",
+        "items": [
+          {
+            "label": "Coffee tastes sour",
+            "value": "Under-extracted",
+            "detail": "The grind is likely too coarse or water too cool; adjust finer or hotter.",
+            "side": "b"
+          },
+          {
+            "label": "Coffee tastes bitter",
+            "value": "Over-extracted",
+            "detail": "The grind is too fine or the contact time is too long; adjust coarser.",
+            "side": "b"
+          },
+          {
+            "label": "Clogged filter",
+            "value": "Fines buildup",
+            "detail": "Often caused by poor grinder quality creating too many 'fines' (dust).",
+            "side": "b"
+          }
+        ]
+      }
+    ],
+    "followups": [
+      "What is the difference between V60 and Chemex brewing?",
+      "How does grind size affect coffee flavor extraction?",
+      "Why does the bloom phase matter for coffee taste?"
+    ]
+  },
+  "timing": {
+    "prefaceMs": 1170,
+    "researchMs": 645,
+    "firstPartialMs": 5768,
+    "sceneMs": 9712,
+    "sources": 0
+  }
+}
