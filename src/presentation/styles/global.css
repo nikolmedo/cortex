@@ -81,11 +81,60 @@ a {
 
 /* ---- Keyframes ---- */
 
+/*
+ * Entrance families. One per way a piece can arrive; the scene's layout picks
+ * the default through --enter and Materialize can override it per element.
+ * Travel and blur come from --rise/--reveal-blur so the mood sets the amount,
+ * and every family ends on identity so they all resolve to the same still page.
+ */
+
 @keyframes materialize {
   from {
     opacity: 0;
-    transform: translateY(12px);
-    filter: blur(6px);
+    transform: translateY(var(--rise, 12px)) scale(var(--enter-scale, 1));
+    filter: blur(var(--reveal-blur, 6px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+/* Drops into place from above: the piece was already there and has now landed. */
+@keyframes settle {
+  from {
+    opacity: 0;
+    transform: translateY(calc(-1 * var(--rise, 12px))) scale(var(--enter-scale, 1));
+    filter: blur(var(--reveal-blur, 6px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+/* Opens along its own height, so a run of steps reads as one following another. */
+@keyframes unfurl {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--rise, 12px) * 0.35)) scaleY(0.96) scale(var(--enter-scale, 1));
+    filter: blur(var(--reveal-blur, 6px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: blur(0);
+  }
+}
+
+/* Slides in from the inline start: two of these arriving together read as sides. */
+@keyframes edge {
+  from {
+    opacity: 0;
+    transform: translateX(calc(-1 * var(--rise, 12px))) scale(var(--enter-scale, 1));
+    filter: blur(var(--reveal-blur, 6px));
   }
   to {
     opacity: 1;

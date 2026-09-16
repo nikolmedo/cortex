@@ -1,8 +1,9 @@
-import { useEffect, useId, useRef, type ReactElement } from 'react';
+import { useId, type ReactElement } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import { useI18n } from '../../../i18n/I18nContext';
 import type { TranslationKey } from '../../../i18n/translations';
+import { useModalDialog } from '../../hooks/useModalDialog';
 import { useSettings } from '../../hooks/useSettings';
 import styles from './SettingsMenu.module.css';
 
@@ -42,29 +43,13 @@ function Segment<T extends string>({ label, hint, value, options, onChange }: Se
 export function SettingsMenu({ onClose }: { onClose: () => void }): ReactElement {
   const { t } = useI18n();
   const { settings, setLocale, setMotion } = useSettings();
-  const panelRef = useRef<HTMLDivElement>(null);
-  const titleId = useId();
-
-  useEffect(() => {
-    const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    panelRef.current?.querySelector<HTMLButtonElement>('[aria-checked="true"]')?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        onClose();
-      }
-    };
-    window.addEventListener('keydown', onKey, true);
-    return () => {
-      window.removeEventListener('keydown', onKey, true);
-      previous?.focus();
-    };
-  }, [onClose]);
+  // The current choice is the useful starting point, not the close button.
+  const { ref, dialogProps, titleId } = useModalDialog<HTMLDivElement>({ onClose, initialFocus: '[aria-checked="true"]' });
 
   return createPortal(
     <>
       <div className={styles.backdrop} onClick={onClose} />
-      <div ref={panelRef} className={styles.panel} role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <div ref={ref} {...dialogProps} className={styles.panel} aria-labelledby={titleId}>
         <div className={styles.head}>
           <h2 id={titleId} className={styles.title}>{t('settings.title')}</h2>
           <button type="button" className={styles.close} onClick={onClose} aria-label={t('settings.close')}>

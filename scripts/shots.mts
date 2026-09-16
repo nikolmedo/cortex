@@ -13,6 +13,20 @@
 //
 // Run: npx tsx scripts/shots.mts [--sizes=390,768,1440] [--only=kyoto,postgres]
 //      [--fixtures-dir=server/fixtures] [--out=docs/screenshots] [--no-servers]
+//      [--freeze=<ms>] [--motion=auto|reduced] [--viewer]
+//
+// --freeze=<ms>   Right as a state is reached (before any extra settle wait),
+//                 pauses every WAAPI/CSS animation and jumps it to <ms>, then
+//                 shoots a companion "-f<ms>" frame before finishing those
+//                 animations and continuing the normal capture. Static PNGs
+//                 cannot show motion, so this is how entrance animations are
+//                 compared frame-for-frame across fixtures.
+// --motion=       Sets `cortex.settings.motion` for every page in this run
+//                 (default "auto"). "reduced" proves the reduced-motion kill
+//                 switch neutralises every entrance; every file from a
+//                 reduced run gets a "-reduced" suffix so both passes coexist.
+// --viewer        For fixtures with a usable hero image, opens the enlarge
+//                 dialog and captures it as a companion "-viewer" frame.
 import { spawn, type ChildProcess } from 'node:child_process';
 import { mkdir, readdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -33,6 +47,14 @@ const WEB = `http://localhost:${WEB_PORT}`;
 const OUT = path.resolve(ROOT, args.get('out') ?? 'docs/screenshots');
 const FIXTURES_DIR = path.resolve(ROOT, args.get('fixtures-dir') ?? 'server/fixtures');
 const ONLY = args.get('only')?.split(',').filter(Boolean) ?? [];
+const MOTION: 'auto' | 'reduced' = args.get('motion') === 'reduced' ? 'reduced' : 'auto';
+const CAPTURE_VIEWER = args.has('viewer');
+const FREEZE_MS = (() => {
+  const raw = args.get('freeze');
+  if (raw === undefined) return null;
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : null;
+})();
 const SIZES = [
   { w: 390, h: 844 },
   { w: 768, h: 1024 },
@@ -54,6 +76,15 @@ interface CaptureReport {
 
 const reports: CaptureReport[] = [];
 const children: ChildProcess[] = [];
+
+/** Applies the `--motion=reduced` suffix so a reduced pass never overwrites the auto one. */
+function withMotion(base: string): string {
+  return MOTION === 'reduced' ? `${base}-reduced` : base;
+}
+
+function pngName(base: string): string {
+  return `${withMotion(base)}.png`;
+}
 
 function shortName(file: string): string {
   const slug = file.replace(/\.json$/, '');
@@ -136,6 +167,87 @@ async function audit(page: Page, file: string): Promise<void> {
   reports.push({ file, ...result });
 }
 
+/**
+ * Pauses every running WAAPI/CSS animation at exactly `ms` into its run so a
+ * static screenshot can show a mid-entrance frame. Returns how many animations
+ * were live at that instant, which is the actual proof a reduced-motion pass
+ * neutralised them (0 animations, not just "looks the same").
+ */
+async function pauseAnimationsAt(page: Page, ms: number): Promise<number> {
+  return page.evaluate(freezeMs => {
+    const animations = document.getAnimations();
+    for (const a of animations) {
+      a.pause();
+      a.currentTime = freezeMs;
+    }
+    return animations.length;
+  }, ms);
+}
+
+/**
+ * Snaps every animation to its settled end state before the normal capture
+ * resumes. `finish()` throws on an infinite (ambient) animation, since it has
+ * no end; those are just resumed from where they were paused instead of being
+ * restarted, which `play()` would do to an already-finished finite one.
+ */
+async function resumeAnimations(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    for (const a of document.getAnimations()) {
+      try {
+        a.finish();
+      } catch {
+        a.play();
+      }
+    }
+  });
+}
+
+/** Companion "-f<ms>" frame: freeze, shoot, then release before the caller's own capture. */
+async function captureFrozen(page: Page, base: string): Promise<void> {
+  if (FREEZE_MS === null) return;
+  const count = await pauseAnimationsAt(page, FREEZE_MS);
+  const file = `${withMotion(base)}-f${FREEZE_MS}.png`;
+  console.log(`[freeze] ${file}: ${count} animation(s) frozen at ${FREEZE_MS}ms`);
+  await audit(page, file);
+  await page.screenshot({ path: path.join(OUT, file) });
+  await resumeAnimations(page);
+}
+
+/**
+ * Companion "-viewer" frame: opens the hero image's enlarge dialog and shoots
+ * it. The control is matched by accessible name, never by class, so it keeps
+ * working while the hero markup is still being built elsewhere. Any fixture
+ * without a usable image (no control, or the image never loaded so the button
+ * stays disabled) is skipped with a log line, never a failure.
+ */
+async function captureViewer(page: Page, base: string): Promise<void> {
+  const control = page.getByRole('button', { name: /Enlarge image|Ampliar imagen/i });
+  const count = await control.count();
+  if (count === 0) {
+    console.log(`[viewer] ${base}: no enlarge control on the page, skipping`);
+    return;
+  }
+  const trigger = control.first();
+  if (!(await trigger.isEnabled())) {
+    console.log(`[viewer] ${base}: enlarge control present but disabled (image not loaded), skipping`);
+    return;
+  }
+  const dialog = page.locator('[role="dialog"]');
+  try {
+    await trigger.click({ timeout: 3000 });
+    await dialog.waitFor({ state: 'visible', timeout: 3000 });
+  } catch (err) {
+    console.log(`[viewer] ${base}: could not open the viewer (${(err as Error).message}), skipping`);
+    return;
+  }
+  await settle(page, 500);
+  const file = `${withMotion(base)}-viewer.png`;
+  await audit(page, file);
+  await page.screenshot({ path: path.join(OUT, file) });
+  await page.keyboard.press('Escape');
+  await dialog.waitFor({ state: 'hidden', timeout: 3000 }).catch(() => {});
+}
+
 const MAX_CAPTURE_HEIGHT = 7000;
 
 /** Grows the viewport until the document fits, so fixed layers cover the whole capture. */
@@ -169,9 +281,9 @@ async function submit(page: Page, query: string): Promise<void> {
 
 async function newPage(browser: Browser, w: number, h: number, lang: 'en' | 'es'): Promise<Page> {
   const context = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, hasTouch: w < 1024 });
-  await context.addInitScript(locale => {
-    localStorage.setItem('cortex.settings', JSON.stringify({ locale, motion: 'auto' }));
-  }, lang);
+  await context.addInitScript(({ locale, motion }) => {
+    localStorage.setItem('cortex.settings', JSON.stringify({ locale, motion }));
+  }, { locale: lang, motion: MOTION });
   const page = await context.newPage();
   page.on('pageerror', err => console.error(`[page] ${err.message}`));
   await page.goto(WEB, { waitUntil: 'networkidle' });
@@ -201,22 +313,25 @@ async function main(): Promise<void> {
     for (const { w, h } of SIZES) {
       if (ONLY.length === 0) {
         const landing = await newPage(browser, w, h, 'en');
+        await captureFrozen(landing, `landing-${w}`);
         await settle(landing, 1200);
-        const landingFile = `landing-${w}.png`;
+        const landingFile = pngName(`landing-${w}`);
         await audit(landing, landingFile);
         await landing.screenshot({ path: path.join(OUT, landingFile) });
 
         await submit(landing, SEARCH_QUERY);
         await landing.waitForSelector('[data-status="streaming"]', { timeout: 15_000 });
+        await captureFrozen(landing, `searching-${w}`);
         await landing.waitForTimeout(900);
-        const searchFile = `searching-${w}.png`;
+        const searchFile = pngName(`searching-${w}`);
         await audit(landing, searchFile);
         await landing.screenshot({ path: path.join(OUT, searchFile) });
 
         // Mid-stream: partial scenes are rendering, the final one has not landed.
         await landing.waitForSelector('[data-status="streaming"] article', { timeout: 20_000 });
+        await captureFrozen(landing, `streaming-${w}`);
         await landing.waitForTimeout(1200);
-        const streamFile = `streaming-${w}.png`;
+        const streamFile = pngName(`streaming-${w}`);
         await audit(landing, streamFile);
         await landing.screenshot({ path: path.join(OUT, streamFile) });
         console.log(`captured ${streamFile} (status=${await landing.getAttribute('[data-status]', 'data-status')})`);
@@ -227,9 +342,11 @@ async function main(): Promise<void> {
         const page = await newPage(browser, w, h, fx.lang);
         await submit(page, fx.query);
         await page.waitForSelector('[data-status="done"]', { timeout: 20_000 });
+        await captureFrozen(page, `${fx.name}-${w}`);
         await settle(page, 1600);
-        const file = `${fx.name}-${w}.png`;
+        const file = pngName(`${fx.name}-${w}`);
         await audit(page, file);
+        if (CAPTURE_VIEWER) await captureViewer(page, `${fx.name}-${w}`);
         // The dock is fixed over the viewport; in a whole-page capture it belongs at the end.
         await page.evaluate(() => {
           const dock = document.querySelector<HTMLElement>('[data-dock]');

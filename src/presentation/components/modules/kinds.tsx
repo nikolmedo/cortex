@@ -3,17 +3,66 @@ import { Check, Copy, Minus, Plus } from 'lucide-react';
 import type { SceneItem } from '../../../domain/Scene';
 import { useI18n } from '../../../i18n/I18nContext';
 import { RichText } from '../text/RichText';
+import { useCountUp, staggerIndex } from '../../hooks/useCountUp';
 import { moduleItems } from './items';
 import type { ModuleRendererProps } from './registry';
 import styles from './kinds.module.css';
 
-function Detail({ text }: { text?: string }) {
+/*
+ * The atoms below are exported because `panel` lets the model compose a card out
+ * of them. Sharing the components, rather than the class names, is what keeps a
+ * composed panel made of parts that are already validated and already styled.
+ */
+
+export function Detail({ text }: { text?: string }) {
   return text ? <p className={styles.detail}><RichText text={text} /></p> : null;
 }
 
 /** 0-1 fraction as a CSS number for scaleX bars (computed, never model text). */
 function fraction(value: number): CSSProperties {
   return { '--w': Math.min(1, Math.max(0, value)).toFixed(3) } as CSSProperties;
+}
+
+/** Proportion bar for a 0-1 fraction. */
+export function Bar({ value }: { value: number }) {
+  return (
+    <span className={styles.track} aria-hidden="true">
+      <span className={styles.fill} style={fraction(value)} />
+    </span>
+  );
+}
+
+/** A run of keyword pills. Always a list, so a pill is always a list item. */
+export function TagRow({ items }: { items: SceneItem[] }) {
+  return (
+    <ul className={styles.tags}>
+      {items.map((item, i) => (
+        <li key={i} className={styles.tag}>
+          {item.label}
+          {item.value ? <span className={styles.tagValue}>{item.value}</span> : null}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/** A run of key/value rows as one description list. */
+export function KvList({ items }: { items: SceneItem[] }) {
+  return (
+    <dl className={styles.kv}>
+      {items.map((item, i) => (
+        <div key={i} className={styles.kvPair}>
+          <dt className={styles.kvKey}>{item.label}</dt>
+          {item.value || item.detail ? (
+            <dd className={styles.kvValue}>
+              {item.value ?? <RichText text={item.detail ?? ''} />}
+              {item.value ? <Detail text={item.detail} /> : null}
+            </dd>
+          ) : null}
+        </div>
+      ))}
+    </dl>
+  );
 }
 
 export function ListModule({ module }: ModuleRendererProps): ReactElement {
@@ -37,7 +86,7 @@ export function TimelineModule({ module }: ModuleRendererProps): ReactElement {
   return (
     <ol className={styles.timeline}>
       {moduleItems(module).map((item, i) => (
-        <li key={i} className={styles.tlItem}>
+        <li key={i} className={styles.tlItem} style={staggerIndex(i)}>
           <span className={styles.tlNode} aria-hidden="true" />
           {item.value ? <span className={styles.tlDate}>{item.value}</span> : null}
           <span className={styles.label}>{item.label}</span>
@@ -48,7 +97,7 @@ export function TimelineModule({ module }: ModuleRendererProps): ReactElement {
   );
 }
 
-function Gauge({ weight }: { weight: number }) {
+export function Gauge({ weight }: { weight: number }) {
   const w = Math.min(100, Math.max(0, weight));
   return (
     <svg className={styles.gauge} viewBox="0 0 40 40" aria-hidden="true">
@@ -59,21 +108,27 @@ function Gauge({ weight }: { weight: number }) {
         cy="20"
         r="16"
         pathLength={100}
-        strokeDasharray={`${w.toFixed(1)} 100`}
+        // The ring sweeps as a CSS animation on stroke-dasharray, so the length lives in a custom property.
+        style={{ '--dash': w.toFixed(1) } as CSSProperties}
         transform="rotate(-90 20 20)"
       />
     </svg>
   );
 }
 
+/** Owns the count-up hook, which cannot be called from inside the items map. */
+export function Figure({ value }: { value: string }) {
+  return <span className={styles.figure}>{useCountUp(value)}</span>;
+}
+
 export function StatsModule({ module }: ModuleRendererProps): ReactElement {
   return (
     <div className={styles.stats}>
       {moduleItems(module).map((item, i) => (
-        <div key={i} className={styles.stat}>
+        <div key={i} className={styles.stat} style={staggerIndex(i)}>
           {item.weight != null ? <Gauge weight={item.weight} /> : null}
           <div className={styles.statText}>
-            {item.value ? <span className={styles.figure}>{item.value}</span> : null}
+            {item.value ? <Figure value={item.value} /> : null}
             <span className={styles.statLabel}>{item.label}</span>
             <Detail text={item.detail} />
           </div>
@@ -154,13 +209,11 @@ export function RankingModule({ module }: ModuleRendererProps): ReactElement {
       {items.map((item, i) => {
         const w = item.weight != null ? item.weight / top : 1 - i / (items.length + 1);
         return (
-          <li key={i} className={styles.rankRow}>
+          <li key={i} className={styles.rankRow} style={staggerIndex(i)}>
             <span className={styles.rankNum}>{i + 1}</span>
             <span className={styles.rankLabel}>{item.label}</span>
             {item.value ? <span className={styles.rankValue}>{item.value}</span> : null}
-            <span className={styles.track} aria-hidden="true">
-              <span className={styles.fill} style={fraction(w)} />
-            </span>
+            <Bar value={w} />
           </li>
         );
       })}
@@ -172,14 +225,12 @@ export function ProgressModule({ module }: ModuleRendererProps): ReactElement {
   return (
     <div className={styles.progress}>
       {moduleItems(module).map((item, i) => (
-        <div key={i} className={styles.progRow}>
+        <div key={i} className={styles.progRow} style={staggerIndex(i)}>
           <div className={styles.progHead}>
             <span className={styles.label}>{item.label}</span>
             <span className={styles.progValue}>{item.value ?? (item.weight != null ? `${Math.round(item.weight)}%` : '')}</span>
           </div>
-          <span className={styles.track} aria-hidden="true">
-            <span className={styles.fill} style={fraction((item.weight ?? 0) / 100)} />
-          </span>
+          <Bar value={(item.weight ?? 0) / 100} />
           <Detail text={item.detail} />
         </div>
       ))}
@@ -188,41 +239,18 @@ export function ProgressModule({ module }: ModuleRendererProps): ReactElement {
 }
 
 export function KeyValueModule({ module }: ModuleRendererProps): ReactElement {
-  return (
-    <dl className={styles.kv}>
-      {moduleItems(module).map((item, i) => (
-        <div key={i} className={styles.kvPair}>
-          <dt className={styles.kvKey}>{item.label}</dt>
-          {item.value || item.detail ? (
-            <dd className={styles.kvValue}>
-              {item.value ?? <RichText text={item.detail ?? ''} />}
-              {item.value ? <Detail text={item.detail} /> : null}
-            </dd>
-          ) : null}
-        </div>
-      ))}
-    </dl>
-  );
+  return <KvList items={moduleItems(module)} />;
 }
 
 export function TagsModule({ module }: ModuleRendererProps): ReactElement {
-  return (
-    <ul className={styles.tags}>
-      {moduleItems(module).map((item, i) => (
-        <li key={i} className={styles.tag}>
-          {item.label}
-          {item.value ? <span className={styles.tagValue}>{item.value}</span> : null}
-        </li>
-      ))}
-    </ul>
-  );
+  return <TagRow items={moduleItems(module)} />;
 }
 
 export function StepsModule({ module }: ModuleRendererProps): ReactElement {
   return (
     <ol className={styles.steps}>
       {moduleItems(module).map((item, i) => (
-        <li key={i} className={styles.step}>
+        <li key={i} className={styles.step} style={staggerIndex(i)}>
           <span className={styles.stepNum} aria-hidden="true">{i + 1}</span>
           <div className={styles.stepBody}>
             <div className={styles.stepHead}>

@@ -1,5 +1,6 @@
 import { ai, resolveResearchModelName, resolveResearchModelRef } from '../infrastructure/geminiClient.js';
 import { sourcesFromGrounding, type GroundingSource } from '../infrastructure/grounding.js';
+import { verifyImage } from '../infrastructure/verifyImage.js';
 import { safeHttpsUrl } from '../domain/Scene.js';
 import { firstLine, linkedSignal, type GenerateInput } from './cortexFlow.js';
 import { buildResearchPrompt } from './prompt.js';
@@ -62,6 +63,13 @@ export async function runResearch(input: GenerateInput): Promise<ResearchResult 
       imageUrl,
       searches: countSearches(res.custom),
     };
+    // Warm the hero check here rather than when the scene is assembled: it then
+    // runs during the preface grace period and the main call's first token, so
+    // the flow's lookup is a memo hit and the image makes the first partial.
+    // Deliberately not awaited (verifyImage never rejects) and deliberately
+    // without the request signal: a client disconnect must not cache a
+    // "not verified" that every later request would inherit.
+    if (result.imageUrl !== '') void verifyImage(result.imageUrl);
     console.log(
       `[cortex] research model=${resolveResearchModelName()} ms=${Date.now() - started} `
       + `searches=${result.searches} sources=${result.sources.length} chars=${result.brief.length}`,

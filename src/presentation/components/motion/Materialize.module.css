@@ -3,5 +3,7 @@
 }
 
 .enter {
-  animation: materialize var(--dur-slow) var(--ease) both;
+  /* `unfurl` scales on the block axis; it has to open downward, not from the middle. */
+  transform-origin: top center;
+  animation: var(--enter, materialize) var(--dur-slow) var(--ease) both;
 }

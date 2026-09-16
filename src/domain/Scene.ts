@@ -15,10 +15,21 @@ export const SCENE_MOTIFS = ['flow', 'rings', 'grid', 'none'] as const;
 export const SCENE_DENSITIES = ['sparse', 'balanced', 'dense'] as const;
 export const FACT_KINDS = [
   'list', 'timeline', 'stats', 'comparison', 'quote', 'ranking', 'progress', 'keyvalue', 'tags',
-  'steps', 'formula', 'code', 'prose', 'proscons', 'chart',
+  'steps', 'formula', 'code', 'prose', 'proscons', 'chart', 'panel',
 ] as const;
 export const SPOTLIGHT_KINDS = ['stat', 'quote', 'callout'] as const;
 export const ITEM_SIDES = ['a', 'b'] as const;
+
+// Composition vocabulary: the model may propose part of the interface, but only
+// by picking from these lists. Every value maps to a data attribute or a custom
+// property through a fixed table, so nothing the model writes reaches CSS.
+export const MODULE_SLOTS = ['rail', 'main'] as const;
+export const MODULE_SPANS = ['wide', 'compact'] as const;
+export const MODULE_EMPHASES = ['lead', 'normal', 'quiet'] as const;
+export const MODULE_TONES = ['neutral', 'positive', 'caution', 'critical'] as const;
+export const MODULE_REVEALS = ['rise', 'draw', 'count', 'fade'] as const;
+export const ITEM_SHAPES = ['figure', 'bar', 'note', 'pair', 'tag', 'divider'] as const;
+
 export const SCENE_VERSION = 3;
 
 export const LIMITS = {
@@ -42,6 +53,7 @@ export const LIMITS = {
   categoryName: 40,
   maxModules: 8,
   maxItems: 6,
+  maxPanel: 8,
   maxSteps: 8,
   maxChartPoints: 12,
   maxMeta: 8,
@@ -81,6 +93,12 @@ export type SceneDensity = typeof SCENE_DENSITIES[number];
 export type FactKind = typeof FACT_KINDS[number];
 export type SpotlightKind = typeof SPOTLIGHT_KINDS[number];
 export type ItemSide = typeof ITEM_SIDES[number];
+export type ModuleSlot = typeof MODULE_SLOTS[number];
+export type ModuleSpanHint = typeof MODULE_SPANS[number];
+export type ModuleEmphasis = typeof MODULE_EMPHASES[number];
+export type ModuleTone = typeof MODULE_TONES[number];
+export type ModuleReveal = typeof MODULE_REVEALS[number];
+export type ItemShape = typeof ITEM_SHAPES[number];
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 const BARE_HEX_RE = /^[0-9a-fA-F]{6}$/;
@@ -203,6 +221,7 @@ export function itemCap(kind: FactKind): number {
   if (kind === 'tags') return LIMITS.maxTags;
   if (kind === 'steps') return LIMITS.maxSteps;
   if (kind === 'chart') return LIMITS.maxChartPoints;
+  if (kind === 'panel') return LIMITS.maxPanel;
   return LIMITS.maxItems;
 }
 
@@ -211,9 +230,24 @@ export function kindUsesSide(kind: FactKind): boolean {
   return kind === 'comparison' || kind === 'proscons';
 }
 
-/** Item `weight` is kept only for these kinds. */
+/** Item `weight` is kept only for these kinds; a panel bar or gauge needs it too. */
 export function kindUsesWeight(kind: FactKind): boolean {
-  return kind === 'stats' || kind === 'ranking' || kind === 'progress' || kind === 'chart';
+  return kind === 'stats' || kind === 'ranking' || kind === 'progress' || kind === 'chart' || kind === 'panel';
+}
+
+/** Item `shape` is kept only for `panel`, the one kind whose items compose themselves. */
+export function kindUsesShape(kind: FactKind): boolean {
+  return kind === 'panel';
+}
+
+/**
+ * The item `shape` when the kind uses it and the value is a known shape.
+ * Both mirrors read shapes through this, so an unknown shape can never reach a
+ * renderer as anything other than `undefined`.
+ */
+export function itemShape(kind: FactKind, value: unknown): ItemShape | undefined {
+  if (!kindUsesShape(kind) || typeof value !== 'string') return undefined;
+  return (ITEM_SHAPES as readonly string[]).includes(value) ? value as ItemShape : undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -253,6 +287,8 @@ export interface SceneItem {
   /** Clamped to 0-100 when present. */
   weight?: number;
   side?: ItemSide;
+  /** panel only: which existing atom draws this part. */
+  shape?: ItemShape;
 }
 
 export interface SceneModule {
@@ -269,6 +305,15 @@ export interface SceneModule {
   value?: string;
   /** Present only when non-empty. */
   items?: SceneItem[];
+  /**
+   * Composition directives. Each one only seeds the computed presentation, which
+   * still has the last word; see the presentation layer for what overrides what.
+   */
+  slot?: ModuleSlot;
+  span?: ModuleSpanHint;
+  emphasis?: ModuleEmphasis;
+  tone?: ModuleTone;
+  reveal?: ModuleReveal;
 }
 
 export interface SceneAnswer {
@@ -320,6 +365,11 @@ export const DEFAULT_PRESENTATION: Readonly<ScenePresentation> = Object.freeze({
 
 export function asEnum<T extends string>(value: unknown, allowed: readonly T[], fallback: T): T {
   return typeof value === 'string' && (allowed as readonly string[]).includes(value) ? (value as T) : fallback;
+}
+
+/** Same rule as `asEnum`, but an unknown value is dropped rather than replaced. */
+function optionalEnum<T extends string>(value: unknown, allowed: readonly T[]): T | undefined {
+  return typeof value === 'string' && (allowed as readonly string[]).includes(value) ? (value as T) : undefined;
 }
 
 function toText(value: unknown, max: number): string {
@@ -377,6 +427,8 @@ function toItem(raw: unknown, kind: FactKind): SceneItem | null {
   if (detail !== undefined) item.detail = detail;
   if (weight !== undefined && kindUsesWeight(kind)) item.weight = weight;
   if ((raw.side === 'a' || raw.side === 'b') && kindUsesSide(kind)) item.side = raw.side;
+  const shape = itemShape(kind, raw.shape);
+  if (shape !== undefined) item.shape = shape;
   return item;
 }
 
@@ -411,6 +463,18 @@ function toModule(raw: unknown): SceneModule | null {
     }
     if (items.length > 0) module.items = items;
   }
+  // Copied through verbatim: each is already one of its enum values or undefined,
+  // and what a directive actually does is the presentation layer's decision.
+  const slot = optionalEnum(raw.slot, MODULE_SLOTS);
+  const span = optionalEnum(raw.span, MODULE_SPANS);
+  const emphasis = optionalEnum(raw.emphasis, MODULE_EMPHASES);
+  const tone = optionalEnum(raw.tone, MODULE_TONES);
+  const reveal = optionalEnum(raw.reveal, MODULE_REVEALS);
+  if (slot !== undefined) module.slot = slot;
+  if (span !== undefined) module.span = span;
+  if (emphasis !== undefined) module.emphasis = emphasis;
+  if (tone !== undefined) module.tone = tone;
+  if (reveal !== undefined) module.reveal = reveal;
   return module;
 }
 

@@ -84,6 +84,9 @@
   bottom: 8px;
   width: 1px;
   background: linear-gradient(to bottom, color-mix(in srgb, var(--m) 60%, transparent), var(--line));
+  /* One rail for the whole list, so it draws top-down without a per-item index. */
+  transform-origin: top;
+  animation: railDraw var(--dur-slow) var(--ease) both;
 }
 
 .tlItem {
@@ -106,6 +109,8 @@
   border-radius: 50%;
   background: var(--ink-1);
   border: 1.5px solid color-mix(in srgb, var(--m) 85%, white);
+  /* Dots land behind the rail: it has a head start, then each node pops in turn. */
+  animation: nodeIn var(--dur-base) var(--ease) calc(var(--dur-slow) * 0.45 + var(--i, 0) * var(--stagger, 60ms)) both;
 }
 
 .tlDate {
@@ -155,6 +160,9 @@
   stroke: color-mix(in srgb, var(--m) 85%, white);
   stroke-width: 3;
   stroke-linecap: round;
+  /* pathLength is 100, so --dash is the swept percentage the renderer computed. */
+  stroke-dasharray: var(--dash, 0) 100;
+  animation: sweep var(--dur-slow) var(--ease) calc(var(--i, 0) * var(--stagger, 60ms)) both;
 }
 
 .figure {
@@ -335,7 +343,7 @@
   background: linear-gradient(90deg, color-mix(in srgb, var(--m) 55%, transparent), color-mix(in srgb, var(--m) 95%, white));
   transform-origin: left center;
   transform: scaleX(var(--w, 0));
-  animation: fillIn var(--dur-slow) var(--ease) both;
+  animation: fillIn var(--dur-slow) var(--ease) calc(var(--i, 0) * var(--stagger, 60ms)) both;
 }
 
 @keyframes fillIn {
@@ -468,6 +476,9 @@
   bottom: 4px;
   width: 1px;
   background: linear-gradient(to bottom, color-mix(in srgb, var(--m) 45%, transparent), var(--line));
+  /* One segment per step, so each draws after its own number has appeared. */
+  transform-origin: top;
+  animation: railDraw var(--dur-base) var(--ease) calc(var(--i, 0) * var(--stagger, 60ms) + var(--dur-fast)) both;
 }
 
 .stepNum {
@@ -482,6 +493,7 @@
   background: color-mix(in srgb, var(--m) 12%, var(--ink-1));
   border: 1px solid color-mix(in srgb, var(--m) 45%, transparent);
   font-variant-numeric: tabular-nums;
+  animation: nodeIn var(--dur-base) var(--ease) calc(var(--i, 0) * var(--stagger, 60ms)) both;
 }
 
 .stepBody {
@@ -694,4 +706,48 @@
 .pcValue {
   font-size: var(--fs-small);
   color: var(--text-dim);
+}
+
+/* Reveal choreography */
+
+@keyframes railDraw {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@keyframes nodeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes sweep {
+  from {
+    stroke-dasharray: 0 100;
+  }
+}
+
+/*
+ * A settled turn must not replay. Every reveal above is a one-shot that would
+ * otherwise restart on each mount, so an old turn scrolling back into the tree
+ * would animate as if it had just arrived. The settled state is the base rule
+ * in every case, so dropping the animation lands exactly where it should.
+ */
+[data-reveal='false'] :is(.fill, .gaugeFill, .tlNode, .stepNum),
+[data-reveal='false'] .timeline::before,
+[data-reveal='false'] .step:not(:last-child)::before {
+  animation: none;
+}
+
+/*
+ * `reveal: fade` asks for a card that simply appears. The card itself still
+ * takes an entrance from Materialize; this drops the second layer, so nothing
+ * inside it draws, sweeps or counts its way in on top of that.
+ */
+[data-enter='fade'] :is(.fill, .gaugeFill, .tlNode, .stepNum),
+[data-enter='fade'] .timeline::before,
+[data-enter='fade'] .step:not(:last-child)::before {
+  animation: none;
 }

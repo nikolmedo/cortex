@@ -146,7 +146,11 @@ export function fixturePartials(scene: Scene): Array<Record<string, unknown>> {
     title: scene.title,
     subtitle: scene.subtitle,
     presentation: scene.presentation,
-    image_url: '',
+    // Carried from the very first partial, the way the live path does it.
+    // Filling it in only at the `framed` step flipped the hero on mid-stream
+    // and re-templated the desktop grid around it. Fixture replay is offline by
+    // design, so nothing is verified here — the URL is replayed as captured.
+    image_url: scene.image_url,
     meta: {},
     modules: [],
   };

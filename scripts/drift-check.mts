@@ -9,6 +9,7 @@ import * as client from '../src/domain/Scene.ts';
 const CONSTANTS = [
   'VALID_TYPES', 'SCENE_INTENTS', 'SCENE_LAYOUTS', 'SCENE_MOODS', 'SCENE_MOTIFS', 'SCENE_DENSITIES',
   'FACT_KINDS', 'SPOTLIGHT_KINDS', 'ITEM_SIDES', 'SCENE_VERSION', 'LIMITS', 'LAYOUT_BY_INTENT', 'DEFAULT_PALETTE',
+  'MODULE_SLOTS', 'MODULE_SPANS', 'MODULE_EMPHASES', 'MODULE_TONES', 'MODULE_REVEALS', 'ITEM_SHAPES',
 ] as const;
 
 let failures = 0;
@@ -45,6 +46,41 @@ const payload = {
     { category: 'Formula', color: '#7FD8FF', kind: 'formula', items: [{ label: 't = d / (v2 - v1) <ok>' }] },
     { category: 'Code', color: 'red', kind: 'code', value: 'python', body: '\n  if a < b:\n\tpass  \n' },
     { category: 'Prose', color: '#7FD8FF', kind: 'prose', body: 'A\n\nB' },
+    // ScenePresentation and SceneModule live outside the byte-for-byte block, so
+    // the composition directives are only ever compared through this payload.
+    // Every new field appears here, each with at least one invalid value, so a
+    // mirror that forgot to drop one shows up as a diff rather than at runtime.
+    {
+      category: 'Panel', color: '#7FD8FF', kind: 'panel',
+      slot: 'rail', span: 'compact', emphasis: 'lead', tone: 'chartreuse', reveal: 'draw',
+      items: [
+        { label: 'Capacity', value: '12 GW', weight: 140, shape: 'figure' },
+        { label: 'Share', weight: 40, shape: 'bar' },
+        { label: 'Unknown shape is dropped', shape: 'hologram' },
+        { label: 'Break', shape: 'divider' },
+      ],
+    },
+    // The regression this payload exists to pin: a module the model returned as
+    // all shell and no body — every directive set, no items, no facts, no body.
+    // Both mirrors must normalise it to the same content-less module (facts: [],
+    // no items key) so the composition can recognise it and drop it rather than
+    // render a header over an empty box.
+    { category: 'Hollow steps', color: '#7FD8FF', kind: 'steps', span: 'wide', emphasis: 'lead', reveal: 'draw' },
+    { category: 'Hollow chart', color: '#7FD8FF', kind: 'chart', tone: 'positive', reveal: 'draw', items: [] },
+    // An invalid kind falls back to 'list' on both sides. The directives must
+    // survive that fallback identically, since each mirror applies it at a
+    // different point: a zod .catch() on one side, asEnum() on the other.
+    {
+      category: 'Bad kind', color: '#7FD8FF', kind: 'bogus',
+      span: 'wide', emphasis: 'lead', reveal: 'draw',
+      items: [{ label: 'still a list item', shape: 'figure' }],
+    },
+    // tags uses neither shape nor weight, so both must disappear on both sides.
+    {
+      category: 'Tags', color: '#7FD8FF', kind: 'tags',
+      slot: 'sideways', span: 'wide', emphasis: 'enormous', tone: 'caution', reveal: 'somersault',
+      items: [{ label: 'kept', shape: 'tag', weight: 50 }],
+    },
     'junk',
   ],
   followups: ['Why?', 42, ''],

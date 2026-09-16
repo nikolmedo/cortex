@@ -58,6 +58,15 @@
   min-width: 0;
 }
 
+/*
+ * The streaming placeholder joins the modules grid as its trailing cell rather
+ * than sitting under it, so a half-width card waiting for its neighbour keeps
+ * the row it is already in instead of stretching and snapping back.
+ */
+.pendingCell {
+  min-width: 0;
+}
+
 .foot {
   display: flex;
   flex-direction: column;
@@ -88,14 +97,23 @@
     max-width: 640px;
   }
 
-  .composition[data-layout='dossier'] .hero {
-    max-height: 420px;
-  }
-
   .foot {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     column-gap: var(--sp-7);
+  }
+}
+
+/*
+ * The wrapper cap has to track the figure's own cap in blocks.module.css, and
+ * that one rises to 560px at 1280. Left open at the top end this rule pinned the
+ * wrapper to 420 while the figure inside it was allowed 560, so a portrait hero
+ * (the ratio clamp floor is 0.7) would have hung ~140px out of its grid row.
+ * Above 1280 the figure's own cap governs and the wrapper just takes its height.
+ */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .composition[data-layout='dossier'] .hero {
+    max-height: min(70vh, 420px);
   }
 }
 

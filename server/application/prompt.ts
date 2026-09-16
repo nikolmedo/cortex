@@ -1,7 +1,13 @@
 import {
   DEFAULT_PALETTE,
   FACT_KINDS,
+  ITEM_SHAPES,
   LIMITS,
+  MODULE_EMPHASES,
+  MODULE_REVEALS,
+  MODULE_SLOTS,
+  MODULE_SPANS,
+  MODULE_TONES,
   SCENE_DENSITIES,
   SCENE_INTENTS,
   SCENE_LAYOUTS,
@@ -92,7 +98,7 @@ export function buildMainPrompt(query: string, preface: ScenePreface | null, bri
 export function buildSystemPrompt(lang: ResponseLang): string {
   return `${SYSTEM_PROMPT}
 
-LANGUAGE: Write every human-readable value (title, subtitle, answer, summary, module names, headlines, facts, item labels/values/details, prose bodies, meta, spotlight, followups) in ${LANG_NAMES[lang]}. JSON field names and enum values (intent, type, layout, mood, motif, density, kind, side) stay exactly as specified. Code stays in its programming language. EXCEPTION: every "image_query" is ALWAYS in English.`;
+LANGUAGE: Write every human-readable value (title, subtitle, answer, summary, module names, headlines, facts, item labels/values/details, prose bodies, meta, spotlight, followups) in ${LANG_NAMES[lang]}. JSON field names and enum values (intent, type, layout, mood, motif, density, kind, side, slot, span, emphasis, tone, reveal, shape) stay exactly as specified. Code stays in its programming language. EXCEPTION: every "image_query" is ALWAYS in English.`;
 }
 
 export function buildPrefacePrompt(lang: ResponseLang): string {
@@ -146,6 +152,9 @@ const ENTITY_EXAMPLE = `{
       "color": "#6FE3D1",
       "image_query": "vintage laboratory glassware",
       "kind": "timeline",
+      "span": "wide",
+      "emphasis": "lead",
+      "reveal": "draw",
       "headline": "From Warsaw student to two-time laureate in two decades",
       "facts": ["Born in Warsaw, 1867", "Nobel Prize in Physics, 1903", "Nobel Prize in Chemistry, 1911"],
       "items": [
@@ -158,9 +167,30 @@ const ENTITY_EXAMPLE = `{
       "category": "In her words",
       "color": "#F2C46B",
       "kind": "quote",
+      "emphasis": "quiet",
+      "reveal": "fade",
       "facts": ["Nothing in life is to be feared"],
       "items": [
         { "label": "Nothing in life is to be feared, it is only to be understood.", "detail": "Attributed, widely quoted" }
+      ]
+    },
+    {
+      "category": "At a glance",
+      "color": "#FF8A7A",
+      "kind": "panel",
+      "span": "compact",
+      "tone": "positive",
+      "reveal": "count",
+      "facts": ["Two Nobel Prizes", "Two elements discovered"],
+      "items": [
+        { "label": "Nobel Prizes", "value": "2", "shape": "figure" },
+        { "label": "Elements discovered", "value": "2", "detail": "Polonium and radium", "shape": "figure" },
+        { "label": "Nationality", "value": "Polish-French", "shape": "pair" },
+        { "label": "Recognition in her lifetime", "value": "Exceptional", "weight": 92, "shape": "bar" },
+        { "label": "Fields", "shape": "divider" },
+        { "label": "Physics", "shape": "tag" },
+        { "label": "Chemistry", "shape": "tag" },
+        { "label": "Radiochemistry", "shape": "tag" }
       ]
     }
   ],
@@ -195,6 +225,9 @@ const PROBLEM_EXAMPLE = `{
       "category": "Given",
       "color": "#8FD3FF",
       "kind": "keyvalue",
+      "slot": "rail",
+      "emphasis": "quiet",
+      "reveal": "fade",
       "facts": ["Rate 5% a year", "Compounded annually"],
       "items": [
         { "label": "Annual rate", "value": "5%" },
@@ -206,6 +239,9 @@ const PROBLEM_EXAMPLE = `{
       "category": "Worked solution",
       "color": "#8FD3FF",
       "kind": "steps",
+      "span": "wide",
+      "emphasis": "lead",
+      "reveal": "draw",
       "headline": "Set growth equal to 2 and solve for n",
       "facts": ["1.05ⁿ = 2", "n ≈ 14.21", "Doubled after year 15"],
       "items": [
@@ -219,6 +255,8 @@ const PROBLEM_EXAMPLE = `{
       "category": "Formulas",
       "color": "#B8F28A",
       "kind": "formula",
+      "span": "compact",
+      "reveal": "rise",
       "facts": ["Compound growth", "Exact doubling time", "Rule of 72"],
       "items": [
         { "label": "A = P × (1 + r)ⁿ", "detail": "Balance after n periods at rate r per period" },
@@ -230,6 +268,9 @@ const PROBLEM_EXAMPLE = `{
       "category": "Growth of 1 unit",
       "color": "#FFC46B",
       "kind": "chart",
+      "span": "wide",
+      "tone": "positive",
+      "reveal": "draw",
       "headline": "Slow start, then the curve steepens",
       "facts": ["1.00 at year 0", "2.08 at year 15"],
       "items": [
@@ -285,9 +326,14 @@ JSON SHAPE (field names are fixed; enum values are lowercase exactly as listed):
       "kind": "${enumList(FACT_KINDS)}",
       "headline": "One-line takeaway (max ${LIMITS.headline} chars)",
       "facts": ["Plain one-line fact"],
-      "items": [ { "label": "text", "value": "short text", "detail": "sentence" } ],
+      "items": [ { "label": "text", "value": "short text", "detail": "sentence", "shape": "panel items only" } ],
       "body": "code or prose only",
-      "value": "code only: language"
+      "value": "code only: language",
+      "slot": "${enumList(MODULE_SLOTS)}",
+      "span": "${enumList(MODULE_SPANS)}",
+      "emphasis": "${enumList(MODULE_EMPHASES)}",
+      "tone": "${enumList(MODULE_TONES)}",
+      "reveal": "${enumList(MODULE_REVEALS)}"
     }
   ],
   "followups": ["Natural next question"]
@@ -317,10 +363,24 @@ ITEMS PER KIND (3 to 6 items unless noted). Fields not listed for a kind stay ou
   formula: label = the expression in plain text, e.g. "d = v × t", detail = what it means and what each symbol is.
   proscons: side = "a" for a pro or "b" for a con, label = the point, detail = why it matters.
   chart: 4 to 12 points in order; label = x-axis point, value = the real number with unit, weight = that number scaled 0-100 against the largest point.
+  panel: a card you compose yourself, 3 to ${LIMITS.maxPanel} parts, when no other kind matches the shape of what you have to show. Every part carries a "shape": ${enumList(ITEM_SHAPES)}. figure = label + value, drawn as a large number that counts up (add weight 0-100 for a ring around it); bar = label + weight 0-100, with value as the readout; note = label + detail, a line with its explanation; pair = label + value, a key and its value; tag = label only, a keyword; divider = a rule separating groups, label optional. Consecutive tags share one row and consecutive pairs one list, so keep them together. It is not a replacement for stats, keyvalue or tags when one of those already fits.
   code: no items; body = the snippet with real newlines and indentation (max ${LIMITS.code} chars); value = language.
   prose: no items; body = one passage (max ${LIMITS.prose} chars).
 - facts: 2 to 6 plain one-line fallback facts for every kind except code and prose.
 - Module "image_query" only for entity intents; omit it otherwise.
+
+COMPOSITION (optional per-module directives). Omitting one costs nothing: a computed default takes over, and the layout still overrides anything that would not fit on the screen it lands on. Set one only when you mean it. The counts below are hard, like the module minimums: count them before returning.
+- emphasis: EXACTLY ONE module in the scene may be "lead" — the one a reader must not miss (the worked solution, the required comparison, the timeline of a breaking story). Use "quiet" for reference material: givens, definitions, caveats. Everything else omits it.
+- span: AT MOST TWO modules may be "wide". Use it for content that needs the full width: a chart, a code snippet, a comparison, a long set of steps. Everything else is compact by default and never needs to say so.
+- slot: "rail" ONLY for compact reference material that still reads in a narrow column: keyvalue, stats, tags, ranking, progress. Never for chart, code, prose, comparison, steps or panel — those are put back in the main column. At most two rail modules.
+- tone: follows the VALENCE OF THE CONTENT, never the palette and never the module color. "positive" for gains, growth and successes; "caution" for risks, limits and trade-offs; "critical" for failures, losses and dangers; omit it for ordinary facts. Most modules are neutral — a scene where every card is toned has said nothing at all.
+- reveal: "draw" ONLY for chart, timeline and steps, the kinds that build up as they are read. "count" for a module led by a figure. "fade" for quiet text: prose, list, quote. "rise" or omitted for everything else.
+
+PER-KIND DEFAULTS (what you already get, so that deviating is a deliberate act)
+- chart, code, prose, comparison: full width. Every other kind: half width.
+- keyvalue, stats, tags, ranking, progress: the side rail, on the layouts that have one.
+- chart, timeline, steps: "draw". stats: "count". Every other kind: the layout's own entrance.
+- No tone and no emphasis: an ordinary card in the color you chose for it.
 
 PRESENTATION DETAILS
 - motif (ambient field): flow for continuous processes, nature, fluids, economies, music and cooking; rings for astronomy, physics, cycles, eras and places; grid for engineering, software, data, maths and products; none for literature, philosophy, ethics and other text-first subjects.
@@ -334,7 +394,7 @@ OTHER FIELDS
 - image_url: only for entity intents, the direct https URL of the best image (Wikipedia infobox image, official press photo) or "" if none is found; never invent one. For every other intent it MUST be "" and image_query is omitted: no stock photos for maths, procedures or comparisons.
 - followups: 2 to 4 short, natural next questions that go deeper or sideways from this answer.
 
-EXAMPLE (entity, abbreviated to 2 modules; real entity scenes have 5 to 7). Its colors are illustrative only; never reuse them:
+EXAMPLE (entity, abbreviated to 3 modules; real entity scenes have 5 to 7). Its colors are illustrative only; never reuse them:
 ${ENTITY_EXAMPLE}
 
 EXAMPLE (problem; note focus layout, empty image_url, no image_query, and every step with a value). Its colors are illustrative only; never reuse them:

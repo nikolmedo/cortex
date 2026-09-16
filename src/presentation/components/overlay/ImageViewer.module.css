@@ -1,0 +1,117 @@
+/* Full-bleed look at one image. Shares the overlay layer with the settings panel. */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: rgb(5 7 12 / 0.86);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  animation: fadeIn var(--dur-fast) var(--ease) both;
+}
+
+.panel {
+  position: fixed;
+  z-index: var(--z-overlay);
+  /* inset + auto margins centre the box without a transform, which leaves
+     transform free for the entry animation. */
+  inset: max(var(--sp-4), env(safe-area-inset-top)) var(--gutter) max(var(--sp-4), env(safe-area-inset-bottom));
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-3);
+  width: min(92vw, 1400px);
+  height: 86vh;
+  /* The margin around the image belongs to the backdrop, so a click there closes
+     the viewer; the parts that matter opt back in below. */
+  pointer-events: none;
+  animation: materialize var(--dur-base) var(--ease) both;
+}
+
+.panel:focus {
+  outline: none;
+}
+
+.image {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  /* Whole image or nothing: this view exists because the figure had to crop. */
+  object-fit: contain;
+  border-radius: var(--r-md);
+  pointer-events: auto;
+}
+
+.bar {
+  flex: none;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  max-width: 100%;
+  padding: 4px 4px 4px 16px;
+  border-radius: var(--r-pill);
+  background: var(--surface-strong);
+  border: 1px solid var(--line-strong);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
+  pointer-events: auto;
+}
+
+.caption {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+  min-height: var(--hit);
+  padding: 0 12px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-small);
+  color: var(--text-hi);
+  text-decoration: none;
+  transition: background-color var(--dur-fast) var(--ease);
+}
+
+.link:hover {
+  background: var(--surface-raised);
+}
+
+.link svg {
+  color: var(--scene-primary);
+}
+
+.close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: var(--hit);
+  height: var(--hit);
+  border-radius: 50%;
+  color: var(--text-dim);
+  transition: color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+}
+
+.close:hover {
+  color: var(--text-hi);
+  background: var(--line);
+}
+
+@media (max-width: 767px) {
+  .panel {
+    width: calc(100vw - 2 * var(--gutter));
+    height: 80vh;
+  }
+
+  .caption {
+    display: none;
+  }
+}

@@ -1,0 +1,94 @@
+/*
+ * Layout only. Every visible part of a panel — the figure, the gauge, the bar,
+ * the pills, the key/value rows — is an atom shared with the other kinds and
+ * styled by kinds.module.css, so a panel can never drift away from them.
+ */
+
+.panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px 20px;
+}
+
+@container (min-width: 420px) {
+  .panel {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Runs of tags and pairs read across the whole card, not down one column. */
+.full {
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.cell[data-shape='figure'] {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.cellText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.caption {
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.noteLabel {
+  color: var(--text-hi);
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.barHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.barValue {
+  font-family: var(--font-display);
+  color: var(--text-hi);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The one part that carries no data of its own: it groups what comes after it. */
+.divider {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 2px 0;
+}
+
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--m) 40%, transparent), transparent);
+}
+
+.dividerLabel {
+  flex: none;
+  font-size: var(--fs-caption);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-faint);
+}

@@ -10,12 +10,13 @@ interface SceneThemeProps {
 }
 
 /**
- * Scopes one turn's palette as inline custom properties. The palette properties
- * are registered (@property) so a preface-to-scene change crossfades.
+ * Scopes one turn's palette and motion identity as inline custom properties.
+ * The palette properties are registered (@property) so a preface-to-scene change
+ * crossfades; the motion properties deliberately stay out of the transition list
+ * below, since animating a duration would smear the very entrance it times.
  */
 export function SceneTheme({ presentation, className, children }: SceneThemeProps): ReactElement {
-  const { palette } = presentation;
-  const style = useMemo(() => sceneCssVars(palette) as CSSProperties, [palette]);
+  const style = useMemo(() => sceneCssVars(presentation) as CSSProperties, [presentation]);
 
   return (
     <div

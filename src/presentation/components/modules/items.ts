@@ -1,9 +1,21 @@
-import type { FactKind, SceneItem, SceneLayout, SceneModule } from '../../../domain/Scene';
+import type {
+  FactKind, ModuleReveal, ModuleSpanHint, SceneItem, SceneLayout, SceneModule,
+} from '../../../domain/Scene';
 
 /** Structured items when present, otherwise the plain facts as label-only items. */
 export function moduleItems(module: SceneModule): SceneItem[] {
   if (module.items && module.items.length > 0) return module.items;
   return module.facts.map(label => ({ label }));
+}
+
+/**
+ * Whether a module has anything to draw at all. Items come first, facts are the
+ * fallback every renderer already reads through `moduleItems`, and `body` covers
+ * the two kinds that carry their content as text. A module with none of the
+ * three is a header over an empty box, so the composition drops it instead.
+ */
+export function hasContent(module: SceneModule): boolean {
+  return moduleItems(module).length > 0 || Boolean(module.body);
 }
 
 /**
@@ -22,10 +34,41 @@ const DESKTOP_WIDE_KINDS: ReadonlySet<FactKind> = new Set<FactKind>(['code', 'ch
 
 export type ModuleWidth = 'narrow' | 'wide';
 
-export function moduleSpan(layout: SceneLayout, kind: FactKind, width: ModuleWidth = 'narrow'): ModuleSpan {
+/**
+ * `hint` is the model's `span` directive. It is read on a full-width desktop row
+ * only: a narrow screen has one column to give, so a directive there means
+ * nothing. It may widen a card, never squeeze one — a kind that needs the whole
+ * row to be legible keeps it — so `compact` states an intent rather than forcing
+ * a width, and the balancing pass below still has the last word either way.
+ */
+export function moduleSpan(
+  layout: SceneLayout,
+  kind: FactKind,
+  width: ModuleWidth = 'narrow',
+  hint?: ModuleSpanHint,
+): ModuleSpan {
   if (layout === 'split' && kind === 'proscons') return 'pair';
-  if (width === 'wide') return DESKTOP_WIDE_KINDS.has(kind) ? 'wide' : 'compact';
+  if (width === 'wide') {
+    const natural = DESKTOP_WIDE_KINDS.has(kind) ? 'wide' : 'compact';
+    return hint === 'wide' ? 'wide' : natural;
+  }
   return COMPACT_KINDS.has(kind) ? 'compact' : 'wide';
+}
+
+/** Entrance a kind takes when the model does not ask for one. */
+const KIND_REVEAL: Partial<Record<FactKind, ModuleReveal>> = {
+  chart: 'draw',
+  timeline: 'draw',
+  steps: 'draw',
+  stats: 'count',
+};
+
+/**
+ * The module's `reveal` directive, or the default its kind earns. `undefined`
+ * means "no opinion", which leaves the layout's own entrance family in place.
+ */
+export function moduleReveal(module: SceneModule): ModuleReveal | undefined {
+  return module.reveal ?? KIND_REVEAL[module.kind];
 }
 
 /** Kinds that sit in the side rail next to the reading column, per layout. */
@@ -52,7 +95,9 @@ const PAIR_TOLERANCE_PX = 180;
  * instead: a lone tall neighbour leaves a column of dead space beside it.
  */
 export function balancedSpans(layout: SceneLayout, entries: IndexedModule[], width: ModuleWidth = 'narrow'): ModuleSpan[] {
-  const spans = entries.map(({ module }) => moduleSpan(layout, module.kind, width));
+  // The directives only seed the array; the pairing and height-tolerance pass
+  // below then runs over the result exactly as it did before they existed.
+  const spans = entries.map(({ module }) => moduleSpan(layout, module.kind, width, module.span));
   let i = 0;
   while (i < spans.length) {
     const pairs = i + 1 < spans.length
@@ -69,11 +114,33 @@ export function balancedSpans(layout: SceneLayout, entries: IndexedModule[], wid
   return spans;
 }
 
-export function partitionModules(layout: SceneLayout, modules: SceneModule[]): { main: IndexedModule[]; rail: IndexedModule[] } {
+/**
+ * A layout whose rail set is empty has no rail at all, so no directive can
+ * conjure one. Otherwise `slot` decides, but only for kinds that read well in a
+ * narrow column: the rail is a gutter, and a chart or a code block dropped into
+ * it would be unreadable however deliberate the request was.
+ */
+function isRailed(module: SceneModule, railKinds: ReadonlySet<FactKind>, honourSlot: boolean): boolean {
+  if (railKinds.size === 0) return false;
+  if (!honourSlot || module.slot === undefined) return railKinds.has(module.kind);
+  return module.slot === 'rail' && COMPACT_KINDS.has(module.kind);
+}
+
+/**
+ * Splits modules between the reading column and the side rail. `honourSlot` is
+ * true on desktop only: the rail is a desktop arrangement, and a narrow screen
+ * stacks everything in reading order regardless.
+ */
+export function partitionModules(
+  layout: SceneLayout,
+  modules: SceneModule[],
+  honourSlot = false,
+): { main: IndexedModule[]; rail: IndexedModule[] } {
+  const railKinds = RAIL_KINDS[layout];
   const main: IndexedModule[] = [];
   const rail: IndexedModule[] = [];
   modules.forEach((module, index) => {
-    (RAIL_KINDS[layout].has(module.kind) ? rail : main).push({ module, index });
+    (isRailed(module, railKinds, honourSlot) ? rail : main).push({ module, index });
   });
   return { main, rail };
 }
@@ -90,6 +157,7 @@ const ROW_PX: Partial<Record<FactKind, number>> = {
   ranking: 56,
   progress: 56,
   tags: 38,
+  panel: 64,
 };
 
 /** Rough rendered height of a card, in px. Only ever used to compare cards with each other. */

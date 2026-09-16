@@ -2,6 +2,7 @@ import { GenkitError, z } from 'genkit';
 import { ai, redactSecrets, resolveModelName, resolveModelRef } from '../infrastructure/geminiClient.js';
 import { extractJSON } from '../infrastructure/parseScene.js';
 import { sourcesFromGrounding, type GroundingSource } from '../infrastructure/grounding.js';
+import { verifyImage } from '../infrastructure/verifyImage.js';
 import { buildMainPrompt, buildSystemPrompt, type ResponseLang } from './prompt.js';
 import { partialScene } from './partial.js';
 import { SceneWireSchema, safeHttpsUrl, validateScene, type Scene, type ScenePreface } from '../domain/Scene.js';
@@ -120,15 +121,79 @@ function requestOptions(input: SceneInput, shape: RequestProfile) {
   };
 }
 
+interface Hero {
+  /**
+   * Settles once the research image has been judged. Awaited after the model
+   * request is already in flight, so it overlaps the answer instead of delaying
+   * it — see streamOnce.
+   */
+  ready: Promise<void>;
+  /**
+   * The hero as known right now, for a partial. Never blocks: a candidate that
+   * still needs checking is started in the background and picked up by a later
+   * partial, because stalling the stream on a HEAD request is the very latency
+   * this is meant to remove.
+   */
+  offer(candidate: unknown): string;
+  /** The final value, once anything still in flight has settled. */
+  settle(candidate: unknown): Promise<string>;
+}
+
 /**
- * The hero image, resolved by one rule for partials and for the final scene:
- * the image the research stage found, otherwise the model's own. Both go through
- * https validation first, so an invalid model URL falls back to the research
- * image instead of blanking the hero, and the image cannot swap or vanish at the
- * moment the answer completes.
+ * Decides the hero image once per request, by the rule that was already here —
+ * the image the research stage found, otherwise the model's own — with one
+ * addition: a URL is adopted only after verifyImage confirms it really serves an
+ * image. A plausible URL the model invented (the Kyoto fixture's Wikimedia 404)
+ * used to reach the client and render as nothing at all.
+ *
+ * The value locks the moment one verifies and never changes after that, so every
+ * partial and the final scene resolve to the same URL — an invariant a review
+ * already flagged, and the reason verification cannot simply be re-run per
+ * partial. The research image is known before the answer starts and its check is
+ * warmed in the research stage, so it is normally already verified when the
+ * first partial is built: the hero is present from the first frame rather than
+ * appearing later and shifting the layout.
  */
-function heroImage(input: SceneInput, candidate: unknown): string {
-  return safeHttpsUrl(input.research?.imageUrl) || safeHttpsUrl(candidate);
+function createHero(research: ResearchResult | null | undefined): Hero {
+  const researchUrl = safeHttpsUrl(research?.imageUrl);
+  let locked = '';
+  /** The model's URL cannot win until the research image has been judged. */
+  let researchSettled = researchUrl === '';
+  const started = new Set<string>();
+  const inFlight: Array<Promise<unknown>> = [];
+
+  function start(url: string, isResearch: boolean): Promise<void> {
+    started.add(url);
+    const task = verifyImage(url).then(ok => {
+      if (ok && locked === '') locked = url;
+      if (isResearch) researchSettled = true;
+    });
+    inFlight.push(task);
+    return task;
+  }
+
+  const ready = researchUrl === '' ? Promise.resolve() : start(researchUrl, true);
+
+  function offer(candidate: unknown): string {
+    if (locked !== '' || !researchSettled) return locked;
+    const url = safeHttpsUrl(candidate);
+    if (url !== '' && !started.has(url)) start(url, false);
+    return locked;
+  }
+
+  return {
+    ready,
+    offer,
+    async settle(candidate: unknown): Promise<string> {
+      // Two rounds at most: the research image resolves in the first, which is
+      // what allows the model's URL to be offered in the second.
+      for (let round = 0; round < 2 && locked === ''; round += 1) {
+        offer(candidate);
+        await Promise.all(inFlight);
+      }
+      return locked;
+    },
+  };
 }
 
 /** Streams the answer, emitting throttled partial scenes, and returns the final payload. */
@@ -138,8 +203,16 @@ async function streamOnce(
   signal: AbortSignal,
   onPartial: (scene: Record<string, unknown>) => void,
   extra: Record<string, unknown>,
+  hero: Hero,
 ): Promise<GenerationResult> {
   const { stream, response } = ai.generateStream({ ...requestOptions(input, shape), abortSignal: signal });
+
+  // The request is already in flight, so this runs concurrently with the model's
+  // first token rather than in series ahead of it, and verifyImage's own timeout
+  // bounds it. Waiting here is what puts the research image on the FIRST partial
+  // instead of a later one: arriving late is the layout shift this path exists
+  // to remove. A retry re-awaits an already settled promise.
+  await hero.ready;
 
   let lastAt = 0;
   let lastPayload = '';
@@ -150,7 +223,7 @@ async function streamOnce(
       if (now - lastAt < PARTIAL_THROTTLE_MS) continue;
       const scene = partialScene(chunk.output, extra);
       if (!scene) continue;
-      scene.image_url = heroImage(input, scene.image_url);
+      scene.image_url = hero.offer(scene.image_url);
       const payload = JSON.stringify(scene);
       if (payload === lastPayload) continue;
       lastAt = now;
@@ -173,28 +246,39 @@ async function generateOnce(
   shape: RequestProfile,
   signal: AbortSignal,
   extra: Record<string, unknown>,
+  hero: Hero,
 ): Promise<GenerationResult> {
   try {
     const canStream = Boolean(input.onPartial) && shape.structuredOutput;
-    if (canStream) return await streamOnce(input, shape, signal, input.onPartial!, extra);
+    if (canStream) return await streamOnce(input, shape, signal, input.onPartial!, extra, hero);
 
     const res = await ai.generate({ ...requestOptions(input, shape), abortSignal: signal });
     const structured = shape.structuredOutput ? res.output : null;
     const raw = structured != null ? structured : extractJSON(res.text);
     return { raw, custom: res.custom, profile: shape };
   } catch (err) {
-    if (isSchemaValidationError(err)) {
-      const recovered = recoverDataFromValidationError(err.message);
-      if (recovered !== undefined) return { raw: recovered, custom: undefined, profile: shape };
+    if (!isSchemaValidationError(err)) throw err;
+    const recovered = recoverDataFromValidationError(err.message);
+    if (recovered !== undefined) return { raw: recovered, custom: undefined, profile: shape };
+    // The wire schema asks for more than the model reliably gives: `facts` and
+    // `items` are required there so a module can never come back as an empty
+    // shell. That makes it a gate as well as a nudge, and a gate loses the whole
+    // answer over one missing field. The reply is still there, so the gate is
+    // dropped for one retry and the JSON is read out of the text instead, where
+    // the lenient domain schema salvages whatever the model did write. The
+    // process-wide profile is deliberately left alone: structured output is
+    // still the right first attempt for the next question.
+    if (!shape.structuredOutput) {
       throw new CortexError('Structured output did not match the Scene wire schema', 'PARSE_FAILURE');
     }
-    throw err;
+    console.warn(`[cortex] structured output failed validation (${firstLine(err)}); retrying once as raw JSON`);
+    return await generateOnce(input, { ...shape, structuredOutput: false }, signal, extra, hero);
   }
 }
 
-async function generateWithFallback(input: SceneInput, signal: AbortSignal, extra: Record<string, unknown>): Promise<GenerationResult> {
+async function generateWithFallback(input: SceneInput, signal: AbortSignal, extra: Record<string, unknown>, hero: Hero): Promise<GenerationResult> {
   try {
-    return await generateOnce(input, profile, signal, extra);
+    return await generateOnce(input, profile, signal, extra, hero);
   } catch (err) {
     if (!isBadRequest(err)) throw err;
     const dropThinking = profile.thinking && /thinking/i.test(err.message);
@@ -204,7 +288,9 @@ async function generateWithFallback(input: SceneInput, signal: AbortSignal, extr
     };
     if (next.structuredOutput === profile.structuredOutput && next.thinking === profile.thinking) throw err;
     console.warn(`[cortex] request rejected (${firstLine(err)}); retrying with structuredOutput=${next.structuredOutput} thinking=${next.thinking}`);
-    const result = await generateOnce(input, next, signal, extra);
+    // The same Hero as the first attempt: a retry must not blank a hero an
+    // earlier attempt already streamed.
+    const result = await generateOnce(input, next, signal, extra, hero);
     profile = next;
     return result;
   }
@@ -228,12 +314,15 @@ export async function generateScene(input: SceneInput): Promise<Scene> {
   const linked = linkedSignal(input.signal, GEMINI_TIMEOUT_MS);
   const researched = input.research?.sources ?? [];
   // The sources the research stage found are known before the answer is, so
-  // every partial can carry them; the hero image is resolved by heroImage().
+  // every partial can carry them; the hero image is resolved by the Hero below.
   const extra: Record<string, unknown> = researched.length > 0 ? { sources: researched } : {};
+  // Created before the request goes out, so the research image is verified
+  // concurrently with the model call rather than in series ahead of it.
+  const hero = createHero(input.research);
 
   let result: GenerationResult;
   try {
-    result = await generateWithFallback(input, linked.signal, extra);
+    result = await generateWithFallback(input, linked.signal, extra, hero);
   } catch (err) {
     if (input.signal?.aborted) throw new CortexError('Request aborted by client', 'ABORTED');
     if (linked.timedOut()) throw new CortexError(`Upstream timeout after ${GEMINI_TIMEOUT_MS} ms`, 'GEMINI_ERROR');
@@ -245,7 +334,7 @@ export async function generateScene(input: SceneInput): Promise<Scene> {
   const base = result.raw !== null && typeof result.raw === 'object' ? (result.raw as Record<string, unknown>) : {};
   const merged: Record<string, unknown> = { ...base };
   if (sources.length > 0) merged.sources = sources;
-  merged.image_url = heroImage(input, base.image_url);
+  merged.image_url = await hero.settle(base.image_url);
   const scene = validateScene(merged);
 
   const kinds = scene.modules.map(m => m.kind).join(',');

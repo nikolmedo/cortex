@@ -1,0 +1,75 @@
+{
+  "query": "Why is the sky blue?",
+  "lang": "en",
+  "preface": {
+    "intent": "explanation",
+    "title": "Why the Sky Is Blue",
+    "layout": "focus",
+    "mood": "calm",
+    "palette": {
+      "primary": "#7FD8FF",
+      "secondary": "#8C9EFF",
+      "accent": "#5EF2C2"
+    },
+    "plan": [
+      "Recalling how sunlight is made of many wavelengths",
+      "Explaining Rayleigh scattering in the atmosphere",
+      "Connecting scattering strength to the blue we see"
+    ]
+  },
+  "scene": {
+    "version": 3,
+    "intent": "explanation",
+    "type": "concept",
+    "title": "Why the Sky Is Blue",
+    "subtitle": "Air molecules scatter short wavelengths more than long ones",
+    "answer": {
+      "headline": "The sky looks blue because air molecules scatter the short, blue wavelengths of sunlight far more strongly than the longer red and yellow ones.",
+      "body": [
+        "Sunlight looks white, but it is a mix of every color in the visible spectrum. As that light passes through the atmosphere, it collides with tiny nitrogen and oxygen molecules. This is called Rayleigh scattering, and it scatters shorter wavelengths, like blue and violet, roughly ten times more strongly than longer wavelengths like red. Our eyes are more sensitive to blue than violet, so the sky reads as blue rather than violet."
+      ]
+    },
+    "summary": "",
+    "image_url": "",
+    "image_query": "",
+    "meta": {},
+    "presentation": {
+      "layout": "focus",
+      "mood": "calm",
+      "motif": "flow",
+      "density": "sparse",
+      "palette": {
+        "primary": "#7FD8FF",
+        "secondary": "#8C9EFF",
+        "accent": "#5EF2C2"
+      }
+    },
+    "modules": [
+      {
+        "category": "Why it happens",
+        "color": "#7FD8FF",
+        "image_query": "",
+        "kind": "list",
+        "facts": [
+          "Blue light has a shorter wavelength than red light.",
+          "Shorter wavelengths scatter more off small molecules."
+        ],
+        "headline": "Rayleigh scattering favors blue",
+        "items": [
+          {
+            "label": "Scattering strength",
+            "value": "~10x stronger for blue than red"
+          },
+          {
+            "label": "Sunset color shift",
+            "value": "Blue scatters away, leaving red and orange"
+          }
+        ]
+      }
+    ],
+    "followups": [
+      "Why do sunsets look red and orange instead of blue?",
+      "Why isn't the sky violet if violet scatters even more?"
+    ]
+  }
+}

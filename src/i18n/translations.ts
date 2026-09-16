@@ -70,6 +70,7 @@ export const en = {
   'scene.kind.prose': 'Notes',
   'scene.kind.proscons': 'Pros and cons',
   'scene.kind.chart': 'Chart',
+  'scene.kind.panel': 'Panel',
 
   'module.copy': 'Copy',
   'module.copied': 'Copied',
@@ -78,6 +79,12 @@ export const en = {
   'module.sideA': 'Option A',
   'module.sideB': 'Option B',
   'module.sections': 'Sections to compare',
+
+  'image.enlarge': 'Enlarge image',
+  'image.close': 'Close image',
+  'image.loading': 'Loading image',
+  'image.unavailable': 'Image unavailable',
+  'image.openOriginal': 'Open the original',
 
   'settings.title': 'Settings',
   'settings.close': 'Close settings',
@@ -169,6 +176,7 @@ export const es: Translations = {
   'scene.kind.prose': 'Notas',
   'scene.kind.proscons': 'Pros y contras',
   'scene.kind.chart': 'Gráfico',
+  'scene.kind.panel': 'Panel',
 
   'module.copy': 'Copiar',
   'module.copied': 'Copiado',
@@ -177,6 +185,12 @@ export const es: Translations = {
   'module.sideA': 'Opción A',
   'module.sideB': 'Opción B',
   'module.sections': 'Secciones para comparar',
+
+  'image.enlarge': 'Ampliar imagen',
+  'image.close': 'Cerrar imagen',
+  'image.loading': 'Cargando imagen',
+  'image.unavailable': 'Imagen no disponible',
+  'image.openOriginal': 'Abrir el original',
 
   'settings.title': 'Configuración',
   'settings.close': 'Cerrar configuración',

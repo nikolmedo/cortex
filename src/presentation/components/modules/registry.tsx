@@ -1,6 +1,7 @@
 import type { ComponentType } from 'react';
 import type { FactKind, SceneModule } from '../../../domain/Scene';
 import { ChartModule } from './ChartModule';
+import { PanelModule } from './PanelModule';
 import {
   CodeModule, ComparisonModule, FormulaModule, KeyValueModule, ListModule, ProgressModule, ProseModule,
   ProsConsModule, QuoteModule, RankingModule, StatsModule, StepsModule, TagsModule, TimelineModule,
@@ -27,4 +28,5 @@ export const MODULE_RENDERERS: Record<FactKind, ComponentType<ModuleRendererProp
   prose: ProseModule,
   proscons: ProsConsModule,
   chart: ChartModule,
+  panel: PanelModule,
 };

@@ -1,5 +1,6 @@
-import type { ReactElement } from 'react';
+import { useId, type CSSProperties, type ReactElement } from 'react';
 import type { SceneItem } from '../../../domain/Scene';
+import { staggerIndex } from '../../hooks/useCountUp';
 import { moduleItems } from './items';
 import { ListModule } from './kinds';
 import type { ModuleRendererProps } from './registry';
@@ -28,7 +29,7 @@ function Bars({ points }: { points: Point[] }) {
       {points.map((p, i) => {
         const w = Math.max(1.5, Math.min(100, p.weight));
         return (
-          <li key={i} className={styles.barRow}>
+          <li key={i} className={styles.barRow} style={staggerIndex(i)}>
             <span className={styles.barLabel}>{p.label}</span>
             <span className={styles.barValue}>{p.value ?? ''}</span>
             <svg className={styles.barSvg} height="10" role="img" aria-label={p.value ? `${p.label}: ${p.value}` : p.label}>
@@ -44,6 +45,9 @@ function Bars({ points }: { points: Point[] }) {
 
 function Line({ points }: { points: Point[] }) {
   const n = points.length;
+  // Interpolated into a url(#...) reference, so it is reduced to characters that
+  // are always valid in a fragment identifier whatever React's id format is.
+  const clipId = `chart-wipe-${useId().replace(/[^a-zA-Z0-9_-]/g, '')}`;
   const coords = points.map((p, i) => ({
     x: n === 1 ? 50 : X_PAD + (i / (n - 1)) * (100 - 2 * X_PAD),
     y: LINE_H - 3 - (Math.min(100, Math.max(0, p.weight)) / 100) * (LINE_H - 8),
@@ -58,16 +62,30 @@ function Line({ points }: { points: Point[] }) {
       <div className={styles.plot}>
         <div className={styles.plotInner}>
         <svg className={styles.lineSvg} viewBox={`0 0 100 ${LINE_H}`} preserveAspectRatio="none" aria-hidden="true">
+          {/*
+            The line is drawn by wiping this clip rect across the plot, not by
+            animating stroke-dashoffset. `vector-effect: non-scaling-stroke`
+            makes the browser measure the dash pattern in screen pixels, and
+            `pathLength` does not normalise it back, so a dashed stroke stayed
+            visibly broken into ~100px segments even once settled. The gauge in
+            kinds.module.css carries no vector-effect, which is why the same dash
+            technique is correct there and wrong here.
+          */}
+          <defs>
+            <clipPath id={clipId} clipPathUnits="userSpaceOnUse">
+              <rect className={styles.wipe} x="0" y="0" width="100" height={LINE_H} />
+            </clipPath>
+          </defs>
           <line className={styles.grid} x1="0" x2="100" y1={LINE_H - 0.5} y2={LINE_H - 0.5} vectorEffect="non-scaling-stroke" />
           <line className={styles.grid} x1="0" x2="100" y1={LINE_H / 2} y2={LINE_H / 2} vectorEffect="non-scaling-stroke" />
           <polygon className={styles.area} points={area} />
-          <polyline className={styles.stroke} points={line} vectorEffect="non-scaling-stroke" />
+          <polyline className={styles.stroke} points={line} vectorEffect="non-scaling-stroke" clipPath={`url(#${clipId})`} />
         </svg>
         {coords.map((c, i) => (
           <span
             key={i}
             className={i === peak || i === n - 1 ? styles.markerStrong : styles.marker}
-            style={{ left: `${c.x}%`, top: `${(c.y / LINE_H) * 100}%` }}
+            style={{ left: `${c.x}%`, top: `${(c.y / LINE_H) * 100}%`, '--i': i } as CSSProperties}
           />
         ))}
         {points[peak].value ? (

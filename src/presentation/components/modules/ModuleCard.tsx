@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactElement } from 'react';
 import { isHex, type SceneModule } from '../../../domain/Scene';
 import { useI18n } from '../../../i18n/I18nContext';
+import { moduleReveal } from './items';
 import { KIND_ICON, kindLabelKey } from './kindIcons';
 import { MODULE_RENDERERS } from './registry';
 import styles from './ModuleCard.module.css';
@@ -22,6 +23,13 @@ export function ModuleCard({ module, bare = false }: ModuleCardProps): ReactElem
     <section
       className={styles.card}
       data-kind={module.kind}
+      // Directives reach CSS only as these three attributes; each stylesheet rule
+      // that reads one is scoped to the card, never to a bare [data-kind].
+      data-emphasis={module.emphasis ?? 'normal'}
+      data-tone={module.tone ?? 'neutral'}
+      // Not `data-motion`: that attribute is the app-wide reduced-motion switch
+      // on :root, and a second meaning on the card is a collision waiting to happen.
+      data-enter={moduleReveal(module) ?? 'rise'}
       style={color ? ({ '--m': color } as CSSProperties) : undefined}
       aria-label={module.category || kindLabel}
     >

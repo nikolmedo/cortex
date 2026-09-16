@@ -1,0 +1,201 @@
+{
+  "query": "REST vs GraphQL API design tradeoffs",
+  "lang": "en",
+  "preface": {
+    "intent": "comparison",
+    "title": "REST vs GraphQL: API Design Tradeoffs",
+    "layout": "split",
+    "mood": "kinetic",
+    "palette": {
+      "primary": "#FF8A65",
+      "secondary": "#7C4DFF",
+      "accent": "#29E9FF"
+    },
+    "plan": [
+      "Comparing request shapes and over-fetching behavior",
+      "Weighing caching, tooling, and versioning strategy",
+      "Checking how each scales with client diversity"
+    ]
+  },
+  "scene": {
+    "version": 3,
+    "intent": "comparison",
+    "type": "concept",
+    "title": "REST vs GraphQL: API Design Tradeoffs",
+    "subtitle": "Choosing a query model as an API surface grows",
+    "answer": {
+      "headline": "REST wins on simplicity, caching, and tooling maturity; GraphQL wins when clients need flexible, precisely-shaped data from a large, evolving schema.",
+      "body": [
+        "REST organizes an API around resources and HTTP verbs: a client fetches or mutates a URL that represents one entity or collection at a time. This maps cleanly onto HTTP caching, is easy to reason about, and every HTTP client, proxy, and monitoring tool already understands it. The cost shows up as the API grows: a mobile screen that needs data from four resources either makes four round trips or waits for a bespoke aggregation endpoint, and a single resource often ships more fields than any one client actually uses.",
+        "GraphQL flips the contract: the client sends a query describing exactly the fields and nested relations it wants, and the server resolves that shape in one round trip. This removes over-fetching and under-fetching almost entirely, and a single schema can serve a web app, a mobile app, and a partner integration without three sets of endpoints. The cost moves to the server: naive resolvers can trigger the N+1 query problem, arbitrary nesting needs depth and complexity limits, and HTTP-level caching no longer works out of the box because every request is a POST to the same URL.",
+        "Versioning also diverges. REST APIs typically version whole endpoints (v1, v2) or negotiate via headers, which is coarse but predictable. GraphQL favors additive evolution: new fields are added and old ones are deprecated in place, so a single schema version can serve old and new clients simultaneously, at the cost of needing schema governance to stop it from sprawling.",
+        "Tooling maturity still favors REST for anything that leans on generic HTTP infrastructure: CDNs, simple rate limiters, and off-the-shelf API gateways. GraphQL's tooling has caught up for introspection, typed client generation, and query cost analysis, but it usually means adopting a GraphQL-aware layer rather than reusing whatever HTTP tooling is already on hand.",
+        "In practice, teams with a small number of well-known clients and a resource model that maps naturally onto CRUD tend to be happier with REST. Teams serving several very different client types against a wide, fast-changing data graph tend to be happier with GraphQL, provided they invest in resolver-level caching and query complexity limits from day one."
+      ],
+      "caveats": [
+        "Hybrid approaches (REST with sparse fieldsets, or GraphQL over a thin REST layer) are common in practice and blur this comparison.",
+        "GraphQL's caching gap can be closed with persisted queries and edge caching, but it takes deliberate setup that REST gets for free.",
+        "Team familiarity with either paradigm often outweighs the technical tradeoffs discussed here."
+      ]
+    },
+    "summary": "",
+    "image_url": "",
+    "image_query": "",
+    "meta": {
+      "Request shape": "Fixed per endpoint (REST) vs client-defined (GraphQL)",
+      "Round trips": "Often several (REST) vs typically one (GraphQL)",
+      "HTTP caching": "Native (REST) vs requires extra layer (GraphQL)",
+      "Common failure mode": "Over-fetching (REST) vs N+1 resolvers (GraphQL)",
+      "Versioning style": "Endpoint versions (REST) vs additive schema (GraphQL)",
+      "Tooling baseline": "Generic HTTP (REST) vs GraphQL-aware (GraphQL)",
+      "Best fit": "Few clients, CRUD-shaped data (REST)",
+      "Also best fit": "Many client shapes, wide data graph (GraphQL)"
+    },
+    "presentation": {
+      "layout": "split",
+      "mood": "kinetic",
+      "motif": "grid",
+      "density": "dense",
+      "palette": {
+        "primary": "#FF8A65",
+        "secondary": "#7C4DFF",
+        "accent": "#29E9FF"
+      }
+    },
+    "modules": [
+      {
+        "category": "Head to head",
+        "color": "#FF8A65",
+        "image_query": "",
+        "kind": "comparison",
+        "facts": [],
+        "headline": "Where the two models pull apart",
+        "items": [
+          { "label": "Fetch shape", "value": "Fixed resource", "side": "a" },
+          { "label": "Fetch shape", "value": "Client-defined query", "side": "b" },
+          { "label": "Caching", "value": "Native HTTP caching", "side": "a" },
+          { "label": "Caching", "value": "Needs a dedicated layer", "side": "b" },
+          { "label": "Failure mode", "value": "Over/under-fetching", "side": "a" },
+          { "label": "Failure mode", "value": "N+1 resolver calls", "side": "b" }
+        ]
+      },
+      {
+        "category": "Adoption signals",
+        "color": "#7C4DFF",
+        "image_query": "",
+        "kind": "stats",
+        "facts": [
+          "Majority of public APIs still ship REST first.",
+          "GraphQL adoption concentrated in multi-client products."
+        ],
+        "headline": "Where each model shows up in practice",
+        "items": [
+          { "label": "Public APIs offering REST", "value": "~80%", "weight": 80 },
+          { "label": "Public APIs offering GraphQL", "value": "~25%", "weight": 25 },
+          { "label": "Multi-client products preferring GraphQL", "value": "~60%", "weight": 60 }
+        ]
+      },
+      {
+        "category": "REST strengths",
+        "color": "#29E9FF",
+        "image_query": "",
+        "kind": "list",
+        "facts": [
+          "Maps directly onto HTTP verbs and status codes.",
+          "Cacheable at the CDN and browser level for free.",
+          "Every HTTP tool already understands it."
+        ],
+        "headline": "Why REST still wins by default",
+        "items": [
+          { "label": "HTTP-native caching", "value": "No extra layer needed" },
+          { "label": "Simple mental model", "value": "One URL, one resource" },
+          { "label": "Broad tooling support", "value": "Proxies, gateways, monitors" },
+          { "label": "Predictable versioning", "value": "v1, v2 or header-based" }
+        ]
+      },
+      {
+        "category": "Field mapping",
+        "color": "#FF8A65",
+        "image_query": "",
+        "kind": "keyvalue",
+        "facts": [],
+        "headline": "Typical REST vs GraphQL vocabulary",
+        "items": [
+          { "label": "Endpoint", "value": "Query / mutation" },
+          { "label": "Resource", "value": "Type" },
+          { "label": "Query parameter", "value": "Field argument" },
+          { "label": "Status code", "value": "Errors array" }
+        ]
+      },
+      {
+        "category": "Common tags",
+        "color": "#7C4DFF",
+        "image_query": "",
+        "kind": "tags",
+        "facts": [],
+        "headline": "Terms that come up in this decision",
+        "items": [
+          { "label": "over-fetching" },
+          { "label": "under-fetching" },
+          { "label": "N+1 problem" },
+          { "label": "schema stitching" },
+          { "label": "HTTP caching" },
+          { "label": "resolver" },
+          { "label": "persisted queries" },
+          { "label": "API gateway" }
+        ]
+      },
+      {
+        "category": "Deciding path",
+        "color": "#29E9FF",
+        "image_query": "",
+        "kind": "steps",
+        "facts": [
+          "Start from client count and data shape variance.",
+          "Check whether HTTP caching is load-bearing today."
+        ],
+        "headline": "A quick way to pick a direction",
+        "items": [
+          { "label": "Count client shapes", "value": "1-2 clients", "detail": "One or two well-known clients with similar needs usually points toward REST's simplicity." },
+          { "label": "Check data graph width", "value": "Wide, connected data", "detail": "A large graph of related entities that different clients slice differently favors GraphQL's flexible queries." },
+          { "label": "Weigh caching needs", "value": "CDN caching required", "detail": "If CDN-level caching of responses is load-bearing for performance, REST keeps that for free." },
+          { "label": "Assess team readiness", "value": "Resolver ownership", "detail": "GraphQL needs someone accountable for resolver performance and query complexity limits from day one." }
+        ]
+      },
+      {
+        "category": "Example query",
+        "color": "#FF8A65",
+        "image_query": "",
+        "kind": "code",
+        "facts": [],
+        "headline": "A GraphQL query asking for exactly what it needs",
+        "value": "graphql",
+        "body": "query OrderSummary($id: ID!) {\n  order(id: $id) {\n    id\n    total\n    customer {\n      name\n    }\n    items {\n      sku\n      quantity\n    }\n  }\n}"
+      },
+      {
+        "category": "Bottom line",
+        "color": "#7C4DFF",
+        "image_query": "",
+        "kind": "prose",
+        "facts": [],
+        "headline": "Pick the model that matches your client diversity",
+        "body": "Neither model is strictly better: REST optimizes for a small, stable set of clients and free HTTP infrastructure, while GraphQL optimizes for many client shapes pulling from one evolving graph. Most teams that regret their choice picked GraphQL for a single, simple client, or picked REST for a product that grew five very different frontends. Match the model to how many different ways your data actually gets sliced, not to which one is trending."
+      }
+    ],
+    "spotlight": {
+      "kind": "stat",
+      "label": "Public APIs still shipping REST first",
+      "value": "~80%"
+    },
+    "followups": [
+      "How do you prevent the N+1 query problem in a GraphQL resolver?",
+      "Can REST and GraphQL be exposed from the same backend?",
+      "How does GraphQL handle rate limiting without per-endpoint quotas?",
+      "What does GraphQL schema deprecation look like in practice?"
+    ],
+    "sources": [
+      { "title": "graphql.org", "url": "https://graphql.org/learn/" },
+      { "title": "restfulapi.net", "url": "https://restfulapi.net/" }
+    ]
+  }
+}

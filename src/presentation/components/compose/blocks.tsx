@@ -1,10 +1,12 @@
-import { useId, useState, type CSSProperties, type KeyboardEvent, type ReactElement } from 'react';
-import { ArrowRight, ArrowUpRight, Info } from 'lucide-react';
+import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactElement } from 'react';
+import { ArrowRight, ArrowUpRight, Expand, Info } from 'lucide-react';
 import { safeHttpsUrl, type Scene, type SceneAnswer, type SceneSource, type SceneSpotlight } from '../../../domain/Scene';
 import { useI18n } from '../../../i18n/I18nContext';
+import type { ImageStatus } from '../../hooks/useImageSource';
 import type { IndexedModule } from '../modules/items';
 import { ModuleCard } from '../modules/ModuleCard';
 import { RichText } from '../text/RichText';
+import { ImageViewer } from '../overlay/ImageViewer';
 import styles from './blocks.module.css';
 
 export function SceneHeader({ scene, reveal }: { scene: Scene; reveal: boolean }): ReactElement {
@@ -99,12 +101,109 @@ export function MetaGrid({ entries }: { entries: Array<[string, string]> }): Rea
   );
 }
 
-export function HeroMedia({ src, alt, onError }: { src: string; alt: string; onError: () => void }): ReactElement {
+interface HeroMediaProps {
+  src: string;
+  alt: string;
+  onError: () => void;
+  /** Optional: lets the owner of the URL follow the load it cannot observe itself. */
+  onLoad?: () => void;
+}
+
+/** The nominal box before the image speaks for itself; it matches --hero-default. */
+const RESERVED = { w: 1600, h: 1000 };
+
+interface HeroState {
+  src: string;
+  status: ImageStatus;
+  w: number;
+  h: number;
+}
+
+export function HeroMedia({ src, alt, onError, onLoad }: HeroMediaProps): ReactElement {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  const [state, setState] = useState<HeroState>({ src, status: 'loading', w: 0, h: 0 });
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  // Adjusted during render rather than in an effect: a new URL must not inherit
+  // the previous image's status for a frame, or the figure would flash its result.
+  if (state.src !== src) setState({ src, status: 'loading', w: 0, h: 0 });
+  const current: HeroState = state.src === src ? state : { src, status: 'loading', w: 0, h: 0 };
+
+  const markLoaded = (img: HTMLImageElement) => {
+    setState({ src, status: 'loaded', w: img.naturalWidth, h: img.naturalHeight });
+    onLoad?.();
+  };
+  const markFailed = () => {
+    setState({ src, status: 'error', w: 0, h: 0 });
+    onError();
+  };
+
+  // A cached image can finish before React attaches onLoad, which would leave the
+  // figure shimmering for good. Once mounted the element already knows the answer.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img || !img.complete) return;
+    if (img.naturalWidth === 0) markFailed();
+    else markLoaded(img);
+  }, [src]);
+
+  // Clamped: a panorama or a tower would otherwise reserve an absurd box. Whatever
+  // the clamp letterboxes is covered by the blurred fill, not cut away.
+  const ratio = current.w > 0 && current.h > 0
+    ? Math.min(Math.max(current.w / current.h, 0.7), 1.9)
+    : null;
+
   return (
-    <figure className={styles.hero}>
-      <img className={styles.heroImg} src={src} alt={alt} decoding="async" onError={onError} />
-      <span className={styles.heroShade} aria-hidden="true" />
-    </figure>
+    <>
+      <figure
+        className={styles.hero}
+        data-state={current.status}
+        style={ratio ? ({ '--hero-ratio': String(ratio) } as CSSProperties) : undefined}
+      >
+        <button
+          type="button"
+          className={styles.heroFrame}
+          disabled={current.status !== 'loaded'}
+          onClick={() => setOpen(true)}
+        >
+          <img className={styles.heroFill} src={src} alt="" aria-hidden="true" decoding="async" />
+          <img
+            ref={imgRef}
+            className={styles.heroImg}
+            src={src}
+            alt={alt}
+            // Only an intrinsic-ratio hint for the browser; the reserved box is
+            // the figure's aspect-ratio, which CSS sizes on its own.
+            width={current.w || RESERVED.w}
+            height={current.h || RESERVED.h}
+            decoding="async"
+            onLoad={e => markLoaded(e.currentTarget)}
+            onError={markFailed}
+          />
+          <span className={styles.heroShade} aria-hidden="true" />
+          <span className={styles.heroBadge} aria-hidden="true">
+            <Expand size={15} />
+          </span>
+          {/* Composed name: "enlarge" plus the image's own alt, which an
+              aria-label on the button would have hidden. */}
+          <span className="visually-hidden">{t('image.enlarge')}</span>
+        </button>
+        {current.status === 'loading' ? (
+          <>
+            <span className={styles.heroBone} aria-hidden="true" />
+            <span className="visually-hidden">{t('image.loading')}</span>
+          </>
+        ) : null}
+        {current.status === 'error' ? (
+          <figcaption className={styles.heroFallback}>
+            <span className={styles.heroMark} aria-hidden="true" />
+            {t('image.unavailable')}
+          </figcaption>
+        ) : null}
+      </figure>
+      {open ? <ImageViewer src={src} alt={alt} onClose={() => setOpen(false)} /> : null}
+    </>
   );
 }
 

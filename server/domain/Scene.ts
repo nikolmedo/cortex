@@ -18,10 +18,21 @@ export const SCENE_MOTIFS = ['flow', 'rings', 'grid', 'none'] as const;
 export const SCENE_DENSITIES = ['sparse', 'balanced', 'dense'] as const;
 export const FACT_KINDS = [
   'list', 'timeline', 'stats', 'comparison', 'quote', 'ranking', 'progress', 'keyvalue', 'tags',
-  'steps', 'formula', 'code', 'prose', 'proscons', 'chart',
+  'steps', 'formula', 'code', 'prose', 'proscons', 'chart', 'panel',
 ] as const;
 export const SPOTLIGHT_KINDS = ['stat', 'quote', 'callout'] as const;
 export const ITEM_SIDES = ['a', 'b'] as const;
+
+// Composition vocabulary: the model may propose part of the interface, but only
+// by picking from these lists. Every value maps to a data attribute or a custom
+// property through a fixed table, so nothing the model writes reaches CSS.
+export const MODULE_SLOTS = ['rail', 'main'] as const;
+export const MODULE_SPANS = ['wide', 'compact'] as const;
+export const MODULE_EMPHASES = ['lead', 'normal', 'quiet'] as const;
+export const MODULE_TONES = ['neutral', 'positive', 'caution', 'critical'] as const;
+export const MODULE_REVEALS = ['rise', 'draw', 'count', 'fade'] as const;
+export const ITEM_SHAPES = ['figure', 'bar', 'note', 'pair', 'tag', 'divider'] as const;
+
 export const SCENE_VERSION = 3;
 
 export const LIMITS = {
@@ -45,6 +56,7 @@ export const LIMITS = {
   categoryName: 40,
   maxModules: 8,
   maxItems: 6,
+  maxPanel: 8,
   maxSteps: 8,
   maxChartPoints: 12,
   maxMeta: 8,
@@ -84,6 +96,12 @@ export type SceneDensity = typeof SCENE_DENSITIES[number];
 export type FactKind = typeof FACT_KINDS[number];
 export type SpotlightKind = typeof SPOTLIGHT_KINDS[number];
 export type ItemSide = typeof ITEM_SIDES[number];
+export type ModuleSlot = typeof MODULE_SLOTS[number];
+export type ModuleSpanHint = typeof MODULE_SPANS[number];
+export type ModuleEmphasis = typeof MODULE_EMPHASES[number];
+export type ModuleTone = typeof MODULE_TONES[number];
+export type ModuleReveal = typeof MODULE_REVEALS[number];
+export type ItemShape = typeof ITEM_SHAPES[number];
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 const BARE_HEX_RE = /^[0-9a-fA-F]{6}$/;
@@ -206,6 +224,7 @@ export function itemCap(kind: FactKind): number {
   if (kind === 'tags') return LIMITS.maxTags;
   if (kind === 'steps') return LIMITS.maxSteps;
   if (kind === 'chart') return LIMITS.maxChartPoints;
+  if (kind === 'panel') return LIMITS.maxPanel;
   return LIMITS.maxItems;
 }
 
@@ -214,9 +233,24 @@ export function kindUsesSide(kind: FactKind): boolean {
   return kind === 'comparison' || kind === 'proscons';
 }
 
-/** Item `weight` is kept only for these kinds. */
+/** Item `weight` is kept only for these kinds; a panel bar or gauge needs it too. */
 export function kindUsesWeight(kind: FactKind): boolean {
-  return kind === 'stats' || kind === 'ranking' || kind === 'progress' || kind === 'chart';
+  return kind === 'stats' || kind === 'ranking' || kind === 'progress' || kind === 'chart' || kind === 'panel';
+}
+
+/** Item `shape` is kept only for `panel`, the one kind whose items compose themselves. */
+export function kindUsesShape(kind: FactKind): boolean {
+  return kind === 'panel';
+}
+
+/**
+ * The item `shape` when the kind uses it and the value is a known shape.
+ * Both mirrors read shapes through this, so an unknown shape can never reach a
+ * renderer as anything other than `undefined`.
+ */
+export function itemShape(kind: FactKind, value: unknown): ItemShape | undefined {
+  if (!kindUsesShape(kind) || typeof value !== 'string') return undefined;
+  return (ITEM_SHAPES as readonly string[]).includes(value) ? value as ItemShape : undefined;
 }
 
 // ---------------------------------------------------------------------------
@@ -282,6 +316,12 @@ const WireItemSchema = z.object({
   detail: z.string().optional().describe('Supporting sentence: attribution, explanation of a step, meaning of a formula.'),
   weight: z.number().optional().describe('Relative magnitude 0-100. Used by stats, ranking, progress and chart kinds.'),
   side: z.enum(ITEM_SIDES).optional().describe('comparison: "a" or "b", the side this item belongs to. proscons: "a" = pro, "b" = con.'),
+  shape: z.enum(ITEM_SHAPES).optional().describe(
+    'panel only: how this part is drawn. figure: a large number with a caption (needs value). '
+    + 'bar: a labelled proportion (needs weight). note: a line with its explanation in detail. '
+    + 'pair: a key and its value. tag: a short keyword. divider: a rule between groups, label optional. '
+    + 'Omit for every other kind.',
+  ),
 });
 
 const WireModuleSchema = z.object({
@@ -293,19 +333,24 @@ const WireModuleSchema = z.object({
     + 'comparison: two sides contrasted aspect by aspect. quote: notable quotes. ranking: ordered by score. '
     + 'progress: percentages. keyvalue: attribute/value pairs. tags: short keywords. '
     + 'steps: ordered worked steps. formula: equations with their meaning. code: one code snippet in body. '
-    + 'prose: one explanatory passage in body. proscons: advantages vs disadvantages. chart: a numeric series.',
+    + 'prose: one explanatory passage in body. proscons: advantages vs disadvantages. chart: a numeric series. '
+    + 'panel: a card you compose yourself out of figures, bars, notes, pairs, tags and dividers.',
   ),
   headline: z.string().optional().describe('One-line takeaway for the module, at most 140 characters.'),
-  facts: z.array(z.string()).optional().describe(
-    '2 to 6 plain one-line facts (at most 160 characters each), used as fallback text. Omit for code and prose.',
+  // Required on the wire for the same reason as an item's `value` above: offered
+  // the choice, Gemini emitted every optional enum directive and skipped both
+  // optional content arrays, returning modules that were all shell and no body.
+  // Kinds that carry no facts send [], and the strict schema drops the empty.
+  facts: z.array(z.string()).describe(
+    '2 to 6 plain one-line facts (at most 160 characters each), used as fallback text. [] for code and prose.',
   ),
   body: z.string().optional().describe(
     'Only for code (the snippet, with newlines and indentation, at most 2400 characters) '
     + 'and prose (a passage of at most 1600 characters). Omit for every other kind.',
   ),
   value: z.string().optional().describe('Only for code: the language name, e.g. "python". Omit otherwise.'),
-  items: z.array(WireItemSchema).optional().describe(
-    'Structured items matching the kind. Per kind: '
+  items: z.array(WireItemSchema).describe(
+    'The content of the module: without it the card renders empty. Per kind: '
     + 'timeline: value=date, label=event. '
     + 'stats: label=metric, value=number with unit, weight=0-100. '
     + 'comparison: side="a" or "b", label=aspect, value=that side\'s value. '
@@ -317,7 +362,26 @@ const WireModuleSchema = z.object({
     + 'formula: label=the expression in plain text (e.g. "t = d / v"), detail=what it means. '
     + 'proscons: side="a" for a pro or "b" for a con, label=the point, detail=why. '
     + 'chart: label=x-axis point (a year, a category), value=the real number with unit, weight=0-100 relative magnitude. '
-    + 'code and prose: omit items. Provide 3 to 6 items (up to 8 steps, 12 tags or 12 chart points).',
+    + 'panel: each item also carries a "shape" that decides how it is drawn. '
+    + 'code and prose: []. Provide 3 to 6 items (up to 8 steps, 8 panel parts, 12 tags or 12 chart points).',
+  ),
+  slot: z.enum(MODULE_SLOTS).optional().describe(
+    'Where the card sits on a wide screen: "rail" for compact reference material beside the answer, "main" for the body flow. '
+    + 'Ignored on narrow screens and on layouts with no rail. Omit to let the layout decide.',
+  ),
+  span: z.enum(MODULE_SPANS).optional().describe(
+    'How much of a wide row the card takes: "wide" for the whole row, "compact" for half of it. Omit to let the layout decide.',
+  ),
+  emphasis: z.enum(MODULE_EMPHASES).optional().describe(
+    'Visual weight: "lead" for the one card carrying the answer, "quiet" for supporting detail, "normal" otherwise.',
+  ),
+  tone: z.enum(MODULE_TONES).optional().describe(
+    'Valence of the content, never a colour: "positive" for gains and successes, "caution" for risks and caveats, '
+    + '"critical" for failures, losses and dangers, "neutral" otherwise.',
+  ),
+  reveal: z.enum(MODULE_REVEALS).optional().describe(
+    'How the card enters: "rise" for most cards, "draw" for things that build up (chart, timeline, steps), '
+    + '"count" for a card led by a number, "fade" for quiet text.',
   ),
 });
 
@@ -429,6 +493,8 @@ export interface SceneItem {
   /** Clamped to 0-100 when present. */
   weight?: number;
   side?: ItemSide;
+  /** panel only: which existing atom draws this part. */
+  shape?: ItemShape;
 }
 
 export interface SceneModule {
@@ -445,6 +511,15 @@ export interface SceneModule {
   value?: string;
   /** Present only when non-empty. */
   items?: SceneItem[];
+  /**
+   * Composition directives. Each one only seeds the computed presentation, which
+   * still has the last word; see the presentation layer for what overrides what.
+   */
+  slot?: ModuleSlot;
+  span?: ModuleSpanHint;
+  emphasis?: ModuleEmphasis;
+  tone?: ModuleTone;
+  reveal?: ModuleReveal;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -467,6 +542,8 @@ function toItem(raw: unknown, kind: FactKind): SceneItem | null {
   if (detail !== undefined) item.detail = detail;
   if (weight !== undefined && kindUsesWeight(kind)) item.weight = weight;
   if ((raw.side === 'a' || raw.side === 'b') && kindUsesSide(kind)) item.side = raw.side;
+  const shape = itemShape(kind, raw.shape);
+  if (shape !== undefined) item.shape = shape;
   return item;
 }
 
@@ -480,6 +557,11 @@ export const SceneModuleSchema = z.object({
   body: z.unknown(),
   value: z.unknown(),
   items: z.unknown(),
+  slot: z.enum(MODULE_SLOTS).optional().catch(undefined),
+  span: z.enum(MODULE_SPANS).optional().catch(undefined),
+  emphasis: z.enum(MODULE_EMPHASES).optional().catch(undefined),
+  tone: z.enum(MODULE_TONES).optional().catch(undefined),
+  reveal: z.enum(MODULE_REVEALS).optional().catch(undefined),
 }).transform((m): SceneModule => {
   const cap = itemCap(m.kind);
   const module: SceneModule = {
@@ -508,6 +590,13 @@ export const SceneModuleSchema = z.object({
     }
     if (items.length > 0) module.items = items;
   }
+  // Copied through verbatim: each is already one of its enum values or undefined,
+  // and what a directive actually does is the presentation layer's decision.
+  if (m.slot !== undefined) module.slot = m.slot;
+  if (m.span !== undefined) module.span = m.span;
+  if (m.emphasis !== undefined) module.emphasis = m.emphasis;
+  if (m.tone !== undefined) module.tone = m.tone;
+  if (m.reveal !== undefined) module.reveal = m.reveal;
   return module;
 });
 

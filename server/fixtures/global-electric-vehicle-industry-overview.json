@@ -1,0 +1,135 @@
+{
+  "query": "Global electric vehicle industry overview",
+  "lang": "en",
+  "preface": {
+    "intent": "entity",
+    "title": "Global Electric Vehicle Industry",
+    "layout": "dossier",
+    "mood": "kinetic",
+    "palette": {
+      "primary": "#29E9FF",
+      "secondary": "#7C4DFF",
+      "accent": "#69F0AE"
+    },
+    "plan": [
+      "Sizing the industry by sales volume and market share",
+      "Identifying the leading manufacturers and regions",
+      "Noting the main headwinds to continued growth"
+    ]
+  },
+  "scene": {
+    "version": 3,
+    "intent": "entity",
+    "type": "concept",
+    "title": "Global Electric Vehicle Industry",
+    "subtitle": "From a niche technology to roughly a quarter of new car sales",
+    "answer": {
+      "headline": "The global EV industry now sells around one in four new cars worldwide, led by Chinese manufacturers and anchored by falling battery costs.",
+      "body": [
+        "What began as a small collection of compliance vehicles and early adopter products has grown into a manufacturing sector spanning battery cells, charging networks, and dozens of mainstream vehicle lines. China leads on both production and domestic sales, Europe leads on regulatory push, and the United States trails both but is closing the gap with new domestic battery plants.",
+        "The industry's next phase depends less on convincing buyers electric vehicles work and more on cost: battery pack prices, charging access outside major cities, and the used-vehicle market for older packs will decide how quickly the remaining three quarters of new car sales convert."
+      ],
+      "caveats": [
+        "Figures blend battery-electric and plug-in hybrid vehicles unless noted otherwise."
+      ]
+    },
+    "summary": "The global EV industry covers battery-electric and plug-in hybrid vehicle manufacturing worldwide. It has grown from under 1% of new car sales in 2015 to roughly a quarter by 2025, led by Chinese manufacturers and falling battery costs.",
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Top_PEV_global_markets_stock_2017_final_with_California.png/500px-Top_PEV_global_markets_stock_2017_final_with_California.png",
+    "image_query": "",
+    "meta": {
+      "Leading market": "China",
+      "2025 global share": "~25%",
+      "Major manufacturers": "BYD, Tesla, Volkswagen Group",
+      "Key input": "Lithium-ion battery cells"
+    },
+    "presentation": {
+      "layout": "dossier",
+      "mood": "kinetic",
+      "motif": "rings",
+      "density": "balanced",
+      "palette": {
+        "primary": "#29E9FF",
+        "secondary": "#7C4DFF",
+        "accent": "#69F0AE"
+      }
+    },
+    "modules": [
+      {
+        "category": "Industry timeline",
+        "color": "#7C4DFF",
+        "image_query": "",
+        "kind": "timeline",
+        "facts": [
+          "Under 1% share in 2015",
+          "Crossed 20% share in 2024"
+        ],
+        "headline": "A decade from niche to mainstream",
+        "items": [
+          { "label": "Early compliance vehicles", "value": "2015" },
+          { "label": "Chinese domestic scale-up", "value": "2019" },
+          { "label": "Global share passes 20%", "value": "2024" }
+        ]
+      },
+      {
+        "category": "Leading players",
+        "color": "#29E9FF",
+        "image_query": "",
+        "kind": "list",
+        "facts": [
+          "BYD overtook Tesla on global unit sales.",
+          "Volkswagen Group leads European volume."
+        ],
+        "headline": "Who is building the cars",
+        "items": [
+          { "label": "BYD", "value": "China, largest by volume" },
+          { "label": "Tesla", "value": "United States, premium segment" },
+          { "label": "Volkswagen Group", "value": "Germany, European volume leader" }
+        ]
+      },
+      {
+        "category": "Market metrics",
+        "color": "#69F0AE",
+        "image_query": "",
+        "kind": "stats",
+        "facts": [
+          "Battery pack costs have fallen sharply since 2015.",
+          "China accounts for over half of global EV sales."
+        ],
+        "headline": "The numbers behind the growth",
+        "items": [
+          { "label": "China share of global EV sales", "value": "~55%", "weight": 90 },
+          { "label": "Battery pack cost decline since 2015", "value": "~80%", "weight": 85 }
+        ]
+      },
+      {
+        "category": "Industry voice",
+        "color": "#7C4DFF",
+        "image_query": "",
+        "kind": "quote",
+        "facts": [],
+        "headline": "How the shift is being described",
+        "items": [
+          {
+            "label": "The question is no longer whether the car industry electrifies, but how fast the supply chain can keep up.",
+            "value": "Industry analyst",
+            "detail": "Commonly cited framing of the current phase of EV adoption"
+          }
+        ]
+      }
+    ],
+    "spotlight": {
+      "kind": "stat",
+      "label": "Share of new cars sold globally that are electric",
+      "value": "~25%"
+    },
+    "followups": [
+      "Which countries are building the most EV battery capacity?",
+      "How does the used EV battery market work today?",
+      "What is slowing EV adoption outside of China and Europe?"
+    ],
+    "sources": [
+      { "title": "iea.org", "url": "https://www.iea.org/energy-system/transport/electric-vehicles" },
+      { "title": "ourworldindata.org", "url": "https://ourworldindata.org/electric-car-sales" }
+    ]
+  }
+}

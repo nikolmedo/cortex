@@ -225,8 +225,15 @@
 
 .hero {
   position: relative;
-  aspect-ratio: 16 / 10;
-  max-height: 440px;
+  /*
+   * The box is reserved with aspect-ratio, never min-height: the screenshot pass
+   * zeroes every min-height over 100px inside `main`, so a min-height reservation
+   * would silently disappear from the captures. --hero-ratio is set inline once
+   * the image reports its natural size, so a portrait stops living in a wide box.
+   */
+  --hero-default: 16 / 10;
+  aspect-ratio: var(--hero-ratio, var(--hero-default));
+  max-height: min(70vh, 420px);
   width: 100%;
   border-radius: var(--r-lg);
   overflow: hidden;
@@ -236,16 +243,62 @@
 
 @media (min-width: 1280px) {
   .hero {
-    aspect-ratio: 4 / 3;
-    max-height: none;
+    --hero-default: 4 / 3;
+    max-height: 560px;
   }
 }
 
-.heroImg {
+.heroFrame {
+  position: relative;
   display: block;
   width: 100%;
   height: 100%;
+  min-height: var(--hit);
+  /*
+   * The figure clips too, but the scaled .heroFill below is a transformed
+   * descendant of THIS box, and a transformed box counts toward its ancestors'
+   * scrollable overflow. Without this the button reported a scrollWidth 7.5%
+   * wider than itself (the scale(1.15) blur copy) on every dossier capture.
+   */
+  overflow: hidden;
+  cursor: zoom-in;
+}
+
+.heroFrame:disabled {
+  cursor: default;
+}
+
+/* The figure clips its overflow, so the default outward ring would be cut off. */
+.heroFrame:focus-visible {
+  outline-offset: -3px;
+}
+
+/*
+ * Fills the letterbox with the image's own colours instead of a flat band. A
+ * second <img> and not background-image: url(...): safeHttpsUrl rejects
+ * whitespace but not quotes or parentheses, and a React attribute is escaped
+ * where a CSS url() token is not.
+ */
+.heroFill {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   object-fit: cover;
+  filter: blur(28px) saturate(1.2);
+  transform: scale(1.15);
+  opacity: 0.55;
+  transition: opacity var(--dur-base) var(--ease);
+}
+
+.heroImg {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* contain, so a landscape keeps its sides and a portrait keeps its head. */
+  object-fit: contain;
+  transition: opacity var(--dur-base) var(--ease);
 }
 
 .heroShade {
@@ -255,6 +308,83 @@
   background:
     linear-gradient(to top, rgb(5 7 12 / 0.5), transparent 45%),
     linear-gradient(135deg, color-mix(in srgb, var(--scene-primary) 14%, transparent), transparent 55%);
+}
+
+.heroBadge {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--text-hi);
+  background: var(--surface-strong);
+  border: 1px solid var(--line-strong);
+  opacity: 0;
+  transition: opacity var(--dur-fast) var(--ease);
+}
+
+.heroFrame:hover .heroBadge,
+.heroFrame:focus-visible .heroBadge {
+  opacity: 1;
+}
+
+/*
+ * Loading and error stay inside the same figure: the composition decides its
+ * grid from whether an image exists, so the figure must never unmount midway.
+ */
+.heroBone {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: rgb(176 206 236 / 0.05);
+}
+
+.heroBone::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, var(--scene-primary) 9%, transparent),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: shimmer 1.8s var(--ease) infinite;
+}
+
+.heroFallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+  background: radial-gradient(120% 140% at 50% 0%, color-mix(in srgb, var(--scene-primary) 14%, transparent), transparent 70%);
+}
+
+.heroMark {
+  width: 28px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(to right, var(--scene-primary), color-mix(in srgb, var(--scene-accent) 70%, transparent));
+}
+
+.hero[data-state='loading'] .heroImg,
+.hero[data-state='loading'] .heroFill {
+  opacity: 0;
+}
+
+.hero[data-state='error'] .heroImg,
+.hero[data-state='error'] .heroFill,
+.hero[data-state='error'] .heroShade {
+  display: none;
 }
 
 /* Sources */
