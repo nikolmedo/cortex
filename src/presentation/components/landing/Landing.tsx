@@ -5,6 +5,7 @@ import { useI18n } from '../../../i18n/I18nContext';
 import type { TranslationKey } from '../../../i18n/translations';
 import { ThinkingCore } from '../../canvas/ThinkingCore';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
+import { useTrendingQuestions } from '../../hooks/useTrendingQuestions';
 import { CommandBar } from '../command/CommandBar';
 import styles from './Landing.module.css';
 
@@ -23,8 +24,13 @@ interface LandingProps {
 }
 
 export function Landing({ recent, reduced, onSubmit }: LandingProps): ReactElement {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const bp = useBreakpoint();
+  const trending = useTrendingQuestions(locale);
+  const live = trending.questions !== null;
+  const examples = trending.questions ?? EXAMPLE_KEYS.map(key => t(key));
+  // Fresh trending questions fade in over the static ones; a cached set is simply there.
+  const swapClass = live && !trending.cached && !reduced ? styles.swap : undefined;
 
   return (
     <main className={styles.landing}>
@@ -44,17 +50,26 @@ export function Landing({ recent, reduced, onSubmit }: LandingProps): ReactEleme
           <CommandBar docked={false} busy={false} onSubmit={onSubmit} onStop={() => undefined} />
         </div>
 
-        <section className={styles.section} aria-labelledby="landing-examples">
-          <h2 id="landing-examples" className={styles.sectionLabel}>{t('landing.examples')}</h2>
-          <ul className={styles.chips}>
-            {EXAMPLE_KEYS.map(key => (
-              <li key={key}>
-                <button type="button" className={styles.chip} onClick={() => onSubmit(t(key))}>
-                  {t(key)}
-                </button>
-              </li>
-            ))}
-          </ul>
+        <section className={styles.section} aria-labelledby="landing-examples" data-trending={live ? 'live' : 'static'}>
+          <h2 id="landing-examples" key={live ? 'live' : 'static'} className={[styles.sectionLabel, swapClass].filter(Boolean).join(' ')}>
+            {live ? (
+              <>
+                <span className={styles.liveDot} aria-hidden="true" />
+                {t('landing.trending')}
+              </>
+            ) : t('landing.examples')}
+          </h2>
+          <div className={styles.chipArea}>
+            <ul key={live ? 'live' : 'static'} className={[styles.chips, swapClass].filter(Boolean).join(' ')}>
+              {examples.map(question => (
+                <li key={question}>
+                  <button type="button" className={styles.chip} onClick={() => onSubmit(question)}>
+                    {question}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         </section>
 
         {recent.length > 0 ? (

@@ -48,6 +48,7 @@
       "mood": "calm",
       "motif": "flow",
       "density": "balanced",
+      "typeScale": "editorial",
       "palette": {
         "primary": "#E0A96D",
         "secondary": "#c47a64",
@@ -57,6 +58,11 @@
     "modules": [
       {
         "category": "Preparation",
+        "size": "third",
+        "surface": "bare",
+        "corner": "round",
+        "header": "rule",
+        "variant": "cards",
         "color": "#E0A96D",
         "image_query": "",
         "kind": "list",
@@ -91,6 +97,13 @@
       },
       {
         "category": "Procedure",
+        "size": "two-thirds",
+        "emphasis": "lead",
+        "surface": "glass",
+        "corner": "round",
+        "header": "numeral",
+        "pattern": "contour",
+        "variant": "cards",
         "color": "#c47a64",
         "image_query": "",
         "kind": "steps",
@@ -130,6 +143,9 @@
       },
       {
         "category": "Variables",
+        "surface": "outline",
+        "corner": "round",
+        "header": "rule",
         "color": "#F4D06F",
         "image_query": "",
         "kind": "keyvalue",
@@ -160,6 +176,9 @@
       },
       {
         "category": "Common Mistakes",
+        "surface": "bleed",
+        "corner": "round",
+        "header": "icon",
         "color": "#c47a64",
         "image_query": "",
         "kind": "proscons",

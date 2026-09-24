@@ -24,11 +24,11 @@
 
 .title {
   font-family: var(--font-display);
-  font-weight: 400;
-  font-stretch: 92%;
+  font-weight: var(--display-weight, 400);
+  font-stretch: var(--display-stretch, 92%);
   font-size: var(--fs-title);
   line-height: 1.08;
-  letter-spacing: -0.015em;
+  letter-spacing: var(--display-tracking, -0.015em);
   color: var(--text-hi);
   overflow-wrap: anywhere;
   text-wrap: balance;
@@ -131,7 +131,7 @@
   display: block;
   font-family: var(--font-display);
   font-weight: 300;
-  font-stretch: 90%;
+  font-stretch: var(--figure-stretch, 90%);
   font-size: var(--fs-display);
   line-height: 1;
   letter-spacing: -0.02em;
@@ -454,16 +454,17 @@
   color: var(--text-hi);
   background: var(--surface);
   border: 1px solid var(--line);
+  /* Fixed and short: a chip answers the pointer, it does not take the mood's tempo. */
   transition:
-    border-color var(--dur-fast) var(--ease),
-    background-color var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease);
+    border-color 120ms var(--ease),
+    background-color 120ms var(--ease),
+    transform 120ms var(--ease);
 }
 
 .chip svg {
   flex: none;
   color: var(--scene-primary);
-  transition: transform var(--dur-fast) var(--ease);
+  transition: transform 140ms var(--ease);
 }
 
 .chip:hover {
@@ -476,7 +477,13 @@
 }
 
 .chip:active {
-  transform: scale(0.99);
+  transform: scale(0.97);
+  transition-duration: 90ms;
+}
+
+/* Follow-ups arrive after everything else, one after another, in a short run. */
+[data-reveal='true'] .chips > li {
+  animation: materialize var(--dur-base) var(--ease) calc(var(--enter-delay, 0ms) + min(var(--i, 0) * 45ms, 180ms)) backwards;
 }
 
 /* Split tabs (mobile) */

@@ -31,6 +31,18 @@ interface Mote {
 const PARTICLES = { mobile: 26, tablet: 48, desktop: 72 } as const;
 
 /**
+ * How strongly the flow motes show over each motif. Flow is made of them; rings
+ * keep a faint drift; a grid is already a field of points, so it gets none.
+ */
+const MOTE_ALPHA: Record<SceneMotif, number> = { flow: 1, rings: 0.3, grid: 0, none: 0.45 };
+
+/** A glow's gradient, drawn at unit alpha around the origin and reused until its colour or size changes. */
+interface GlowCache {
+  key: string;
+  gradient: CanvasGradient;
+}
+
+/**
  * The single background layer: palette-tinted light plus one motif
  * (flow, rings, grid or none), drifting at the mood's speed.
  */
@@ -69,21 +81,36 @@ export function AmbientField({ palette, mood, motif, active, reduced }: AmbientF
       }));
     };
 
+    const glows: Array<GlowCache | null> = [null, null, null];
+
     const resize = () => {
       w = window.innerWidth;
       h = window.innerHeight;
       const dpr = fitCanvas(canvas, w, h, dprCap);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      glows.fill(null);
       seed();
     };
 
-    const glow = (x: number, y: number, r: number, c: Rgb, a: number) => {
-      const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-      g.addColorStop(0, rgba(c, a));
-      g.addColorStop(0.45, rgba(c, a * 0.4));
-      g.addColorStop(1, rgba(c, 0));
-      ctx.fillStyle = g;
-      ctx.fillRect(Math.max(0, x - r), Math.max(0, y - r), r * 2, r * 2);
+    // Position and strength change every frame, so they are a translate and a
+    // globalAlpha; only a new colour (the palette easing in) or radius rebuilds it.
+    const glow = (slot: number, x: number, y: number, r: number, c: Rgb, a: number) => {
+      const key = `${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])},${Math.round(r)}`;
+      let cached = glows[slot];
+      if (!cached || cached.key !== key) {
+        const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+        g.addColorStop(0, rgba(c, 1));
+        g.addColorStop(0.45, rgba(c, 0.4));
+        g.addColorStop(1, rgba(c, 0));
+        cached = { key, gradient: g };
+        glows[slot] = cached;
+      }
+      ctx.save();
+      ctx.globalAlpha = a;
+      ctx.translate(x, y);
+      ctx.fillStyle = cached.gradient;
+      ctx.fillRect(Math.max(-r, -x), Math.max(-r, -y), r * 2, r * 2);
+      ctx.restore();
     };
 
     const drawFlow = (t: number, dt: number, alpha: number, move: boolean) => {
@@ -146,21 +173,22 @@ export function AmbientField({ palette, mood, motif, active, reduced }: AmbientF
       ctx.stroke();
     };
 
+    // One path per brightness level: four fills a frame instead of one per dot.
+    const gridAlphas = [0.05, 0.08, 0.14, 0.24];
     const drawGrid = (t: number, alpha: number) => {
       const gap = w < 768 ? 40 : 48;
       const oy = (t * 0.004 * state.speed) % gap;
-      const buckets: Array<Array<[number, number]>> = [[], [], [], []];
+      const paths = [new Path2D(), new Path2D(), new Path2D(), new Path2D()];
       for (let y = -gap + oy; y < h + gap; y += gap) {
         for (let x = gap / 2; x < w; x += gap) {
           const wave = Math.sin(x * 0.004 + y * 0.003 - t * 0.0006 * state.speed);
           const level = wave > 0.9 ? 3 : wave > 0.6 ? 2 : wave > 0 ? 1 : 0;
-          buckets[level].push([x, y]);
+          paths[level].rect(x - 0.75, y - 0.75, 1.5, 1.5);
         }
       }
-      const alphas = [0.05, 0.08, 0.14, 0.24];
-      buckets.forEach((pts, level) => {
-        ctx.fillStyle = rgba(state.palette.primary, alphas[level] * alpha);
-        for (const [x, y] of pts) ctx.fillRect(x - 0.75, y - 0.75, 1.5, 1.5);
+      paths.forEach((path, level) => {
+        ctx.fillStyle = rgba(state.palette.primary, gridAlphas[level] * alpha);
+        ctx.fill(path);
       });
     };
 
@@ -185,15 +213,15 @@ export function AmbientField({ palette, mood, motif, active, reduced }: AmbientF
       ctx.clearRect(0, 0, w, h);
       const e = state.energy;
       const big = Math.max(w, h);
-      glow(w * 0.18 + Math.sin(t * 0.00007) * w * 0.05, h * 0.1 + Math.cos(t * 0.00005) * h * 0.04, big * 0.55, state.palette.primary, 0.1 + e * 0.05);
-      glow(w * 0.88 + Math.cos(t * 0.00006) * w * 0.04, h * 0.92, big * 0.5, state.palette.secondary, 0.065 + e * 0.03);
-      glow(w * 0.55, h * 0.4 + Math.sin(t * 0.00004) * h * 0.06, big * 0.32, state.palette.accent, 0.025 + e * 0.035);
+      glow(0, w * 0.18 + Math.sin(t * 0.00007) * w * 0.05, h * 0.1 + Math.cos(t * 0.00005) * h * 0.04, big * 0.55, state.palette.primary, 0.1 + e * 0.05);
+      glow(1, w * 0.88 + Math.cos(t * 0.00006) * w * 0.04, h * 0.92, big * 0.5, state.palette.secondary, 0.065 + e * 0.03);
+      glow(2, w * 0.55, h * 0.4 + Math.sin(t * 0.00004) * h * 0.06, big * 0.32, state.palette.accent, 0.025 + e * 0.035);
 
       const a = state.motifAlpha;
-      if (state.motif === 'flow') drawFlow(t, dt, a, move);
-      else if (state.motif === 'rings') drawRings(t, a);
+      if (state.motif === 'rings') drawRings(t, a);
       else if (state.motif === 'grid') drawGrid(t, a);
-      if (state.motif !== 'flow' && motes.length > 0) drawFlow(t, dt, a * 0.45, move);
+      const moteAlpha = MOTE_ALPHA[state.motif];
+      if (moteAlpha > 0 && motes.length > 0) drawFlow(t, dt, a * moteAlpha, move);
     };
 
     redraw.current = reduced ? () => render(16, false) : () => undefined;
@@ -203,11 +231,31 @@ export function AmbientField({ palette, mood, motif, active, reduced }: AmbientF
     };
     onResize();
     window.addEventListener('resize', onResize);
-    const unsubscribe = reduced ? null : subscribeTick((_now, dt) => render(dt, true));
+
+    // The shared ticker already stops while the tab is hidden; the field also
+    // rests while the window is in the background, and picks up where it left
+    // off (the ticker caps the first dt, so nothing jumps on the way back).
+    let unsubscribe: (() => void) | null = null;
+    const play = () => {
+      if (reduced || unsubscribe || document.visibilityState !== 'visible') return;
+      unsubscribe = subscribeTick((_now, dt) => render(dt, true));
+    };
+    const pause = () => {
+      unsubscribe?.();
+      unsubscribe = null;
+    };
+    const onVisibility = () => (document.visibilityState === 'visible' && document.hasFocus() ? play() : pause());
+    play();
+    window.addEventListener('focus', play);
+    window.addEventListener('blur', pause);
+    document.addEventListener('visibilitychange', onVisibility);
 
     return () => {
-      unsubscribe?.();
+      pause();
       window.removeEventListener('resize', onResize);
+      window.removeEventListener('focus', play);
+      window.removeEventListener('blur', pause);
+      document.removeEventListener('visibilitychange', onVisibility);
     };
   }, [reduced]);
 

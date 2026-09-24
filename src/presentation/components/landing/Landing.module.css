@@ -60,10 +60,58 @@
 }
 
 .sectionLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   margin-bottom: 10px;
   font-size: var(--fs-caption);
   font-weight: 500;
   color: var(--text-faint);
+}
+
+/* Tiny live indicator for the trending label: a steady core with a slow halo. */
+.liveDot {
+  position: relative;
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--scene-primary);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--scene-primary) 70%, transparent);
+}
+
+.liveDot::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--scene-primary) 60%, transparent);
+  animation: livePulse 2.4s var(--ease) infinite;
+}
+
+@keyframes livePulse {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.6);
+  }
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+/* Reserves the chip block's height so the vertically centred column does not
+   move when trending questions replace the static ones: three two-line chips
+   on phones, five one-line chips (up to 90 characters) from tablet up. */
+.chipArea {
+  min-height: 188px;
+}
+
+/* The static examples hand over to the trending set with a soft fade. */
+.swap {
+  animation: fadeIn 480ms var(--ease) both;
 }
 
 .chips {
@@ -151,6 +199,9 @@
 @media (min-width: 768px) {
   .chips > li:nth-child(n + 4) {
     display: list-item;
+  }
+  .chipArea {
+    min-height: calc(5 * var(--hit) + 4 * 8px);
   }
   .section {
     margin-top: var(--sp-6);

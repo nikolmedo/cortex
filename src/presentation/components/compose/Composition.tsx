@@ -1,30 +1,38 @@
-import { useEffect, useRef, useState, type ReactElement, type ReactNode } from 'react';
+import { useEffect, useRef, type ReactElement, type ReactNode } from 'react';
 import {
   safeHttpsUrl,
   type ModuleReveal, type Scene, type SceneLayout, type ScenePresentation, type SceneSpotlight,
 } from '../../../domain/Scene';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
+import { COUNT_MS } from '../../hooks/useCountUp';
+import { useFlip } from '../../hooks/useFlip';
 import { useImageSource } from '../../hooks/useImageSource';
 import { useReducedMotion } from '../../hooks/useReducedMotion';
 import { staggerDelay } from '../../motion/motion';
 import { MotionProvider } from '../../scene/MotionContext';
-import { motionFor, staggerStep } from '../../scene/motionProfile';
+import { CASCADE_CAP_MS, motionFor, staggerStep } from '../../scene/motionProfile';
 import { Materialize, type MaterializeVariant } from '../motion/Materialize';
 import {
-  balancedSpans, capRail, hasContent, moduleItems, moduleReveal, moduleSpan, partitionModules,
-  type IndexedModule, type ModuleSpan,
+  balancedSpans, capRail, columnsOf, fillRows, hasContent, moduleReveal, moduleSpan, partitionModules,
+  patternSeed, type IndexedModule, type ModuleSpan,
 } from '../modules/items';
 import { ModuleCard } from '../modules/ModuleCard';
-import { Skeleton } from '../session/Skeleton';
+import { Lingering, Skeleton } from '../session/Skeleton';
 import {
   AnswerBody, Followups, HeroMedia, MetaGrid, SceneHeader, SourceList, SplitTabs, SpotlightCard,
 } from './blocks';
 import styles from './Composition.module.css';
+import { useRevealHold } from './revealHold';
 
 interface CompositionProps {
   scene: Scene;
-  /** Animate arriving content (latest turn only). */
+  /**
+   * Entrances may play: this is the latest turn and this view watched it arrive.
+   * A turn restored or scrolled back to as already resolved never animates.
+   */
   reveal: boolean;
+  /** The turn is still in flight; content is arriving now. */
+  live: boolean;
   /** More modules may still arrive; show a placeholder after the last one. */
   pending: boolean;
   onFollowup: (query: string) => void;
@@ -59,16 +67,16 @@ const LEAD_SLOTS: Record<SceneLayout, LeadSlots> = {
 };
 
 /**
- * Fixed map from a `reveal` directive to one of the four entrance families in
- * global.css. `fade` has no family of its own: it reuses the default entrance
- * and drops the card's inner draws instead (see kinds.module.css), which is the
- * part that actually reads as motion.
+ * Fixed map from a `reveal` directive to an entrance family. `draw` scans the
+ * card in top-down like the draws inside it, `count` locks on to its figures,
+ * and `fade` just appears: the rise with no travel, and kinds.module.css drops
+ * the card's inner draws as well.
  */
 const REVEAL_VARIANT: Record<ModuleReveal, MaterializeVariant> = {
-  rise: 'materialize',
-  draw: 'unfurl',
-  count: 'settle',
-  fade: 'materialize',
+  rise: 'rise',
+  draw: 'scan',
+  count: 'lock',
+  fade: 'fade',
 };
 
 /** The scene's own `--dur-slow`, in ms, read back from the table that emits it. */
@@ -98,7 +106,7 @@ function readingHeight(scene: Scene): number {
  * One tree for every layout. Reading order is the DOM order; the layout's
  * CSS module arranges it per breakpoint (mobile, tablet, desktop).
  */
-export function Composition({ scene, reveal, pending, onFollowup }: CompositionProps): ReactElement {
+export function Composition({ scene, reveal, live, pending, onFollowup }: CompositionProps): ReactElement {
   const bp = useBreakpoint();
   const reduced = useReducedMotion();
   const { layout } = scene.presentation;
@@ -117,32 +125,25 @@ export function Composition({ scene, reveal, pending, onFollowup }: CompositionP
   useEffect(() => {
     rendered.current = modules.length;
   }, [modules.length]);
-  const delayOf = (index: number) => (batchStart === 0 ? lead.modules + index : Math.max(0, index - batchStart));
+  // The lead card is the hero of the module row, so the opening batch starts
+  // with it wherever it sits in reading order; the rest keep theirs.
+  const leadAt = modules.findIndex(m => m.emphasis === 'lead');
+  const openingRank = (index: number) => {
+    if (leadAt < 0 || index > leadAt) return index;
+    return index === leadAt ? 0 : index + 1;
+  };
+  const delayOf = (index: number) => (batchStart === 0 ? lead.modules + openingRank(index) : Math.max(0, index - batchStart));
 
-  // `reveal` drops the moment the stream closes, but the last cards are still
-  // drawing: the bars, rails and gauges inside a card are delayed by their own
-  // item index, so a late chart or a long set of steps finishes well after the
-  // card itself landed. Dropping the revealing state there freezes a bar half
-  // filled, so it is held for the longest tail the last batch can still have:
-  // the last card's own entrance delay, plus its items' stagger, plus --dur-slow.
-  const [holding, setHolding] = useState(false);
-  const lastModule = modules[modules.length - 1];
-  const tailMs = staggerDelay(Math.max(0, modules.length - 1 - batchStart), step)
-    + (lastModule ? moduleItems(lastModule).length * step : 0)
-    + slowMs(scene.presentation);
-  useEffect(() => {
-    if (reveal) {
-      setHolding(true);
-      return undefined;
-    }
-    if (!holding) return undefined;
-    const timer = window.setTimeout(() => setHolding(false), tailMs);
-    return () => window.clearTimeout(timer);
-  }, [reveal, holding, tailMs]);
-
+  // Entrances play while content arrives, then for as long as the last batch can
+  // still be drawing: its latest card delay, the capped inner cascade, and the
+  // longer of the entrance itself and a figure's count (see revealHold.ts).
+  const tailMs = staggerDelay(lead.modules + Math.max(0, modules.length - batchStart), step)
+    + CASCADE_CAP_MS
+    + Math.max(slowMs(scene.presentation), COUNT_MS);
   // One boolean settles whether anything moves, so the marker the CSS reads, the
   // value the subtree reads and the entrances themselves can never disagree.
-  const animate = (reveal || holding) && !reduced;
+  const animate = useRevealHold(reveal, live, reduced, tailMs);
+  const rootRef = useRef<HTMLElement>(null);
 
   // Only the scene's own validated https image; no keyword stock photos.
   const image = useImageSource(layout === 'dossier' ? safeHttpsUrl(scene.image_url) || null : null);
@@ -165,7 +166,9 @@ export function Composition({ scene, reveal, pending, onFollowup }: CompositionP
   const mainShown = pair ? main.filter(entry => entry !== pair[1]) : main;
   const width = bp === 'desktop' ? 'wide' : 'narrow';
   const mainSpans = balancedSpans(layout, mainShown, width);
-  const railSpans = balancedSpans(layout, rail);
+  // The rail is one narrow column where a size means nothing, so its cards are
+  // balanced as if they had none.
+  const railSpans = balancedSpans(layout, rail.map(entry => ({ ...entry, module: { ...entry.module, size: undefined } })));
 
   // While modules stream in, `balancedSpans` widens a lone trailing compact card
   // to fill its row, then flips it back the moment its neighbour arrives. Giving
@@ -174,9 +177,22 @@ export function Composition({ scene, reveal, pending, onFollowup }: CompositionP
   const fillsRow = pending
     && bp !== 'mobile'
     && last >= 0
+    && mainShown[last].module.size === undefined
     && mainSpans[last] === 'wide'
     && moduleSpan(layout, mainShown[last].module.kind, width, mainShown[last].module.span) === 'compact';
   if (fillsRow) mainSpans[last] = 'compact';
+  // Rows that still end short of 12 widen one of their own cards; the trailing
+  // row stays open while more may arrive.
+  const mainCols = fillRows(layout, mainShown, mainSpans, width, pending);
+
+  // Spans, fills and rail membership: when this changes, cards that were
+  // already on screen slide to their new place instead of jumping.
+  const arrangement = [
+    ...mainShown.map((entry, i) => `${entry.index}:${mainSpans[i]}:${mainCols[i] ?? ''}`),
+    '|',
+    ...rail.map(entry => entry.index),
+  ].join(',');
+  useFlip(rootRef, arrangement, !reduced);
 
   // Both sides of a comparison land together; staggering them would imply an
   // order the comparison itself does not have.
@@ -185,18 +201,33 @@ export function Composition({ scene, reveal, pending, onFollowup }: CompositionP
   const moduleDelay = (entry: IndexedModule, span: ModuleSpan) =>
     delayOf(span === 'pair' && pairLead >= 0 ? pairLead : entry.index);
 
-  const card = (entry: IndexedModule, span: ModuleSpan) => {
+  // The rail is a narrow column, so a size there means nothing and is not passed.
+  // `ordinal` is the card's place in the order narrow screens stack them: the
+  // main row first, then the rail. It shifts as cards stream in, so it only
+  // draws the numeral; the pattern is seeded from the card's place in the scene.
+  // A main card always gets its full column count; the stylesheet only spans it.
+  const card = (entry: IndexedModule, span: ModuleSpan, ordinal: number, inRail = false, fill?: number) => {
     const entrance = moduleReveal(entry.module);
+    const slot = moduleDelay(entry, span);
+    const cols = inRail ? undefined : fill ?? columnsOf(layout, entry.module, span, width);
     return (
       <Materialize
         key={entry.index}
-        index={moduleDelay(entry, span)}
+        index={slot}
         active={animate}
         span={span}
+        size={inRail || span === 'pair' ? undefined : entry.module.size}
+        cols={cols}
         step={step}
         variant={entrance ? REVEAL_VARIANT[entrance] : undefined}
+        flipKey={entry.index}
       >
-        <ModuleCard module={entry.module} />
+        <ModuleCard
+          module={entry.module}
+          ordinal={ordinal}
+          seed={patternSeed(scene.modules, entry.module)}
+          delay={animate ? staggerDelay(slot, step) : 0}
+        />
       </Materialize>
     );
   };
@@ -207,7 +238,7 @@ export function Composition({ scene, reveal, pending, onFollowup }: CompositionP
         <SplitTabs pair={pair} />
       </Materialize>
     )
-    : card(entry, mainSpans[i])));
+    : card(entry, mainSpans[i], i + 1, false, mainCols[i])));
 
   const hasBody = scene.answer.body.length > 0 || Boolean(scene.answer.caveats);
   // Follow-ups and sources close the answer: they wait until nothing else is coming.
@@ -219,6 +250,7 @@ export function Composition({ scene, reveal, pending, onFollowup }: CompositionP
   return (
     <MotionProvider reveal={animate}>
       <article
+        ref={rootRef}
         className={styles.composition}
         data-layout={layout}
         data-hero={heroSrc ? 'true' : 'false'}
@@ -233,8 +265,10 @@ export function Composition({ scene, reveal, pending, onFollowup }: CompositionP
 
         {/* A dossier leads with its portrait, so the identity follows it — but with
             no hero there is nothing to follow, and slot 0 would just sit empty. */}
-        <Materialize index={heroSrc ? lead.head : lead.hero} active={animate} step={step} className={styles.head}>
-          <SceneHeader scene={scene} reveal={reveal} />
+        {/* Text never takes a clip: the headline and the body rise, and their
+            phrases carry the rest of the motion. */}
+        <Materialize index={heroSrc ? lead.head : lead.hero} active={animate} step={step} variant="rise" className={styles.head}>
+          <SceneHeader scene={scene} reveal={animate} />
         </Materialize>
 
         <aside className={styles.rail}>
@@ -249,35 +283,31 @@ export function Composition({ scene, reveal, pending, onFollowup }: CompositionP
             </Materialize>
           ) : null}
           {rail.length > 0 ? (
-            <div className={styles.railModules}>{rail.map((entry, i) => card(entry, railSpans[i]))}</div>
+            <div className={styles.railModules}>{rail.map((entry, i) => card(entry, railSpans[i], mainShown.length + i + 1, true))}</div>
           ) : null}
         </aside>
 
         <div className={styles.main}>
           {hasBody ? (
-            <Materialize index={lead.body} active={animate} step={step} className={styles.body}>
-              <AnswerBody answer={scene.answer} reveal={reveal} />
+            <Materialize index={lead.body} active={animate} step={step} variant="rise" className={styles.body}>
+              <AnswerBody answer={scene.answer} reveal={animate} />
             </Materialize>
           ) : null}
           {mainNodes.length > 0 ? (
             <div className={styles.mainModules}>
               {mainNodes}
-              {fillsRow ? (
-                <div className={styles.pendingCell} data-span="compact">
-                  <Skeleton layout={layout} compact />
-                </div>
-              ) : null}
+              <Lingering show={fillsRow} fade={animate} className={styles.pendingCell} span="compact">
+                <Skeleton layout={layout} compact />
+              </Lingering>
             </div>
           ) : null}
-          {pending && !fillsRow ? (
-            <div className={styles.pending}>
-              <Skeleton layout={layout} compact />
-            </div>
-          ) : null}
+          <Lingering show={pending && !fillsRow} fade={animate} className={styles.pending}>
+            <Skeleton layout={layout} compact />
+          </Lingering>
         </div>
 
         {followups.length > 0 || sources.length > 0 ? (
-          <Materialize index={batchStart === 0 ? lastSlot : 0} active={animate} step={step} className={styles.foot}>
+          <Materialize index={batchStart === 0 ? lastSlot : 0} active={animate} step={step} variant="rise" className={styles.foot}>
             {followups.length > 0 ? <Followups items={followups} onSelect={onFollowup} /> : null}
             {sources.length > 0 ? <SourceList sources={sources} /> : null}
           </Materialize>

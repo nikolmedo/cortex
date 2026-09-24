@@ -115,3 +115,25 @@ export async function pickFixture(query: string, lang: 'en' | 'es'): Promise<Fix
     return null;
   }
 }
+
+/**
+ * Static landing questions for fixture mode, so screenshots and tests never
+ * reach Google Trends or Gemini. Kept in code: every .json in the fixtures
+ * directory is replayed as a scene.
+ */
+export const FIXTURE_TRENDING: Record<'en' | 'es', readonly string[]> = {
+  en: [
+    'Latest on the James Webb telescope discoveries this month',
+    'Why are mortgage rates falling even as inflation stays sticky?',
+    'iPhone vs Pixel: how do this year\'s flagship cameras compare?',
+    'How does a solar storm disrupt GPS and power grids?',
+    'How many people watched the Champions League final, by country?',
+  ],
+  es: [
+    'Lo último sobre el lanzamiento de la misión Artemis a la Luna',
+    '¿Por qué sube el dólar blue cuando se acerca fin de mes?',
+    'River vs Boca: ¿cómo se comparan sus planteles esta temporada?',
+    '¿Cómo funciona el aumento por movilidad de las jubilaciones?',
+    '¿Cuánto creció el turismo extranjero en Argentina este año?',
+  ],
+};

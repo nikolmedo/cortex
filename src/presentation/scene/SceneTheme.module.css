@@ -10,3 +10,89 @@
     --scene-secondary var(--dur-slow) cubic-bezier(0.22, 1, 0.36, 1),
     --scene-accent var(--dur-slow) cubic-bezier(0.22, 1, 0.36, 1);
 }
+
+/*
+ * Scene-wide tables keyed by the root's data attributes. Each one only sets
+ * custom properties; the components read them with today's values as the
+ * fallback, and a card's own grammar (ModuleCard.module.css) overrides them.
+ */
+
+/* Mood: how a card's frame is cut and lit. */
+.root[data-mood='calm'] {
+  --card-radius: 22px;
+  --hairline-mix: 40%;
+  --hairline-inset: 40px;
+}
+
+.root[data-mood='kinetic'] {
+  --card-radius: 14px;
+  --hairline-mix: 72%;
+  --hairline-inset: 12px;
+}
+
+.root[data-mood='archival'] {
+  --card-radius: 2px;
+  --card-border: rgb(176 206 236 / 0.07);
+  --hairline-mix: 22%;
+  --hairline-inset: 0px;
+}
+
+.root[data-mood='volatile'] {
+  --card-radius: 6px;
+  --card-border: var(--line-strong);
+  --hairline-mix: 95%;
+  --hairline-inset: 0px;
+}
+
+/* Density: the space between and inside cards. */
+.root[data-density='sparse'] {
+  --module-gap: var(--sp-5);
+  --card-pad: clamp(20px, 1.4rem + 0.6vw, 32px);
+}
+
+.root[data-density='dense'] {
+  --module-gap: var(--sp-3);
+  --card-pad: clamp(12px, 0.85rem + 0.3vw, 18px);
+}
+
+/*
+ * Type scale: Saira's width axis (75-125) and weight (300-500) give three
+ * voices from one family. Absent, every property keeps the tokens.css value.
+ */
+.root[data-type-scale='editorial'] {
+  --fs-title: clamp(2rem, 1.5rem + 2.2vw, 3.25rem);
+  --fs-figure: clamp(2rem, 1.6rem + 1.9vw, 3.25rem);
+  --fs-h3: clamp(1.125rem, 1.05rem + 0.35vw, 1.3125rem);
+  --display-stretch: 108%;
+  --display-weight: 300;
+  --display-tracking: -0.02em;
+  --figure-stretch: 108%;
+  --figure-weight: 300;
+  --heading-weight: 500;
+}
+
+.root[data-type-scale='technical'] {
+  --fs-title: clamp(1.5rem, 1.2rem + 1.4vw, 2.375rem);
+  --fs-figure: clamp(1.625rem, 1.35rem + 1.3vw, 2.5rem);
+  --fs-h3: clamp(1rem, 0.96rem + 0.2vw, 1.0625rem);
+  --display-stretch: 78%;
+  --display-weight: 500;
+  --display-tracking: 0.005em;
+  --figure-stretch: 80%;
+  --figure-weight: 500;
+  --heading-weight: 600;
+  --heading-tracking: 0.01em;
+}
+
+.root[data-type-scale='monumental'] {
+  --fs-title: clamp(2.5rem, 1.6rem + 4vw, 4.75rem);
+  --fs-figure: clamp(2.5rem, 1.8rem + 3vw, 4.25rem);
+  --fs-h3: clamp(1.1875rem, 1.1rem + 0.45vw, 1.4375rem);
+  --display-stretch: 122%;
+  --display-weight: 500;
+  --display-tracking: -0.035em;
+  --figure-stretch: 118%;
+  --figure-weight: 500;
+  --heading-weight: 600;
+  --heading-tracking: -0.01em;
+}

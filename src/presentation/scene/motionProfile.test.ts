@@ -7,7 +7,9 @@ import {
   type ScenePalette,
   type ScenePresentation,
 } from '../../domain/Scene';
-import { STAGGER_BY_DENSITY, motionFor, staggerStep } from './motionProfile';
+import {
+  CASCADE_CAP_MS, ENTER_FAMILIES, STAGGER_BY_DENSITY, enterFamily, familyVars, motionFor, staggerStep,
+} from './motionProfile';
 
 const palette: ScenePalette = { ...DEFAULT_PALETTE };
 
@@ -24,8 +26,9 @@ const ALL = SCENE_MOODS.flatMap(mood =>
 
 const MIN_DUR_MS = 140;
 const MAX_DUR_MS = 900;
-/** The only entrance families the layout table can produce. */
-const ENTER_FAMILIES = ['materialize', 'edge', 'unfurl', 'settle'];
+/** The only keyframes and traces the family table can emit. */
+const ENTER_KEYFRAMES = ['materialize', 'wipeIn', 'unfoldIn', 'scanIn', 'lockIn'];
+const TRACES = ['none', 'scanLine', 'lockTrace'];
 
 describe('staggerStep', () => {
   it('reads the density table for every non-mosaic layout', () => {
@@ -80,9 +83,11 @@ describe('motionFor', () => {
     for (const combo of ALL) {
       const vars = motionFor(presentation(combo));
       expect(vars['--ease']).toMatch(/^cubic-bezier\([\d.,\s-]+\)$/);
-      expect(ENTER_FAMILIES).toContain(vars['--enter']);
+      expect(ENTER_KEYFRAMES).toContain(vars['--enter']);
+      expect(TRACES).toContain(vars['--enter-scan']);
+      expect(TRACES).toContain(vars['--enter-lock']);
       expect(vars['--rise']).toMatch(/^\d+px$/);
-      expect(vars['--reveal-blur']).toMatch(/^\d+px$/);
+      expect(vars['--cascade']).toBe(`${CASCADE_CAP_MS}ms`);
       expect(vars['--enter-scale']).toMatch(/^[\d.]+$/);
       expect(Number(vars['--enter-scale'])).toBeGreaterThan(0);
       expect(vars['--stagger']).toBe(`${staggerStep(presentation(combo))}ms`);
@@ -91,8 +96,8 @@ describe('motionFor', () => {
 
   it('returns exactly the documented set of custom properties', () => {
     expect(Object.keys(motionFor(presentation())).sort()).toEqual([
-      '--dur-base', '--dur-fast', '--dur-slow', '--ease', '--enter',
-      '--enter-scale', '--reveal-blur', '--rise', '--stagger',
+      '--cascade', '--dur-base', '--dur-fast', '--dur-slow', '--ease', '--enter',
+      '--enter-lock', '--enter-scale', '--enter-scan', '--rise', '--stagger',
     ].sort());
   });
 
@@ -101,19 +106,36 @@ describe('motionFor', () => {
     expect(new Set(bases).size).toBe(SCENE_MOODS.length);
   });
 
-  it('picks the entrance family from the layout, not the mood', () => {
-    const byLayout = Object.fromEntries(
-      SCENE_LAYOUTS.map(layout => [layout, motionFor(presentation({ layout }))['--enter']]),
-    );
-    expect(byLayout).toEqual({
-      focus: 'materialize',
-      dossier: 'materialize',
-      split: 'edge',
-      sequence: 'unfurl',
-      mosaic: 'settle',
-    });
-    for (const mood of SCENE_MOODS) {
-      expect(motionFor(presentation({ layout: 'split', mood }))['--enter']).toBe('edge');
+  it('lets both the layout and the mood change the entrance family', () => {
+    expect(enterFamily(presentation({ layout: 'dossier', mood: 'calm' }))).toBe('unfold');
+    expect(enterFamily(presentation({ layout: 'dossier', mood: 'kinetic' }))).toBe('lock');
+    expect(enterFamily(presentation({ layout: 'dossier', mood: 'archival' }))).toBe('scan');
+    expect(enterFamily(presentation({ layout: 'split', mood: 'kinetic' }))).toBe('wipe');
+    expect(enterFamily(presentation({ layout: 'focus', mood: 'calm' }))).toBe('rise');
+    // Every layout reads at least two families across the moods, and every mood across the layouts.
+    for (const layout of SCENE_LAYOUTS) {
+      expect(new Set(SCENE_MOODS.map(mood => enterFamily(presentation({ layout, mood })))).size).toBeGreaterThan(1);
     }
+    for (const mood of SCENE_MOODS.filter(m => m !== 'archival')) {
+      expect(new Set(SCENE_LAYOUTS.map(layout => enterFamily(presentation({ layout, mood })))).size).toBeGreaterThan(1);
+    }
+  });
+
+  it('emits the family vars of the chosen family, traces included', () => {
+    for (const combo of ALL) {
+      const p = presentation(combo);
+      const vars = motionFor(p);
+      const family = familyVars(enterFamily(p));
+      for (const key of ['--enter', '--enter-scan', '--enter-lock'] as const) expect(vars[key]).toBe(family[key]);
+    }
+  });
+
+  it('names every trace explicitly, so an override never inherits one', () => {
+    for (const family of Object.values(ENTER_FAMILIES)) {
+      expect(TRACES).toContain(family.scan);
+      expect(TRACES).toContain(family.lock);
+    }
+    expect(ENTER_FAMILIES.scan.scan).toBe('scanLine');
+    expect(ENTER_FAMILIES.lock.lock).toBe('lockTrace');
   });
 });

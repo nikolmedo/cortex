@@ -9,6 +9,7 @@ export const en = {
   'app.tagline': 'Ask anything. Every answer builds its own interface.',
 
   'landing.examples': 'Try asking',
+  'landing.trending': 'Trending now',
   'landing.recent': 'Recent',
 
   'command.label': 'Your question',
@@ -115,6 +116,7 @@ export const es: Translations = {
   'app.tagline': 'Preguntá lo que quieras. Cada respuesta arma su propia interfaz.',
 
   'landing.examples': 'Probá con',
+  'landing.trending': 'En tendencia',
   'landing.recent': 'Recientes',
 
   'command.label': 'Tu pregunta',

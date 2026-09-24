@@ -43,7 +43,7 @@
   fill: color-mix(in srgb, var(--m) 85%, white);
   transform-box: fill-box;
   transform-origin: left center;
-  animation: grow var(--dur-slow) var(--ease) calc(var(--i, 0) * var(--stagger, 60ms)) both;
+  animation: grow var(--dur-slow) var(--ease) calc(var(--enter-delay, 0ms) + min(var(--i, 0) * var(--stagger, 60ms), var(--cascade, 240ms))) both;
 }
 
 @keyframes grow {
@@ -91,7 +91,7 @@
 .area {
   fill: color-mix(in srgb, var(--m) 16%, transparent);
   /* Fills in only once the line that bounds it has finished drawing. */
-  animation: fadeIn var(--dur-base) var(--ease) var(--draw) both;
+  animation: fadeIn var(--dur-base) var(--ease) calc(var(--enter-delay, 0ms) + var(--draw)) both;
 }
 
 .stroke {
@@ -111,7 +111,7 @@
 .wipe {
   transform-box: fill-box;
   transform-origin: left center;
-  animation: wipe var(--draw) var(--ease) both;
+  animation: wipe var(--draw) var(--ease) var(--enter-delay, 0ms) both;
 }
 
 .marker,
@@ -124,7 +124,7 @@
   background: var(--ink-1);
   border: 2px solid color-mix(in srgb, var(--m) 70%, transparent);
   /* Each marker catches up with the line as it passes that point. */
-  animation: markerIn var(--dur-base) var(--ease) calc(var(--draw) * 0.6 + var(--i, 0) * var(--stagger, 60ms)) both;
+  animation: markerIn var(--dur-base) var(--ease) calc(var(--enter-delay, 0ms) + var(--draw) * 0.6 + min(var(--i, 0) * var(--stagger, 60ms), var(--cascade, 240ms))) both;
 }
 
 .markerStrong {
@@ -183,6 +183,34 @@
   transform: translateX(-100%);
 }
 
+/* Variants */
+
+.bars[data-variant='dots'] .barMark {
+  fill: color-mix(in srgb, var(--m) 45%, transparent);
+}
+
+.dotMark {
+  fill: color-mix(in srgb, var(--m) 90%, white);
+  stroke: var(--ink-1);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: markerIn var(--dur-base) var(--ease) calc(var(--enter-delay, 0ms) + var(--dur-slow) * 0.6 + min(var(--i, 0) * var(--stagger, 60ms), var(--cascade, 240ms))) both;
+}
+
+/* area: the filled shape leads and the markers step back to the peak and the end. */
+.lineFigure[data-variant='area'] .area {
+  fill: color-mix(in srgb, var(--m) 34%, transparent);
+}
+
+.lineFigure[data-variant='area'] .stroke {
+  stroke-width: 1.5;
+}
+
+.lineFigure[data-variant='area'] .marker {
+  display: none;
+}
+
 /* Reveal choreography */
 
 @keyframes wipe {
@@ -199,7 +227,7 @@
 }
 
 /* See kinds.module.css: a settled turn renders the base rule and never replays. */
-[data-reveal='false'] :is(.barMark, .wipe, .area, .marker, .markerStrong) {
+[data-reveal='false'] :is(.barMark, .wipe, .area, .marker, .markerStrong, .dotMark) {
   animation: none;
 }
 
@@ -208,6 +236,6 @@
  * already drops every inner draw for it. A chart is the loudest of those draws,
  * so it has to honour the directive too.
  */
-[data-enter='fade'] :is(.barMark, .wipe, .area, .marker, .markerStrong) {
+[data-enter='fade'] :is(.barMark, .wipe, .area, .marker, .markerStrong, .dotMark) {
   animation: none;
 }

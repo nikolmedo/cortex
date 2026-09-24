@@ -20,7 +20,8 @@ describe('shared constant tables', () => {
   const tables = [
     'VALID_TYPES', 'SCENE_INTENTS', 'SCENE_LAYOUTS', 'SCENE_MOODS', 'SCENE_MOTIFS', 'SCENE_DENSITIES',
     'FACT_KINDS', 'SPOTLIGHT_KINDS', 'ITEM_SIDES', 'MODULE_SLOTS', 'MODULE_SPANS', 'MODULE_EMPHASES',
-    'MODULE_TONES', 'MODULE_REVEALS', 'ITEM_SHAPES',
+    'MODULE_TONES', 'MODULE_REVEALS', 'ITEM_SHAPES', 'MODULE_SURFACES', 'MODULE_CORNERS', 'MODULE_HEADERS',
+    'MODULE_PATTERNS', 'MODULE_SIZES', 'MODULE_VARIANTS', 'SCENE_TYPE_SCALES', 'VARIANTS_BY_KIND',
   ] as const;
 
   it.each(tables)('%s is identical in both mirrors', name => {
@@ -153,6 +154,15 @@ describe('kind helper parity', () => {
       }
     }
   });
+
+  it('moduleVariant matches for every kind and candidate value', () => {
+    const values: unknown[] = [...server.MODULE_VARIANTS, 'nope', '', 42, null, undefined];
+    for (const kind of server.FACT_KINDS) {
+      for (const value of values) {
+        expect(client.moduleVariant(kind, value)).toBe(server.moduleVariant(kind, value));
+      }
+    }
+  });
 });
 
 describe('entry-point parity on a shared payload', () => {
@@ -166,6 +176,7 @@ describe('entry-point parity on a shared payload', () => {
     presentation: {
       layout: 'hologram',
       mood: 'angry',
+      typeScale: 'editorial',
       palette: { primary: 'red', secondary: '001F3F', accent: '#5EF2C2' },
     },
     answer: { headline: 'H', body: ['p1', 'p2'], caveats: ['c'] },
@@ -174,6 +185,14 @@ describe('entry-point parity on a shared payload', () => {
       { category: 'C', kind: 'tags', color: 'zzz', items: Array.from({ length: 20 }, (_, i) => ({ label: `t${i}` })) },
       { category: 'D', kind: 'code', body: 'line1\r\nline2', value: 'python', facts: ['f'] },
       { category: 'F', kind: 'panel', items: [{ label: 'L', weight: 500, shape: 'bar' }, { label: 'M', shape: 'nope' }] },
+      {
+        category: 'G', kind: 'stats', items: [{ label: 'L', value: '1' }],
+        size: 'third', surface: 'bleed', corner: 'square', header: 'rule', pattern: 'grid', variant: 'hero',
+      },
+      {
+        category: 'H', kind: 'quote', items: [{ label: 'Q' }],
+        size: 'massive', surface: 'neon', corner: 'blob', header: 'marquee', pattern: 'plaid', variant: 'hero',
+      },
     ],
     followups: ['a', 'b'],
     sources: [{ title: 'S', url: 'http://insecure.com' }, { title: 'T', url: 'https://ok.com' }],

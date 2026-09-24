@@ -8,7 +8,7 @@
 import { STAGGER_BY_DENSITY } from '../scene/motionProfile';
 
 export const STAGGER_STEP_MS = STAGGER_BY_DENSITY.balanced;
-export const STAGGER_CAP_MS = 400;
+export const STAGGER_CAP_MS = 360;
 
 /** Entrance delay for the n-th element of a batch, never beyond the cap. */
 export function staggerDelay(index: number, step: number = STAGGER_STEP_MS): number {

@@ -33,6 +33,20 @@ export const MODULE_TONES = ['neutral', 'positive', 'caution', 'critical'] as co
 export const MODULE_REVEALS = ['rise', 'draw', 'count', 'fade'] as const;
 export const ITEM_SHAPES = ['figure', 'bar', 'note', 'pair', 'tag', 'divider'] as const;
 
+// Card grammar: how a module's shell is drawn. Like the directives above, each
+// value only ever selects a rule through a data attribute or a lookup table.
+export const MODULE_SURFACES = ['solid', 'outline', 'bleed', 'glass', 'bare', 'inverted'] as const;
+export const MODULE_CORNERS = ['round', 'square', 'notch'] as const;
+export const MODULE_HEADERS = ['icon', 'numeral', 'rule', 'none'] as const;
+export const MODULE_PATTERNS = ['none', 'contour', 'grid', 'dots', 'stripes', 'scan'] as const;
+export const MODULE_SIZES = ['quarter', 'third', 'half', 'two-thirds', 'full'] as const;
+/** One flat list on the wire; VARIANTS_BY_KIND says which values a kind can draw. */
+export const MODULE_VARIANTS = [
+  'tiles', 'gauges', 'hero', 'inline', 'rail', 'ribbon', 'stacked', 'line', 'bars', 'area', 'dots',
+  'numbered', 'cards', 'columns', 'pull', 'stack', 'path',
+] as const;
+export const SCENE_TYPE_SCALES = ['editorial', 'technical', 'monumental'] as const;
+
 export const SCENE_VERSION = 3;
 
 export const LIMITS = {
@@ -102,6 +116,23 @@ export type ModuleEmphasis = typeof MODULE_EMPHASES[number];
 export type ModuleTone = typeof MODULE_TONES[number];
 export type ModuleReveal = typeof MODULE_REVEALS[number];
 export type ItemShape = typeof ITEM_SHAPES[number];
+export type ModuleSurface = typeof MODULE_SURFACES[number];
+export type ModuleCorner = typeof MODULE_CORNERS[number];
+export type ModuleHeader = typeof MODULE_HEADERS[number];
+export type ModulePattern = typeof MODULE_PATTERNS[number];
+export type ModuleSize = typeof MODULE_SIZES[number];
+export type ModuleVariant = typeof MODULE_VARIANTS[number];
+export type SceneTypeScale = typeof SCENE_TYPE_SCALES[number];
+
+/** The variants each kind has a renderer for. A kind missing here has none. */
+export const VARIANTS_BY_KIND: Readonly<Partial<Record<FactKind, readonly ModuleVariant[]>>> = {
+  stats: ['tiles', 'gauges', 'hero', 'inline'],
+  timeline: ['rail', 'ribbon', 'stacked'],
+  chart: ['line', 'bars', 'area', 'dots'],
+  list: ['dots', 'numbered', 'cards', 'columns'],
+  quote: ['pull', 'stack'],
+  steps: ['path', 'cards'],
+};
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 const BARE_HEX_RE = /^[0-9a-fA-F]{6}$/;
@@ -253,6 +284,17 @@ export function itemShape(kind: FactKind, value: unknown): ItemShape | undefined
   return (ITEM_SHAPES as readonly string[]).includes(value) ? value as ItemShape : undefined;
 }
 
+/**
+ * The module `variant` when this kind can draw it. Both mirrors read variants
+ * through this, so a value meant for another kind reaches the renderer as
+ * `undefined` and the kind's default drawing is used.
+ */
+export function moduleVariant(kind: FactKind, value: unknown): ModuleVariant | undefined {
+  const allowed = VARIANTS_BY_KIND[kind];
+  if (!allowed || typeof value !== 'string') return undefined;
+  return (allowed as readonly string[]).includes(value) ? value as ModuleVariant : undefined;
+}
+
 // ---------------------------------------------------------------------------
 // Server-only zod helpers
 // ---------------------------------------------------------------------------
@@ -383,6 +425,27 @@ const WireModuleSchema = z.object({
     'How the card enters: "rise" for most cards, "draw" for things that build up (chart, timeline, steps), '
     + '"count" for a card led by a number, "fade" for quiet text.',
   ),
+  size: z.enum(MODULE_SIZES).optional().describe(
+    'Share of a wide 12-column row: quarter, third, half, two-thirds or full. Wins over span. '
+    + 'Give the lead card a larger size than its neighbours.',
+  ),
+  surface: z.enum(MODULE_SURFACES).optional().describe(
+    'Card material. solid: opaque panel. outline: hairline frame, no fill. bleed: colour wash, no frame. '
+    + 'glass: translucent pane. bare: no chrome, content on the page. inverted: a lit header band.',
+  ),
+  corner: z.enum(MODULE_CORNERS).optional().describe('Corner geometry: round, square, or notch (a clipped corner).'),
+  header: z.enum(MODULE_HEADERS).optional().describe(
+    'Card heading. icon: kind icon and title. numeral: the card\'s position as a large number. '
+    + 'rule: a mono label on a thin line. none: no visible heading.',
+  ),
+  pattern: z.enum(MODULE_PATTERNS).optional().describe(
+    'Faint decoration behind the content: none, contour, grid, dots, stripes or scan.',
+  ),
+  variant: z.enum(MODULE_VARIANTS).optional().describe(
+    'How the kind draws itself; only these pairs are valid, anything else is ignored. '
+    + 'stats: tiles, gauges, hero (one giant figure), inline. timeline: rail, ribbon (horizontal track), stacked. '
+    + 'chart: line, bars, area, dots. list: dots, numbered, cards, columns. quote: pull, stack. steps: path, cards.',
+  ),
 });
 
 export const SceneWireSchema = z.object({
@@ -402,6 +465,10 @@ export const SceneWireSchema = z.object({
     mood: z.enum(SCENE_MOODS).describe('Motion and tone: calm, kinetic, archival or volatile.'),
     motif: z.enum(SCENE_MOTIFS).describe('Ambient field: flow, rings, grid or none.'),
     density: z.enum(SCENE_DENSITIES).describe('How much is shown at once: sparse, balanced or dense.'),
+    typeScale: z.enum(SCENE_TYPE_SCALES).optional().describe(
+      'Typographic voice. editorial: light, wide, generous headings. technical: condensed, tight, mono-led. '
+      + 'monumental: very large, heavy, wide display figures.',
+    ),
     palette: WirePaletteSchema,
   }).describe('How the result is presented. Decided before the answer is written so the interface can be themed while it streams.'),
   answer: z.object({
@@ -461,6 +528,7 @@ export const ScenePresentationSchema = z.object({
   mood: z.enum(SCENE_MOODS).catch('calm'),
   motif: z.enum(SCENE_MOTIFS).catch('flow'),
   density: z.enum(SCENE_DENSITIES).catch('balanced'),
+  typeScale: z.enum(SCENE_TYPE_SCALES).optional().catch(undefined),
   palette: ScenePaletteSchema.catch(freshPalette),
 });
 
@@ -469,6 +537,8 @@ export interface ScenePresentation {
   mood: SceneMood;
   motif: SceneMotif;
   density: SceneDensity;
+  /** Absent means the default type scale. */
+  typeScale?: SceneTypeScale;
   palette: ScenePalette;
 }
 
@@ -520,6 +590,14 @@ export interface SceneModule {
   emphasis?: ModuleEmphasis;
   tone?: ModuleTone;
   reveal?: ModuleReveal;
+  size?: ModuleSize;
+  /** Card grammar: drawn by ModuleCard through data attributes only. */
+  surface?: ModuleSurface;
+  corner?: ModuleCorner;
+  header?: ModuleHeader;
+  pattern?: ModulePattern;
+  /** Already checked against VARIANTS_BY_KIND for this module's kind. */
+  variant?: ModuleVariant;
 }
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -562,6 +640,12 @@ export const SceneModuleSchema = z.object({
   emphasis: z.enum(MODULE_EMPHASES).optional().catch(undefined),
   tone: z.enum(MODULE_TONES).optional().catch(undefined),
   reveal: z.enum(MODULE_REVEALS).optional().catch(undefined),
+  size: z.enum(MODULE_SIZES).optional().catch(undefined),
+  surface: z.enum(MODULE_SURFACES).optional().catch(undefined),
+  corner: z.enum(MODULE_CORNERS).optional().catch(undefined),
+  header: z.enum(MODULE_HEADERS).optional().catch(undefined),
+  pattern: z.enum(MODULE_PATTERNS).optional().catch(undefined),
+  variant: z.unknown(),
 }).transform((m): SceneModule => {
   const cap = itemCap(m.kind);
   const module: SceneModule = {
@@ -597,6 +681,15 @@ export const SceneModuleSchema = z.object({
   if (m.emphasis !== undefined) module.emphasis = m.emphasis;
   if (m.tone !== undefined) module.tone = m.tone;
   if (m.reveal !== undefined) module.reveal = m.reveal;
+  if (m.size !== undefined) module.size = m.size;
+  if (m.surface !== undefined) module.surface = m.surface;
+  if (m.corner !== undefined) module.corner = m.corner;
+  if (m.header !== undefined) module.header = m.header;
+  if (m.pattern !== undefined) module.pattern = m.pattern;
+  // Checked against the kind after its fallback, so a bogus kind still ends up
+  // with a variant `list` can draw, or none.
+  const variant = moduleVariant(m.kind, m.variant);
+  if (variant !== undefined) module.variant = variant;
   return module;
 });
 

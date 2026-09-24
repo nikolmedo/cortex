@@ -43,6 +43,7 @@
       "mood": "kinetic",
       "motif": "grid",
       "density": "balanced",
+      "typeScale": "technical",
       "palette": {
         "primary": "#6199c7",
         "secondary": "#6ec95f",
@@ -52,6 +53,12 @@
     "modules": [
       {
         "category": "Key technical differences",
+        "size": "full",
+        "emphasis": "lead",
+        "surface": "solid",
+        "corner": "notch",
+        "header": "numeral",
+        "pattern": "grid",
         "color": "#6199c7",
         "image_query": "",
         "kind": "comparison",
@@ -92,6 +99,9 @@
       },
       {
         "category": "Trade-offs",
+        "surface": "outline",
+        "corner": "notch",
+        "header": "rule",
         "color": "#f4a134",
         "image_query": "",
         "kind": "proscons",
@@ -122,6 +132,10 @@
       },
       {
         "category": "Decision guide",
+        "size": "full",
+        "surface": "inverted",
+        "corner": "notch",
+        "header": "icon",
         "color": "#6ec95f",
         "image_query": "",
         "kind": "keyvalue",
