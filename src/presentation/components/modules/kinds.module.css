@@ -86,7 +86,7 @@
   background: linear-gradient(to bottom, color-mix(in srgb, var(--m) 60%, transparent), var(--line));
   /* One rail for the whole list, so it draws top-down without a per-item index. */
   transform-origin: top;
-  animation: railDraw var(--dur-slow) var(--ease) both;
+  animation: railDraw var(--dur-slow) var(--ease) var(--enter-delay, 0ms) both;
 }
 
 .tlItem {
@@ -110,7 +110,7 @@
   background: var(--ink-1);
   border: 1.5px solid color-mix(in srgb, var(--m) 85%, white);
   /* Dots land behind the rail: it has a head start, then each node pops in turn. */
-  animation: nodeIn var(--dur-base) var(--ease) calc(var(--dur-slow) * 0.45 + var(--i, 0) * var(--stagger, 60ms)) both;
+  animation: nodeIn var(--dur-base) var(--ease) calc(var(--enter-delay, 0ms) + var(--dur-slow) * 0.45 + min(var(--i, 0) * var(--stagger, 60ms), var(--cascade, 240ms))) both;
 }
 
 .tlDate {
@@ -160,15 +160,17 @@
   stroke: color-mix(in srgb, var(--m) 85%, white);
   stroke-width: 3;
   stroke-linecap: round;
-  /* pathLength is 100, so --dash is the swept percentage the renderer computed. */
-  stroke-dasharray: var(--dash, 0) 100;
-  animation: sweep var(--dur-slow) var(--ease) calc(var(--i, 0) * var(--stagger, 60ms)) both;
+  /* pathLength is 100: one dash as long as the ring with a longer gap, shifted
+     so only --dash of it shows. The sweep animates the offset, never the array. */
+  stroke-dasharray: 100 200;
+  stroke-dashoffset: calc(100 - var(--dash, 0));
+  animation: sweep var(--dur-slow) var(--ease) calc(var(--enter-delay, 0ms) + min(var(--i, 0) * var(--stagger, 60ms), var(--cascade, 240ms))) both;
 }
 
 .figure {
   font-family: var(--font-display);
-  font-stretch: 92%;
-  font-weight: 400;
+  font-stretch: var(--figure-stretch, 92%);
+  font-weight: var(--figure-weight, 400);
   font-size: var(--fs-figure);
   line-height: 1.05;
   color: var(--text-hi);
@@ -343,7 +345,7 @@
   background: linear-gradient(90deg, color-mix(in srgb, var(--m) 55%, transparent), color-mix(in srgb, var(--m) 95%, white));
   transform-origin: left center;
   transform: scaleX(var(--w, 0));
-  animation: fillIn var(--dur-slow) var(--ease) calc(var(--i, 0) * var(--stagger, 60ms)) both;
+  animation: fillIn var(--dur-slow) var(--ease) calc(var(--enter-delay, 0ms) + min(var(--i, 0) * var(--stagger, 60ms), var(--cascade, 240ms))) both;
 }
 
 @keyframes fillIn {
@@ -478,7 +480,7 @@
   background: linear-gradient(to bottom, color-mix(in srgb, var(--m) 45%, transparent), var(--line));
   /* One segment per step, so each draws after its own number has appeared. */
   transform-origin: top;
-  animation: railDraw var(--dur-base) var(--ease) calc(var(--i, 0) * var(--stagger, 60ms) + var(--dur-fast)) both;
+  animation: railDraw var(--dur-base) var(--ease) calc(var(--enter-delay, 0ms) + min(var(--i, 0) * var(--stagger, 60ms), var(--cascade, 240ms)) + var(--dur-fast)) both;
 }
 
 .stepNum {
@@ -493,7 +495,7 @@
   background: color-mix(in srgb, var(--m) 12%, var(--ink-1));
   border: 1px solid color-mix(in srgb, var(--m) 45%, transparent);
   font-variant-numeric: tabular-nums;
-  animation: nodeIn var(--dur-base) var(--ease) calc(var(--i, 0) * var(--stagger, 60ms)) both;
+  animation: nodeIn var(--dur-base) var(--ease) calc(var(--enter-delay, 0ms) + min(var(--i, 0) * var(--stagger, 60ms), var(--cascade, 240ms))) both;
 }
 
 .stepBody {
@@ -708,11 +710,358 @@
   color: var(--text-dim);
 }
 
+/* ---------- Variants: each reads the renderer's data-variant; absent keeps the rules above ---------- */
+
+/* List */
+
+.listNum {
+  min-width: 2ch;
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  line-height: 1.9;
+  color: color-mix(in srgb, var(--m) 70%, var(--text-hi));
+  font-variant-numeric: tabular-nums;
+}
+
+.list[data-variant='cards'] {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 180px), 1fr));
+  gap: 10px;
+}
+
+.list[data-variant='cards'] .listItem {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--m) 4%, transparent);
+}
+
+.list[data-variant='cards'] .listValue {
+  grid-column: 1;
+  margin: 0;
+  text-align: left;
+}
+
+.list[data-variant='columns'] {
+  display: block;
+  columns: 2 220px;
+  column-gap: 28px;
+}
+
+.list[data-variant='columns'] .listItem {
+  break-inside: avoid;
+}
+
+.list[data-variant='columns'] .listItem:first-child {
+  padding-top: 10px;
+}
+
+/* Timeline: ribbon runs the events along a horizontal track that scrolls. */
+
+.timeline[data-variant='ribbon'] {
+  display: flex;
+  gap: 18px;
+  min-width: 0;
+  padding: 22px 2px 10px;
+  overflow-x: auto;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
+}
+
+.timeline[data-variant='ribbon']::before {
+  left: 0;
+  right: 0;
+  top: 5px;
+  bottom: auto;
+  width: auto;
+  height: 1px;
+  background: linear-gradient(to right, color-mix(in srgb, var(--m) 60%, transparent), var(--line));
+  transform-origin: left;
+  animation-name: railDrawX;
+}
+
+.timeline[data-variant='ribbon'] .tlItem {
+  flex: 0 0 clamp(150px, 42cqi, 220px);
+  padding-bottom: 0;
+  scroll-snap-align: start;
+}
+
+.timeline[data-variant='ribbon'] .tlNode {
+  left: 0;
+  top: -21px;
+}
+
+.timeline[data-variant='ribbon']:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--m) 70%, white);
+  outline-offset: 2px;
+}
+
+/* stacked: the dates become a column of their own, no rail. */
+
+.timeline[data-variant='stacked'] {
+  padding-left: 0;
+}
+
+.timeline[data-variant='stacked']::before,
+.timeline[data-variant='stacked'] .tlNode {
+  display: none;
+}
+
+.timeline[data-variant='stacked'] .tlItem {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  column-gap: 18px;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+
+.timeline[data-variant='stacked'] .tlItem:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+.timeline[data-variant='stacked'] .tlDate {
+  font-size: var(--fs-lead);
+  line-height: 1.2;
+}
+
+@container (min-width: 420px) {
+  .timeline[data-variant='stacked'] .tlItem {
+    grid-template-columns: 9ch minmax(0, 1fr);
+  }
+  .timeline[data-variant='stacked'] .tlItem > :not(.tlDate) {
+    grid-column: 2;
+  }
+  .timeline[data-variant='stacked'] .tlDate {
+    grid-row: 1 / span 2;
+  }
+}
+
+/* Stats */
+
+.stats[data-variant='gauges'] {
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+}
+
+.stats[data-variant='gauges'] .stat {
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.stats[data-variant='gauges'] .statText {
+  align-items: center;
+}
+
+.stats[data-variant='gauges'] .gauge {
+  width: 64px;
+  height: 64px;
+}
+
+.stats[data-variant='tiles'] {
+  gap: 1px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
+  background: var(--line);
+  overflow: hidden;
+}
+
+.stats[data-variant='tiles'] .stat {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--ink-1);
+}
+
+.stats[data-variant='tiles'] .statLabel,
+.heroStat .statLabel {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.stats[data-variant='inline'] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 0;
+}
+
+.stats[data-variant='inline'] .stat {
+  padding: 0 20px;
+  border-left: 1px solid var(--line);
+}
+
+.stats[data-variant='inline'] .stat:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.stats[data-variant='inline'] .figure {
+  font-size: clamp(1.375rem, 1.2rem + 0.8vw, 1.875rem);
+}
+
+.statsHero {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.heroStat {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.heroStat .figure {
+  font-size: clamp(3.25rem, 2.2rem + 4.5vw, 5.75rem);
+  font-weight: 300;
+  line-height: 0.92;
+  letter-spacing: -0.03em;
+  color: color-mix(in srgb, var(--m) 30%, var(--text-hi));
+}
+
+.statsHero > .stats {
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+/* Quote */
+
+.quotes[data-variant='pull'] .quote:first-child {
+  position: relative;
+  padding: 18px 0 0;
+  border-left: 0;
+}
+
+.quotes[data-variant='pull'] .quote:first-child::before {
+  content: '\201C';
+  position: absolute;
+  top: -0.2em;
+  left: -0.04em;
+  font-family: var(--font-display);
+  font-size: 4.5rem;
+  line-height: 1;
+  color: color-mix(in srgb, var(--m) 55%, transparent);
+  pointer-events: none;
+}
+
+.quotes[data-variant='pull'] .quote:first-child .quoteText {
+  position: relative;
+  font-size: clamp(1.375rem, 1.1rem + 1.2vw, 2.125rem);
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+}
+
+.quotes[data-variant='stack'] {
+  gap: 10px;
+}
+
+.quotes[data-variant='stack'] .quote {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left: 2px solid color-mix(in srgb, var(--m) 60%, transparent);
+  border-radius: 0 var(--r-sm) var(--r-sm) 0;
+  background: color-mix(in srgb, var(--m) 4%, transparent);
+}
+
+.quotes[data-variant='stack'] .quoteText {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: var(--fs-body);
+}
+
+.quotes[data-variant='stack'] .cite {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+}
+
+/* Steps: path keeps the line and swaps the numbered discs for bare nodes. */
+
+.stepTag {
+  display: block;
+  margin-bottom: 2px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: 0.1em;
+  color: color-mix(in srgb, var(--m) 70%, var(--text-hi));
+}
+
+.steps[data-variant='path'] .stepNum {
+  justify-self: center;
+  width: 12px;
+  height: 12px;
+  margin-top: 6px;
+  border-radius: 0;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  background: color-mix(in srgb, var(--m) 85%, white);
+  border: 0;
+}
+
+.steps[data-variant='path'] .step:not(:last-child)::before {
+  top: 22px;
+  bottom: -2px;
+}
+
+.steps[data-variant='path'] .stepBody {
+  padding-top: 0;
+}
+
+.steps[data-variant='cards'] {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr));
+  gap: 10px;
+}
+
+.steps[data-variant='cards'] .step {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--r-sm);
+  background: color-mix(in srgb, var(--m) 4%, transparent);
+}
+
+.steps[data-variant='cards'] .step::before {
+  display: none;
+}
+
+.steps[data-variant='cards'] .stepNum {
+  width: auto;
+  height: auto;
+  place-items: start;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  font-size: var(--fs-figure);
+  font-weight: 300;
+  line-height: 1;
+  color: color-mix(in srgb, var(--m) 55%, var(--text-hi));
+}
+
+.steps[data-variant='cards'] .stepHead {
+  flex-wrap: wrap;
+}
+
+.steps[data-variant='cards'] .stepResult {
+  max-width: none;
+  text-align: left;
+}
+
 /* Reveal choreography */
 
 @keyframes railDraw {
   from {
     transform: scaleY(0);
+  }
+}
+
+@keyframes railDrawX {
+  from {
+    transform: scaleX(0);
   }
 }
 
@@ -725,7 +1074,7 @@
 
 @keyframes sweep {
   from {
-    stroke-dasharray: 0 100;
+    stroke-dashoffset: 100;
   }
 }
 

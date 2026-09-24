@@ -99,3 +99,11 @@
     grid-template-columns: 2fr 1fr;
   }
 }
+
+/* Lingering: the placeholder fades and settles back while the content lands. */
+.leaving {
+  z-index: 1;
+  pointer-events: none;
+  transform-origin: top center;
+  animation: skeletonOut var(--dur-base) var(--ease) forwards;
+}

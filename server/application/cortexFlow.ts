@@ -44,7 +44,8 @@ export interface SceneInput extends GenerateInput {
 }
 
 const MAX_OUTPUT_TOKENS = 16384;
-const TEMPERATURE = 0.3;
+/** Raised from 0.3 for variety in presentation choices, now that the prompt no longer fixes one layout per question; grounding and schema validation still bound the facts and the shape. */
+const TEMPERATURE = 0.6;
 const GEMINI_TIMEOUT_MS = Number(process.env.GEMINI_TIMEOUT_MS) || 75_000;
 /** Minimum gap between partial events; one frame of reading, not one per token. */
 const PARTIAL_THROTTLE_MS = 130;

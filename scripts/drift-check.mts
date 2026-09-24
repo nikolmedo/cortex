@@ -10,6 +10,8 @@ const CONSTANTS = [
   'VALID_TYPES', 'SCENE_INTENTS', 'SCENE_LAYOUTS', 'SCENE_MOODS', 'SCENE_MOTIFS', 'SCENE_DENSITIES',
   'FACT_KINDS', 'SPOTLIGHT_KINDS', 'ITEM_SIDES', 'SCENE_VERSION', 'LIMITS', 'LAYOUT_BY_INTENT', 'DEFAULT_PALETTE',
   'MODULE_SLOTS', 'MODULE_SPANS', 'MODULE_EMPHASES', 'MODULE_TONES', 'MODULE_REVEALS', 'ITEM_SHAPES',
+  'MODULE_SURFACES', 'MODULE_CORNERS', 'MODULE_HEADERS', 'MODULE_PATTERNS', 'MODULE_SIZES', 'MODULE_VARIANTS',
+  'SCENE_TYPE_SCALES', 'VARIANTS_BY_KIND',
 ] as const;
 
 let failures = 0;
@@ -27,6 +29,12 @@ for (const s of samples) {
   if (server.sanitizeCode(s, 2400) !== client.sanitizeCode(s, 2400)) fail('sanitizeCode output differs');
 }
 
+for (const kind of server.FACT_KINDS) {
+  for (const value of [...server.MODULE_VARIANTS, 'bogus', 42, undefined]) {
+    if (server.moduleVariant(kind, value) !== client.moduleVariant(kind, value)) fail(`moduleVariant(${kind}, ${String(value)}) differs`);
+  }
+}
+
 // Byte-for-byte text of the mirrored blocks (constants through itemCap).
 const block = (path: string) => {
   const src = readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -40,7 +48,8 @@ if (block('../server/domain/Scene.ts') !== block('../src/domain/Scene.ts')) fail
 const payload = {
   intent: 'problem', type: 'concept', title: 'Catch-up', subtitle: 'Kinematics',
   answer: { headline: 'At 8 pm, 400 km out', body: ['Para <1>', 'Para 2'], caveats: ['Same track'] },
-  image_url: 'http://insecure', presentation: { layout: 'bogus', mood: 'calm', motif: 'grid', density: 'dense', palette: { primary: '#fff' } },
+  image_url: 'http://insecure',
+  presentation: { layout: 'bogus', mood: 'calm', motif: 'grid', density: 'dense', typeScale: 'monumental', palette: { primary: '#fff' } },
   modules: [
     { category: 'Steps', color: '#7FD8FF', kind: 'steps', items: [{ label: 'Head start', detail: '80 km/h x 1 h', value: '80 km', weight: 140 }] },
     { category: 'Formula', color: '#7FD8FF', kind: 'formula', items: [{ label: 't = d / (v2 - v1) <ok>' }] },
@@ -89,6 +98,38 @@ const payload = {
 const a = JSON.stringify(server.validateScene(payload));
 const b = JSON.stringify(client.sanitizeScene(payload));
 if (a !== b) fail(`normalised scene differs\n  server=${a}\n  client=${b}`);
+
+// The payload above already holds more than LIMITS.maxModules, so the card
+// grammar gets its own scene rather than being cut off the end of that one.
+const grammar = {
+  title: 'Grammar', intent: 'entity',
+  presentation: { layout: 'mosaic', mood: 'volatile', motif: 'grid', density: 'sparse', typeScale: 'monumental', palette: {} },
+  modules: [
+    // Card grammar and variants: every field once valid and once invalid, a
+    // variant meant for another kind, and 'dots', which list and chart share.
+    {
+      category: 'Grammar', color: '#7FD8FF', kind: 'timeline',
+      size: 'two-thirds', surface: 'glass', corner: 'notch', header: 'numeral', pattern: 'contour', variant: 'ribbon',
+      items: [{ label: 'Founded', value: '1998' }],
+    },
+    {
+      category: 'Bad grammar', color: '#7FD8FF', kind: 'chart',
+      size: 'huge', surface: 'chrome', corner: 'blob', header: 'marquee', pattern: 'plaid', variant: 'ribbon',
+      items: [{ label: '2020', value: '1', weight: 10 }],
+    },
+    { category: 'Dot chart', color: '#7FD8FF', kind: 'chart', variant: 'dots', items: [{ label: '2020', value: '1', weight: 10 }] },
+    { category: 'Dot list', color: '#7FD8FF', kind: 'list', variant: 'dots', items: [{ label: 'a' }] },
+    // A bogus kind becomes a list, so only a list variant survives it.
+    { category: 'Bad kind variant', color: '#7FD8FF', kind: 'bogus', variant: 'numbered', items: [{ label: 'a' }] },
+    { category: 'Bad kind stats variant', color: '#7FD8FF', kind: 'bogus', variant: 'hero', items: [{ label: 'a' }] },
+  ],
+};
+for (const typeScale of ['monumental', 'gigantic', undefined]) {
+  const scene = { ...grammar, presentation: { ...grammar.presentation, typeScale } };
+  const x = JSON.stringify(server.validateScene(scene));
+  const y = JSON.stringify(client.sanitizeScene(scene));
+  if (x !== y) fail(`normalised grammar scene differs (typeScale ${String(typeScale)})\n  server=${x}\n  client=${y}`);
+}
 
 const preface = { intent: 'comparison', title: 'PG vs Mongo', layout: 'nope', mood: 'kinetic', palette: {}, plan: ['a', 'b', 'c', 'd'] };
 if (JSON.stringify(server.validatePreface(preface)) !== JSON.stringify(client.sanitizePreface(preface))) fail('normalised preface differs');

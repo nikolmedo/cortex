@@ -1,7 +1,7 @@
 import { useId, type CSSProperties, type ReactElement } from 'react';
 import type { SceneItem } from '../../../domain/Scene';
 import { staggerIndex } from '../../hooks/useCountUp';
-import { moduleItems } from './items';
+import { chartReadsAsLine, moduleItems } from './items';
 import { ListModule } from './kinds';
 import type { ModuleRendererProps } from './registry';
 import styles from './ChartModule.module.css';
@@ -10,7 +10,9 @@ import styles from './ChartModule.module.css';
  * Single-series chart. `weight` (0-100, relative) sets geometry; `value` is the
  * real number and is shown as text only, never parsed. Short ordinal labels with
  * five or more points read as a line; everything else as horizontal bars, which
- * reflow on narrow screens.
+ * reflow on narrow screens. A `variant` replaces that guess: the model's is taken
+ * as given, and the card fallback only assigns a line or area where the guess
+ * would have drawn one.
  */
 
 type Point = SceneItem & { weight: number };
@@ -21,6 +23,28 @@ const X_PAD = 1.4;
 
 function asPoints(items: SceneItem[]): Point[] {
   return items.filter((it): it is Point => typeof it.weight === 'number');
+}
+
+/** Dot plot: each point is a mark on its own thin track, for values read one by one. */
+function Dots({ points }: { points: Point[] }) {
+  return (
+    <ul className={styles.bars} data-variant="dots">
+      {points.map((p, i) => {
+        const w = Math.max(1.5, Math.min(98.5, p.weight));
+        return (
+          <li key={i} className={styles.barRow} style={staggerIndex(i)}>
+            <span className={styles.barLabel}>{p.label}</span>
+            <span className={styles.barValue}>{p.value ?? ''}</span>
+            <svg className={styles.barSvg} height="12" role="img" aria-label={p.value ? `${p.label}: ${p.value}` : p.label}>
+              <rect className={styles.barTrack} x="0" y="5.5" width="100%" height="1" />
+              <rect className={styles.barMark} x="0" y="5" width={`${w.toFixed(2)}%`} height="2" />
+              <circle className={styles.dotMark} cx={`${w.toFixed(2)}%`} cy="6" r="5" />
+            </svg>
+          </li>
+        );
+      })}
+    </ul>
+  );
 }
 
 function Bars({ points }: { points: Point[] }) {
@@ -43,7 +67,7 @@ function Bars({ points }: { points: Point[] }) {
   );
 }
 
-function Line({ points }: { points: Point[] }) {
+function Line({ points, filled = false }: { points: Point[]; filled?: boolean }) {
   const n = points.length;
   // Interpolated into a url(#...) reference, so it is reduced to characters that
   // are always valid in a fragment identifier whatever React's id format is.
@@ -58,7 +82,7 @@ function Line({ points }: { points: Point[] }) {
   const labelIdx = Array.from(new Set([0, Math.floor((n - 1) / 2), n - 1]));
 
   return (
-    <figure className={styles.lineFigure}>
+    <figure className={styles.lineFigure} data-variant={filled ? 'area' : undefined}>
       <div className={styles.plot}>
         <div className={styles.plotInner}>
         <svg className={styles.lineSvg} viewBox={`0 0 100 ${LINE_H}`} preserveAspectRatio="none" aria-hidden="true">
@@ -117,6 +141,17 @@ function Line({ points }: { points: Point[] }) {
 export function ChartModule({ module }: ModuleRendererProps): ReactElement {
   const points = asPoints(moduleItems(module));
   if (points.length === 0) return <ListModule module={module} />;
-  const asLine = points.length >= 5 && points.every(p => p.label.length <= 12);
-  return asLine ? <Line points={points} /> : <Bars points={points} />;
+  switch (module.variant) {
+    case 'line':
+      return <Line points={points} />;
+    case 'area':
+      return <Line points={points} filled />;
+    case 'bars':
+      return <Bars points={points} />;
+    case 'dots':
+      return <Dots points={points} />;
+    default: {
+      return chartReadsAsLine(points) ? <Line points={points} /> : <Bars points={points} />;
+    }
+  }
 }

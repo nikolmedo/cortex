@@ -3,15 +3,18 @@ import {
   DEFAULT_PALETTE,
   FACT_KINDS,
   LIMITS,
+  MODULE_VARIANTS,
   SCENE_LAYOUTS,
   SCENE_MOODS,
   SCENE_VERSION,
+  VARIANTS_BY_KIND,
   asEnum,
   hexOr,
   isHex,
   itemCap,
   itemShape,
   luminousHex,
+  moduleVariant,
   normalizeHex,
   safeHttpsUrl,
   sanitizeCode,
@@ -329,5 +332,70 @@ describe('sanitizePreface', () => {
     expect(sanitizePreface({ intent: 'howto', title: 'P' })?.layout).toBe('sequence');
     expect(sanitizePreface({ intent: 'comparison', title: 'P' })?.layout).toBe('split');
     expect(sanitizePreface({})?.layout).toBe('focus');
+  });
+});
+
+describe('moduleVariant', () => {
+  it('keeps a variant only for a kind that can draw it', () => {
+    expect(moduleVariant('stats', 'hero')).toBe('hero');
+    expect(moduleVariant('timeline', 'ribbon')).toBe('ribbon');
+    expect(moduleVariant('chart', 'dots')).toBe('dots');
+    expect(moduleVariant('list', 'dots')).toBe('dots');
+    expect(moduleVariant('steps', 'cards')).toBe('cards');
+    expect(moduleVariant('chart', 'ribbon')).toBeUndefined();
+    expect(moduleVariant('quote', 'hero')).toBeUndefined();
+    expect(moduleVariant('code', 'line')).toBeUndefined();
+    expect(moduleVariant('stats', 'bogus')).toBeUndefined();
+    expect(moduleVariant('stats', 42)).toBeUndefined();
+  });
+
+  it('only lists variants that exist on the wire', () => {
+    for (const variants of Object.values(VARIANTS_BY_KIND)) {
+      for (const v of variants ?? []) expect(MODULE_VARIANTS).toContain(v);
+    }
+  });
+});
+
+describe('sanitizeScene: card grammar', () => {
+  const scene = sanitizeScene({
+    title: 'T',
+    presentation: { typeScale: 'monumental' },
+    modules: [
+      {
+        category: 'Valid', kind: 'timeline', items: [{ label: 'a', value: '1' }],
+        size: 'two-thirds', surface: 'inverted', corner: 'notch', header: 'numeral', pattern: 'scan', variant: 'ribbon',
+      },
+      {
+        category: 'Invalid', kind: 'chart', items: [{ label: 'a', weight: 1 }],
+        size: 'huge', surface: 'chrome', corner: 'blob', header: 'marquee', pattern: 'plaid', variant: 'ribbon',
+      },
+      { category: 'Bad kind', kind: 'bogus', variant: 'numbered', facts: ['f'] },
+      { category: 'Bad kind, stats variant', kind: 'bogus', variant: 'hero', facts: ['f'] },
+    ],
+  });
+
+  it('keeps every valid grammar value', () => {
+    expect(scene.presentation.typeScale).toBe('monumental');
+    expect(scene.modules[0]).toMatchObject({
+      size: 'two-thirds', surface: 'inverted', corner: 'notch', header: 'numeral', pattern: 'scan', variant: 'ribbon',
+    });
+  });
+
+  it('drops invalid values and a variant meant for another kind', () => {
+    const m = scene.modules[1];
+    for (const key of ['size', 'surface', 'corner', 'header', 'pattern', 'variant'] as const) {
+      expect(m[key]).toBeUndefined();
+    }
+  });
+
+  it('checks the variant against the kind it fell back to', () => {
+    expect(scene.modules[2].kind).toBe('list');
+    expect(scene.modules[2].variant).toBe('numbered');
+    expect(scene.modules[3].variant).toBeUndefined();
+  });
+
+  it('drops an unknown type scale and leaves it absent when omitted', () => {
+    expect(sanitizeScene({ title: 'T', modules: [], presentation: { typeScale: 'huge' } }).presentation.typeScale).toBeUndefined();
+    expect(sanitizeScene({ title: 'T', modules: [] }).presentation.typeScale).toBeUndefined();
   });
 });

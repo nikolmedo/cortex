@@ -26,6 +26,7 @@ export function SceneTheme({ presentation, className, children }: SceneThemeProp
       data-mood={presentation.mood}
       data-motif={presentation.motif}
       data-density={presentation.density}
+      data-type-scale={presentation.typeScale}
     >
       {children}
     </div>

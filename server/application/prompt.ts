@@ -5,14 +5,20 @@ import {
   LIMITS,
   MODULE_EMPHASES,
   MODULE_REVEALS,
+  MODULE_CORNERS,
+  MODULE_HEADERS,
+  MODULE_PATTERNS,
+  MODULE_SIZES,
   MODULE_SLOTS,
   MODULE_SPANS,
+  MODULE_SURFACES,
   MODULE_TONES,
   SCENE_DENSITIES,
   SCENE_INTENTS,
   SCENE_LAYOUTS,
   SCENE_MOODS,
   SCENE_MOTIFS,
+  SCENE_TYPE_SCALES,
   SPOTLIGHT_KINDS,
   VALID_TYPES,
   type ScenePreface,
@@ -41,14 +47,14 @@ const ROUTING_RULES = `INTENT: classify what the user is asking, not the words i
 - current: news or developments of the last months. "Latest on the EU AI Act", "What happened at the election yesterday?"
 When two fit, pick the one that decides the shape of a good answer: a bare name is always entity; a question with numbers to work out is problem.
 
-LAYOUT follows from the intent (never random; the same question always lands on the same layout):
-- entity -> dossier (mosaic instead when the subject is mainly specs or metrics, e.g. a device or a stock)
-- explanation -> focus
-- problem -> focus
-- howto -> sequence
-- comparison -> split
-- analysis -> focus (mosaic when the analysis is mainly data)
-- current -> sequence (the story in order)
+LAYOUT must fit the intent, and within that you choose the composition that suits this subject, so two questions with the same intent need not look alike. The first option is the usual fit; take another when the content is shaped that way:
+- entity -> dossier when there is a portrait, place or object to lead with; mosaic when the subject is mainly specs or metrics (a device, a stock, a company's figures)
+- explanation -> focus; sequence when the mechanism is a chain of stages; mosaic when it rests on several measured quantities
+- problem -> focus; sequence when the working is long and procedural
+- howto -> sequence; focus when the method is short and its key settings matter more than their order
+- comparison -> split; mosaic when the options are compared mostly on numbers
+- analysis -> focus; mosaic when the analysis is mainly data; split when it weighs two positions
+- current -> sequence (the story in order); focus when one development dominates
 
 MOOD follows from the subject, not from the intent. Two different subjects rarely deserve the same mood, and "calm" is not a default:
 - calm: nature, places of quiet, ideas, maths, gentle procedures such as cooking.
@@ -98,7 +104,7 @@ export function buildMainPrompt(query: string, preface: ScenePreface | null, bri
 export function buildSystemPrompt(lang: ResponseLang): string {
   return `${SYSTEM_PROMPT}
 
-LANGUAGE: Write every human-readable value (title, subtitle, answer, summary, module names, headlines, facts, item labels/values/details, prose bodies, meta, spotlight, followups) in ${LANG_NAMES[lang]}. JSON field names and enum values (intent, type, layout, mood, motif, density, kind, side, slot, span, emphasis, tone, reveal, shape) stay exactly as specified. Code stays in its programming language. EXCEPTION: every "image_query" is ALWAYS in English.`;
+LANGUAGE: Write every human-readable value (title, subtitle, answer, summary, module names, headlines, facts, item labels/values/details, prose bodies, meta, spotlight, followups) in ${LANG_NAMES[lang]}. JSON field names and enum values (intent, type, layout, mood, motif, density, typeScale, kind, side, slot, span, size, emphasis, tone, reveal, surface, corner, header, pattern, variant, shape) stay exactly as specified. Code stays in its programming language. EXCEPTION: every "image_query" is ALWAYS in English.`;
 }
 
 export function buildPrefacePrompt(lang: ResponseLang): string {
@@ -128,6 +134,7 @@ const ENTITY_EXAMPLE = `{
     "mood": "archival",
     "motif": "rings",
     "density": "balanced",
+    "typeScale": "editorial",
     "palette": { "primary": "#6FE3D1", "secondary": "#F2C46B", "accent": "#FF8A7A" }
   },
   "answer": {
@@ -152,9 +159,13 @@ const ENTITY_EXAMPLE = `{
       "color": "#6FE3D1",
       "image_query": "vintage laboratory glassware",
       "kind": "timeline",
-      "span": "wide",
+      "size": "two-thirds",
       "emphasis": "lead",
       "reveal": "draw",
+      "surface": "glass",
+      "corner": "square",
+      "header": "numeral",
+      "variant": "stacked",
       "headline": "From Warsaw student to two-time laureate in two decades",
       "facts": ["Born in Warsaw, 1867", "Nobel Prize in Physics, 1903", "Nobel Prize in Chemistry, 1911"],
       "items": [
@@ -167,8 +178,12 @@ const ENTITY_EXAMPLE = `{
       "category": "In her words",
       "color": "#F2C46B",
       "kind": "quote",
+      "size": "third",
       "emphasis": "quiet",
       "reveal": "fade",
+      "surface": "bare",
+      "header": "none",
+      "variant": "pull",
       "facts": ["Nothing in life is to be feared"],
       "items": [
         { "label": "Nothing in life is to be feared, it is only to be understood.", "detail": "Attributed, widely quoted" }
@@ -178,9 +193,13 @@ const ENTITY_EXAMPLE = `{
       "category": "At a glance",
       "color": "#FF8A7A",
       "kind": "panel",
-      "span": "compact",
+      "size": "half",
       "tone": "positive",
       "reveal": "count",
+      "surface": "outline",
+      "corner": "square",
+      "header": "rule",
+      "pattern": "contour",
       "facts": ["Two Nobel Prizes", "Two elements discovered"],
       "items": [
         { "label": "Nobel Prizes", "value": "2", "shape": "figure" },
@@ -207,6 +226,7 @@ const PROBLEM_EXAMPLE = `{
     "mood": "calm",
     "motif": "grid",
     "density": "balanced",
+    "typeScale": "technical",
     "palette": { "primary": "#8FD3FF", "secondary": "#B8F28A", "accent": "#FFC46B" }
   },
   "answer": {
@@ -228,6 +248,8 @@ const PROBLEM_EXAMPLE = `{
       "slot": "rail",
       "emphasis": "quiet",
       "reveal": "fade",
+      "surface": "outline",
+      "header": "rule",
       "facts": ["Rate 5% a year", "Compounded annually"],
       "items": [
         { "label": "Annual rate", "value": "5%" },
@@ -239,9 +261,14 @@ const PROBLEM_EXAMPLE = `{
       "category": "Worked solution",
       "color": "#8FD3FF",
       "kind": "steps",
-      "span": "wide",
+      "size": "full",
       "emphasis": "lead",
       "reveal": "draw",
+      "surface": "solid",
+      "corner": "notch",
+      "header": "icon",
+      "pattern": "grid",
+      "variant": "path",
       "headline": "Set growth equal to 2 and solve for n",
       "facts": ["1.05ⁿ = 2", "n ≈ 14.21", "Doubled after year 15"],
       "items": [
@@ -255,8 +282,10 @@ const PROBLEM_EXAMPLE = `{
       "category": "Formulas",
       "color": "#B8F28A",
       "kind": "formula",
-      "span": "compact",
+      "size": "half",
       "reveal": "rise",
+      "surface": "bare",
+      "header": "rule",
       "facts": ["Compound growth", "Exact doubling time", "Rule of 72"],
       "items": [
         { "label": "A = P × (1 + r)ⁿ", "detail": "Balance after n periods at rate r per period" },
@@ -268,9 +297,12 @@ const PROBLEM_EXAMPLE = `{
       "category": "Growth of 1 unit",
       "color": "#FFC46B",
       "kind": "chart",
-      "span": "wide",
+      "size": "half",
       "tone": "positive",
       "reveal": "draw",
+      "surface": "glass",
+      "corner": "round",
+      "variant": "area",
       "headline": "Slow start, then the curve steepens",
       "facts": ["1.00 at year 0", "2.08 at year 15"],
       "items": [
@@ -311,6 +343,7 @@ JSON SHAPE (field names are fixed; enum values are lowercase exactly as listed):
     "mood": "${enumList(SCENE_MOODS)}",
     "motif": "${enumList(SCENE_MOTIFS)}",
     "density": "${enumList(SCENE_DENSITIES)}",
+    "typeScale": "${enumList(SCENE_TYPE_SCALES)}",
     "palette": { "primary": "#RRGGBB", "secondary": "#RRGGBB", "accent": "#RRGGBB" }
   },
   "answer": { "headline": "...", "body": ["..."], "caveats": ["..."] },
@@ -333,7 +366,13 @@ JSON SHAPE (field names are fixed; enum values are lowercase exactly as listed):
       "span": "${enumList(MODULE_SPANS)}",
       "emphasis": "${enumList(MODULE_EMPHASES)}",
       "tone": "${enumList(MODULE_TONES)}",
-      "reveal": "${enumList(MODULE_REVEALS)}"
+      "reveal": "${enumList(MODULE_REVEALS)}",
+      "size": "${enumList(MODULE_SIZES)}",
+      "surface": "${enumList(MODULE_SURFACES)}",
+      "corner": "${enumList(MODULE_CORNERS)}",
+      "header": "${enumList(MODULE_HEADERS)}",
+      "pattern": "${enumList(MODULE_PATTERNS)}",
+      "variant": "one of the variants CARD GRAMMAR allows for this kind"
     }
   ],
   "followups": ["Natural next question"]
@@ -369,18 +408,40 @@ ITEMS PER KIND (3 to 6 items unless noted). Fields not listed for a kind stay ou
 - facts: 2 to 6 plain one-line fallback facts for every kind except code and prose.
 - Module "image_query" only for entity intents; omit it otherwise.
 
-COMPOSITION (optional per-module directives). Omitting one costs nothing: a computed default takes over, and the layout still overrides anything that would not fit on the screen it lands on. Set one only when you mean it. The counts below are hard, like the module minimums: count them before returning.
+COMPOSITION (per-module directives). Each value maps to a fixed rule, and the layout still overrides anything that would not fit on the screen it lands on. The counts below are hard, like the module minimums: count them before returning.
 - emphasis: EXACTLY ONE module in the scene may be "lead" — the one a reader must not miss (the worked solution, the required comparison, the timeline of a breaking story). Use "quiet" for reference material: givens, definitions, caveats. Everything else omits it.
-- span: AT MOST TWO modules may be "wide". Use it for content that needs the full width: a chart, a code snippet, a comparison, a long set of steps. Everything else is compact by default and never needs to say so.
+- size: the module's share of a wide 12-column row: quarter (3 columns), third (4), half (6), two-thirds (8), full (12). Prefer it to span; when both are set, size wins. The lead module takes a larger size than any other. Let the sizes of neighbouring modules add up to 12 where you can (two-thirds + third, half + half, third + third + third). A size places the card in the main module row; a card meant for the side rail takes slot "rail" and no size. Narrow screens stack every card whatever its size.
+- span: the older, coarser width hint, only for a module with no size. AT MOST TWO modules may be "wide". Use it for content that needs the full width: a chart, a code snippet, a comparison, a long set of steps.
 - slot: "rail" ONLY for compact reference material that still reads in a narrow column: keyvalue, stats, tags, ranking, progress. Never for chart, code, prose, comparison, steps or panel — those are put back in the main column. At most two rail modules.
 - tone: follows the VALENCE OF THE CONTENT, never the palette and never the module color. "positive" for gains, growth and successes; "caution" for risks, limits and trade-offs; "critical" for failures, losses and dangers; omit it for ordinary facts. Most modules are neutral — a scene where every card is toned has said nothing at all.
 - reveal: "draw" ONLY for chart, timeline and steps, the kinds that build up as they are read. "count" for a module led by a figure. "fade" for quiet text: prose, list, quote. "rise" or omitted for everything else.
 
-PER-KIND DEFAULTS (what you already get, so that deviating is a deliberate act)
+CARD GRAMMAR (per-module directives that decide how each card is drawn):
+- surface: solid (an opaque panel, for dense data), outline (a hairline frame with no fill, for reference material), bleed (a colour wash with no frame, for a card that should glow), glass (a lit translucent pane, for the lead or a highlight), bare (no chrome, content straight on the page, for prose, quotes and hero figures), inverted (a lit header band in the module color; at most one per scene).
+- corner: round (soft: nature, people, calm subjects), square (formal: history, archives, engineering), notch (a clipped corner: technology, markets, anything kinetic or volatile).
+- header: icon (kind icon and title), numeral (the card's position as a large number, for sequences and ordered arguments), rule (the title as a mono label on a thin line: technical and archival subjects), none (no visible title, only when the content speaks for itself, such as a quote or a hero figure).
+- pattern: a faint decoration behind the card. contour (topographic rings: geography, physics, fields), grid (engineering, data, maths), dots (halftone: media, biology, populations), stripes (industry, hazards, markets), scan (signals, screens, news), none. At most two modules per scene carry a pattern.
+- variant: how the kind draws itself. Only these pairs exist; a variant on any other kind is ignored and the default drawing is used.
+  stats: tiles (a grid of bordered cells), gauges (large rings; needs weight), hero (one giant figure with the rest small beneath it; put the key figure first), inline (one row of figures).
+  timeline: rail (a vertical line), ribbon (a horizontal scrolling track, for 4 or more short events), stacked (the dates as a column beside each event).
+  chart: line (a trend over ordered points), bars (categories compared), area (a filled trend, for accumulation or share), dots (a dot plot, for a few values read one by one).
+  list: dots (plain), numbered (when order matters), cards (a grid of short items), columns (a long list of short items).
+  quote: pull (the first quote set large), stack (several quotes as compact blocks).
+  steps: path (a line of nodes, for a flowing procedure), cards (a grid of step cards, for independent stages).
+- presentation.typeScale: the typographic voice of the whole scene. editorial (light, wide headings: culture, places, ideas, history), technical (condensed and tight: software, engineering, maths, specs), monumental (very large and heavy: records, landmark events, markets, big numbers).
+
+VARIETY (hard rule, like the module minimums). Two results should not look alike, and neither should the cards within one:
+- Within a scene use at least two different surfaces and at least two different header styles.
+- Never give every module the same variant; pick each one from what that module's content is.
+- Pick one lead module: emphasis "lead" plus a larger size than any other module.
+- Choose surface, corner, header, pattern and typeScale from the subject and its mood, not by habit. An archival subject might take square corners, rule headers and outline cards; a volatile market story notched corners, a monumental type scale and a hero stats card; a calm nature question round glass and bare cards with a contour pattern.
+
+PER-KIND DEFAULTS (what a module gets for any directive it leaves out)
 - chart, code, prose, comparison: full width. Every other kind: half width.
 - keyvalue, stats, tags, ranking, progress: the side rail, on the layouts that have one.
 - chart, timeline, steps: "draw". stats: "count". Every other kind: the layout's own entrance.
 - No tone and no emphasis: an ordinary card in the color you chose for it.
+- No surface, corner, header, pattern or variant: the scene mood's plain card with its kind icon and the kind's usual drawing. A scene made only of defaults breaks the VARIETY rule.
 
 PRESENTATION DETAILS
 - motif (ambient field): flow for continuous processes, nature, fluids, economies, music and cooking; rings for astronomy, physics, cycles, eras and places; grid for engineering, software, data, maths and products; none for literature, philosophy, ethics and other text-first subjects.
@@ -394,10 +455,10 @@ OTHER FIELDS
 - image_url: only for entity intents, the direct https URL of the best image (Wikipedia infobox image, official press photo) or "" if none is found; never invent one. For every other intent it MUST be "" and image_query is omitted: no stock photos for maths, procedures or comparisons.
 - followups: 2 to 4 short, natural next questions that go deeper or sideways from this answer.
 
-EXAMPLE (entity, abbreviated to 3 modules; real entity scenes have 5 to 7). Its colors are illustrative only; never reuse them:
+EXAMPLE (entity, abbreviated to 3 modules; real entity scenes have 5 to 7). Its colors and its card grammar are illustrative only; never reuse them, choose your own for each subject:
 ${ENTITY_EXAMPLE}
 
-EXAMPLE (problem; note focus layout, empty image_url, no image_query, and every step with a value). Its colors are illustrative only; never reuse them:
+EXAMPLE (problem; note focus layout, empty image_url, no image_query, every step with a value, and a different card grammar from the entity example). Its colors are illustrative only; never reuse them:
 ${PROBLEM_EXAMPLE}
 
 Return valid JSON only, no markdown fences.`;

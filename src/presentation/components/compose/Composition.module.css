@@ -54,7 +54,7 @@
 .railModules {
   display: flex;
   flex-direction: column;
-  gap: var(--sp-4);
+  gap: var(--module-gap, var(--sp-4));
   min-width: 0;
 }
 
@@ -81,16 +81,34 @@
     gap: var(--sp-6);
   }
 
-  .mainModules,
   .railModules {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-4);
+    gap: var(--module-gap, var(--sp-4));
   }
 
-  .mainModules > [data-span='wide'],
   .railModules > [data-span='wide'] {
     grid-column: 1 / -1;
+  }
+
+  /*
+   * The module row is a 12-column grid on every layout. Each child needs a span:
+   * one left without it would take a single twelfth. A card's own width comes
+   * from items.ts as --cols (last rule in this file); these span defaults only
+   * place what has none, like the streaming placeholder and the split tabs.
+   */
+  .mainModules {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--module-gap, var(--sp-4));
+  }
+
+  .mainModules > * {
+    grid-column: span 6;
+  }
+
+  .mainModules > [data-span='wide'] {
+    grid-column: span 12;
   }
 
   .composition[data-layout='split'] .spotlight {
@@ -170,16 +188,9 @@
   }
 
   .mainModules {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
     /* Cards keep their natural height: stretching the shorter one only moves the
        empty space inside it. */
     align-items: start;
-    gap: var(--sp-4);
-  }
-
-  .mainModules > [data-span='wide'] {
-    grid-column: 1 / -1;
   }
 
   /* focus: answer-first reading column with a readout rail beside it from the top */
@@ -256,14 +267,12 @@
     break-inside: avoid-column;
   }
 
-  .composition[data-layout='split'] .mainModules {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: var(--sp-4);
+  :where(.composition[data-layout='split']) .mainModules > * {
+    grid-column: span 12;
   }
 
-  .composition[data-layout='split'] .mainModules > :not([data-span='pair']) {
-    grid-column: 1 / -1;
+  :where(.composition[data-layout='split']) .mainModules > [data-span='pair'] {
+    grid-column: span 6;
   }
 
   /* mosaic: dense tiles on a 12-column grid */
@@ -277,19 +286,15 @@
       'foot foot';
   }
 
-  .composition[data-layout='mosaic'] .mainModules {
-    display: grid;
-    grid-template-columns: repeat(12, minmax(0, 1fr));
+  :where(.composition[data-layout='mosaic']) .mainModules {
     grid-auto-flow: dense;
-    align-items: start;
-    gap: var(--sp-4);
   }
 
-  .composition[data-layout='mosaic'] .mainModules > * {
+  :where(.composition[data-layout='mosaic']) .mainModules > * {
     grid-column: span 4;
   }
 
-  .composition[data-layout='mosaic'] .mainModules > [data-span='wide'] {
+  :where(.composition[data-layout='mosaic']) .mainModules > [data-span='wide'] {
     grid-column: span 8;
   }
 
@@ -309,4 +314,15 @@
 /* A foot with only follow-ups uses the full row. */
 .foot > :only-child {
   grid-column: 1 / -1;
+}
+
+/*
+ * A card's width on the module row: items.ts `columnsOf` (or a `fillRows`
+ * override) for the breakpoint it renders at, clamped to 1..12 in code. It comes
+ * last so it wins over every span default above on order alone.
+ */
+@media (min-width: 768px) {
+  .mainModules > [data-cols] {
+    grid-column: span var(--cols);
+  }
 }

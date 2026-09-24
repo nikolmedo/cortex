@@ -21,7 +21,7 @@ export function SceneHeader({ scene, reveal }: { scene: Scene; reveal: boolean }
       {scene.subtitle ? <p className={styles.subtitle}>{scene.subtitle}</p> : null}
       {scene.answer.headline ? (
         <p className={styles.lead}>
-          <RichText text={scene.answer.headline} reveal={reveal} delay={120} />
+          <RichText text={scene.answer.headline} reveal={reveal} delay={60} />
         </p>
       ) : null}
     </header>
@@ -36,7 +36,7 @@ export function AnswerBody({ answer, reveal }: { answer: SceneAnswer; reveal: bo
         <div className={styles.paragraphs}>
           {answer.body.map((p, i) => (
             <p key={i}>
-              <RichText text={p} reveal={reveal} delay={Math.min(200 + i * 60, 360)} />
+              <RichText text={p} reveal={reveal} delay={Math.min(i * 60, 120)} />
             </p>
           ))}
         </div>
@@ -252,7 +252,7 @@ export function Followups({ items, onSelect }: { items: string[]; onSelect: (que
       <h3 className={styles.blockLabel}>{t('turn.followups')}</h3>
       <ul className={styles.chips}>
         {items.map((q, i) => (
-          <li key={i}>
+          <li key={i} style={{ '--i': i } as CSSProperties}>
             <button type="button" className={styles.chip} onClick={() => onSelect(q)}>
               <span>{q}</span>
               <ArrowRight size={16} aria-hidden="true" />

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties, type ReactElement } from 'react';
 import { Check, Copy, Minus, Plus } from 'lucide-react';
-import type { SceneItem } from '../../../domain/Scene';
+import type { ModuleVariant, SceneItem } from '../../../domain/Scene';
 import { useI18n } from '../../../i18n/I18nContext';
 import { RichText } from '../text/RichText';
 import { useCountUp, staggerIndex } from '../../hooks/useCountUp';
@@ -65,12 +65,21 @@ export function KvList({ items }: { items: SceneItem[] }) {
   );
 }
 
+/** Two-digit ordinal for the numbered drawings ("01", "02"). */
+function ordinal(i: number): string {
+  return String(i + 1).padStart(2, '0');
+}
+
 export function ListModule({ module }: ModuleRendererProps): ReactElement {
+  const numbered = module.variant === 'numbered';
+  const Tag = numbered ? 'ol' : 'ul';
   return (
-    <ul className={styles.list}>
+    <Tag className={styles.list} data-variant={module.variant}>
       {moduleItems(module).map((item, i) => (
         <li key={i} className={styles.listItem}>
-          <span className={styles.dot} aria-hidden="true" />
+          {numbered
+            ? <span className={styles.listNum} aria-hidden="true">{ordinal(i)}</span>
+            : <span className={styles.dot} aria-hidden="true" />}
           <div className={styles.listText}>
             <span className={styles.label}>{item.label}</span>
             <Detail text={item.detail} />
@@ -78,13 +87,19 @@ export function ListModule({ module }: ModuleRendererProps): ReactElement {
           {item.value ? <span className={styles.listValue}>{item.value}</span> : null}
         </li>
       ))}
-    </ul>
+    </Tag>
   );
 }
 
 export function TimelineModule({ module }: ModuleRendererProps): ReactElement {
+  const ribbon = module.variant === 'ribbon';
   return (
-    <ol className={styles.timeline}>
+    <ol
+      className={styles.timeline}
+      data-variant={module.variant}
+      // The ribbon scrolls sideways, so it has to be reachable from the keyboard.
+      tabIndex={ribbon ? 0 : undefined}
+    >
       {moduleItems(module).map((item, i) => (
         <li key={i} className={styles.tlItem} style={staggerIndex(i)}>
           <span className={styles.tlNode} aria-hidden="true" />
@@ -108,7 +123,7 @@ export function Gauge({ weight }: { weight: number }) {
         cy="20"
         r="16"
         pathLength={100}
-        // The ring sweeps as a CSS animation on stroke-dasharray, so the length lives in a custom property.
+        // The ring sweeps on stroke-dashoffset from a fixed dash; the arc length lives in a custom property.
         style={{ '--dash': w.toFixed(1) } as CSSProperties}
         transform="rotate(-90 20 20)"
       />
@@ -116,24 +131,55 @@ export function Gauge({ weight }: { weight: number }) {
   );
 }
 
-/** Owns the count-up hook, which cannot be called from inside the items map. */
+/**
+ * Owns the count-up hook, which cannot be called from inside the items map. The
+ * visible digits are presentational while they count; assistive tech reads the
+ * final value from the hidden copy, never an intermediate frame.
+ */
 export function Figure({ value }: { value: string }) {
-  return <span className={styles.figure}>{useCountUp(value)}</span>;
+  const ref = useRef<HTMLSpanElement>(null);
+  const epoch = useCountUp(value, ref);
+  return (
+    <span className={styles.figure}>
+      <span key={epoch} ref={ref} aria-hidden="true">{value}</span>
+      <span className="visually-hidden">{value}</span>
+    </span>
+  );
 }
 
-export function StatsModule({ module }: ModuleRendererProps): ReactElement {
+function StatCells({ items, variant, offset = 0 }: { items: SceneItem[]; variant?: ModuleVariant; offset?: number }) {
+  const gauges = variant === undefined || variant === 'gauges';
   return (
-    <div className={styles.stats}>
-      {moduleItems(module).map((item, i) => (
-        <div key={i} className={styles.stat} style={staggerIndex(i)}>
-          {item.weight != null ? <Gauge weight={item.weight} /> : null}
+    <div className={styles.stats} data-variant={variant}>
+      {items.map((item, i) => (
+        <div key={i} className={styles.stat} style={staggerIndex(i + offset)}>
+          {gauges && item.weight != null ? <Gauge weight={item.weight} /> : null}
           <div className={styles.statText}>
             {item.value ? <Figure value={item.value} /> : null}
             <span className={styles.statLabel}>{item.label}</span>
             <Detail text={item.detail} />
           </div>
+          {variant === 'tiles' && item.weight != null ? <Bar value={item.weight / 100} /> : null}
         </div>
       ))}
+    </div>
+  );
+}
+
+export function StatsModule({ module }: ModuleRendererProps): ReactElement {
+  const items = moduleItems(module);
+  if (module.variant !== 'hero' || items.length === 0) return <StatCells items={items} variant={module.variant} />;
+  // hero: the first figure carries the card, the rest line up under it.
+  const [lead, ...rest] = items;
+  return (
+    <div className={styles.statsHero}>
+      <div className={styles.heroStat}>
+        {lead.value ? <Figure value={lead.value} /> : null}
+        <span className={styles.statLabel}>{lead.label}</span>
+        {lead.weight != null ? <Bar value={lead.weight / 100} /> : null}
+        <Detail text={lead.detail} />
+      </div>
+      {rest.length > 0 ? <StatCells items={rest} variant="inline" offset={1} /> : null}
     </div>
   );
 }
@@ -186,7 +232,7 @@ export function ComparisonModule({ module }: ModuleRendererProps): ReactElement 
 
 export function QuoteModule({ module }: ModuleRendererProps): ReactElement {
   return (
-    <div className={styles.quotes}>
+    <div className={styles.quotes} data-variant={module.variant}>
       {moduleItems(module).map((item, i) => (
         <figure key={i} className={styles.quote}>
           <blockquote className={styles.quoteText}>
@@ -247,12 +293,15 @@ export function TagsModule({ module }: ModuleRendererProps): ReactElement {
 }
 
 export function StepsModule({ module }: ModuleRendererProps): ReactElement {
+  const path = module.variant === 'path';
   return (
-    <ol className={styles.steps}>
+    <ol className={styles.steps} data-variant={module.variant}>
       {moduleItems(module).map((item, i) => (
         <li key={i} className={styles.step} style={staggerIndex(i)}>
-          <span className={styles.stepNum} aria-hidden="true">{i + 1}</span>
+          {/* path draws a bare node on the line and moves the number beside the label. */}
+          <span className={styles.stepNum} aria-hidden="true">{path ? null : i + 1}</span>
           <div className={styles.stepBody}>
+            {path ? <span className={styles.stepTag} aria-hidden="true">{ordinal(i)}</span> : null}
             <div className={styles.stepHead}>
               <span className={styles.stepLabel}>{item.label}</span>
               {item.value ? <span className={styles.stepResult}>{item.value}</span> : null}

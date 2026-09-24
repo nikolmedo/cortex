@@ -82,64 +82,105 @@ a {
 /* ---- Keyframes ---- */
 
 /*
- * Entrance families. One per way a piece can arrive; the scene's layout picks
- * the default through --enter and Materialize can override it per element.
- * Travel and blur come from --rise/--reveal-blur so the mood sets the amount,
- * and every family ends on identity so they all resolve to the same still page.
+ * Entrance families (motionProfile.ts ENTER_FAMILIES). The scene picks the
+ * default through --enter / --enter-scan / --enter-lock and Materialize can
+ * override all three per element. Every family animates only opacity, transform
+ * and clip-path, eases out, and runs with `backwards` fill, so once it ends the
+ * element is back to its own styles with no clip left over.
  */
 
+/* rise: the plain arrival. Also the shell's own entrance (landing, menus). */
 @keyframes materialize {
   from {
     opacity: 0;
     transform: translateY(var(--rise, 12px)) scale(var(--enter-scale, 1));
-    filter: blur(var(--reveal-blur, 6px));
-  }
-  to {
-    opacity: 1;
-    transform: none;
-    filter: blur(0);
   }
 }
 
-/* Drops into place from above: the piece was already there and has now landed. */
-@keyframes settle {
+/* wipe: a side sliding into view from the inline start. The clip overshoots the
+   box so an outer shadow is never shaved off mid-way. */
+@keyframes wipeIn {
   from {
-    opacity: 0;
-    transform: translateY(calc(-1 * var(--rise, 12px))) scale(var(--enter-scale, 1));
-    filter: blur(var(--reveal-blur, 6px));
+    opacity: 0.25;
+    clip-path: inset(-24px 100% -24px -24px);
+    transform: translateX(calc(-0.5 * var(--rise, 12px)));
   }
   to {
     opacity: 1;
+    clip-path: inset(-24px -24px -24px -24px);
     transform: none;
-    filter: blur(0);
   }
 }
 
-/* Opens along its own height, so a run of steps reads as one following another. */
-@keyframes unfurl {
+/* unfold: opens diagonally from the top-left corner, the same cut as `notch`. */
+@keyframes unfoldIn {
   from {
-    opacity: 0;
-    transform: translateY(calc(var(--rise, 12px) * 0.35)) scaleY(0.96) scale(var(--enter-scale, 1));
-    filter: blur(var(--reveal-blur, 6px));
+    opacity: 0.2;
+    clip-path: polygon(-24px -24px, -24px -24px, -24px -24px);
   }
   to {
     opacity: 1;
-    transform: none;
-    filter: blur(0);
+    clip-path: polygon(-24px -24px, calc(200% + 48px) -24px, -24px calc(200% + 48px));
   }
 }
 
-/* Slides in from the inline start: two of these arriving together read as sides. */
-@keyframes edge {
+/* scan: the content is revealed top-down behind the line drawn by scanLine. */
+@keyframes scanIn {
   from {
-    opacity: 0;
-    transform: translateX(calc(-1 * var(--rise, 12px))) scale(var(--enter-scale, 1));
-    filter: blur(var(--reveal-blur, 6px));
+    opacity: 0.4;
+    clip-path: inset(0 -24px 100% -24px);
   }
   to {
     opacity: 1;
+    clip-path: inset(0 -24px 0 -24px);
+  }
+}
+
+/* The scan line rides the reveal edge: same duration and curve as scanIn, and
+   the pseudo-element is the element's height, so its bottom edge tracks the clip. */
+@keyframes scanLine {
+  0% {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  10%,
+  80% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
     transform: none;
-    filter: blur(0);
+  }
+}
+
+/* lock: settles out of a slightly larger frame while its hairlines draw in. */
+@keyframes lockIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+}
+
+@keyframes lockTrace {
+  0% {
+    opacity: 1;
+    transform: scaleX(0);
+  }
+  65% {
+    opacity: 1;
+    transform: none;
+  }
+  100% {
+    opacity: 0;
+    transform: none;
+  }
+}
+
+/* A placeholder handing over to the content that replaces it. */
+@keyframes skeletonOut {
+  to {
+    opacity: 0;
+    transform: scale(0.985);
   }
 }
 

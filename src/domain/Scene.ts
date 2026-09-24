@@ -30,6 +30,20 @@ export const MODULE_TONES = ['neutral', 'positive', 'caution', 'critical'] as co
 export const MODULE_REVEALS = ['rise', 'draw', 'count', 'fade'] as const;
 export const ITEM_SHAPES = ['figure', 'bar', 'note', 'pair', 'tag', 'divider'] as const;
 
+// Card grammar: how a module's shell is drawn. Like the directives above, each
+// value only ever selects a rule through a data attribute or a lookup table.
+export const MODULE_SURFACES = ['solid', 'outline', 'bleed', 'glass', 'bare', 'inverted'] as const;
+export const MODULE_CORNERS = ['round', 'square', 'notch'] as const;
+export const MODULE_HEADERS = ['icon', 'numeral', 'rule', 'none'] as const;
+export const MODULE_PATTERNS = ['none', 'contour', 'grid', 'dots', 'stripes', 'scan'] as const;
+export const MODULE_SIZES = ['quarter', 'third', 'half', 'two-thirds', 'full'] as const;
+/** One flat list on the wire; VARIANTS_BY_KIND says which values a kind can draw. */
+export const MODULE_VARIANTS = [
+  'tiles', 'gauges', 'hero', 'inline', 'rail', 'ribbon', 'stacked', 'line', 'bars', 'area', 'dots',
+  'numbered', 'cards', 'columns', 'pull', 'stack', 'path',
+] as const;
+export const SCENE_TYPE_SCALES = ['editorial', 'technical', 'monumental'] as const;
+
 export const SCENE_VERSION = 3;
 
 export const LIMITS = {
@@ -99,6 +113,23 @@ export type ModuleEmphasis = typeof MODULE_EMPHASES[number];
 export type ModuleTone = typeof MODULE_TONES[number];
 export type ModuleReveal = typeof MODULE_REVEALS[number];
 export type ItemShape = typeof ITEM_SHAPES[number];
+export type ModuleSurface = typeof MODULE_SURFACES[number];
+export type ModuleCorner = typeof MODULE_CORNERS[number];
+export type ModuleHeader = typeof MODULE_HEADERS[number];
+export type ModulePattern = typeof MODULE_PATTERNS[number];
+export type ModuleSize = typeof MODULE_SIZES[number];
+export type ModuleVariant = typeof MODULE_VARIANTS[number];
+export type SceneTypeScale = typeof SCENE_TYPE_SCALES[number];
+
+/** The variants each kind has a renderer for. A kind missing here has none. */
+export const VARIANTS_BY_KIND: Readonly<Partial<Record<FactKind, readonly ModuleVariant[]>>> = {
+  stats: ['tiles', 'gauges', 'hero', 'inline'],
+  timeline: ['rail', 'ribbon', 'stacked'],
+  chart: ['line', 'bars', 'area', 'dots'],
+  list: ['dots', 'numbered', 'cards', 'columns'],
+  quote: ['pull', 'stack'],
+  steps: ['path', 'cards'],
+};
 
 const HEX_RE = /^#[0-9a-fA-F]{6}$/;
 const BARE_HEX_RE = /^[0-9a-fA-F]{6}$/;
@@ -250,6 +281,17 @@ export function itemShape(kind: FactKind, value: unknown): ItemShape | undefined
   return (ITEM_SHAPES as readonly string[]).includes(value) ? value as ItemShape : undefined;
 }
 
+/**
+ * The module `variant` when this kind can draw it. Both mirrors read variants
+ * through this, so a value meant for another kind reaches the renderer as
+ * `undefined` and the kind's default drawing is used.
+ */
+export function moduleVariant(kind: FactKind, value: unknown): ModuleVariant | undefined {
+  const allowed = VARIANTS_BY_KIND[kind];
+  if (!allowed || typeof value !== 'string') return undefined;
+  return (allowed as readonly string[]).includes(value) ? value as ModuleVariant : undefined;
+}
+
 // ---------------------------------------------------------------------------
 // Types (structurally identical to the server's output types)
 // ---------------------------------------------------------------------------
@@ -265,6 +307,8 @@ export interface ScenePresentation {
   mood: SceneMood;
   motif: SceneMotif;
   density: SceneDensity;
+  /** Absent means the default type scale. */
+  typeScale?: SceneTypeScale;
   palette: ScenePalette;
 }
 
@@ -314,6 +358,14 @@ export interface SceneModule {
   emphasis?: ModuleEmphasis;
   tone?: ModuleTone;
   reveal?: ModuleReveal;
+  size?: ModuleSize;
+  /** Card grammar: drawn by ModuleCard through data attributes only. */
+  surface?: ModuleSurface;
+  corner?: ModuleCorner;
+  header?: ModuleHeader;
+  pattern?: ModulePattern;
+  /** Already checked against VARIANTS_BY_KIND for this module's kind. */
+  variant?: ModuleVariant;
 }
 
 export interface SceneAnswer {
@@ -475,6 +527,20 @@ function toModule(raw: unknown): SceneModule | null {
   if (emphasis !== undefined) module.emphasis = emphasis;
   if (tone !== undefined) module.tone = tone;
   if (reveal !== undefined) module.reveal = reveal;
+  const size = optionalEnum(raw.size, MODULE_SIZES);
+  const surface = optionalEnum(raw.surface, MODULE_SURFACES);
+  const corner = optionalEnum(raw.corner, MODULE_CORNERS);
+  const header = optionalEnum(raw.header, MODULE_HEADERS);
+  const pattern = optionalEnum(raw.pattern, MODULE_PATTERNS);
+  if (size !== undefined) module.size = size;
+  if (surface !== undefined) module.surface = surface;
+  if (corner !== undefined) module.corner = corner;
+  if (header !== undefined) module.header = header;
+  if (pattern !== undefined) module.pattern = pattern;
+  // Checked against the kind after its fallback, so a bogus kind still ends up
+  // with a variant `list` can draw, or none.
+  const variant = moduleVariant(kind, raw.variant);
+  if (variant !== undefined) module.variant = variant;
   return module;
 }
 
@@ -510,11 +576,14 @@ function toMeta(raw: unknown): Record<string, string> {
 
 function toPresentation(raw: unknown, intent: SceneIntent): ScenePresentation {
   const p = isObject(raw) ? raw : {};
+  const typeScale = optionalEnum(p.typeScale, SCENE_TYPE_SCALES);
   return {
     layout: asEnum<SceneLayout>(p.layout, SCENE_LAYOUTS, LAYOUT_BY_INTENT[intent]),
     mood: asEnum(p.mood, SCENE_MOODS, DEFAULT_PRESENTATION.mood),
     motif: asEnum(p.motif, SCENE_MOTIFS, DEFAULT_PRESENTATION.motif),
     density: asEnum(p.density, SCENE_DENSITIES, DEFAULT_PRESENTATION.density),
+    // Spread rather than assigned so the key sits where the server schema puts it.
+    ...(typeScale !== undefined ? { typeScale } : {}),
     palette: toPalette(isObject(raw) ? p.palette : undefined),
   };
 }

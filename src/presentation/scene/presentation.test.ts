@@ -46,4 +46,21 @@ describe('turnPresentation', () => {
     const preface = sanitizePreface({ intent: 'howto', title: 'P', mood: 'kinetic' });
     expect(turnPresentation(turn({ scene, preface: preface! }))).toBe(scene.presentation);
   });
+
+  it('carries the scene type scale through, and the preface has none', () => {
+    const scene = sanitizeScene({
+      title: 'T',
+      modules: [],
+      presentation: { layout: 'mosaic', mood: 'volatile', typeScale: 'monumental', palette: {} },
+    });
+    expect(turnPresentation(turn({ scene })).typeScale).toBe('monumental');
+    const preface = sanitizePreface({ intent: 'analysis', title: 'P', typeScale: 'monumental' });
+    expect(turnPresentation(turn({ status: 'streaming', preface: preface! })).typeScale).toBeUndefined();
+  });
+
+  it('drops an unknown type scale so the default scale applies', () => {
+    const scene = sanitizeScene({ title: 'T', modules: [], presentation: { typeScale: 'gigantic' } });
+    expect(turnPresentation(turn({ scene })).typeScale).toBeUndefined();
+    expect('typeScale' in turnPresentation(turn({ scene }))).toBe(false);
+  });
 });

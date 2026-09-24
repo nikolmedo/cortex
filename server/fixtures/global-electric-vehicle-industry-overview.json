@@ -47,6 +47,7 @@
       "mood": "kinetic",
       "motif": "rings",
       "density": "balanced",
+      "typeScale": "monumental",
       "palette": {
         "primary": "#29E9FF",
         "secondary": "#7C4DFF",
@@ -56,6 +57,13 @@
     "modules": [
       {
         "category": "Industry timeline",
+        "size": "full",
+        "emphasis": "lead",
+        "surface": "bleed",
+        "corner": "notch",
+        "header": "rule",
+        "pattern": "scan",
+        "variant": "ribbon",
         "color": "#7C4DFF",
         "image_query": "",
         "kind": "timeline",
@@ -72,6 +80,11 @@
       },
       {
         "category": "Leading players",
+        "size": "half",
+        "surface": "solid",
+        "corner": "notch",
+        "header": "numeral",
+        "variant": "cards",
         "color": "#29E9FF",
         "image_query": "",
         "kind": "list",
@@ -88,6 +101,10 @@
       },
       {
         "category": "Market metrics",
+        "surface": "inverted",
+        "corner": "notch",
+        "header": "icon",
+        "variant": "hero",
         "color": "#69F0AE",
         "image_query": "",
         "kind": "stats",
@@ -103,6 +120,11 @@
       },
       {
         "category": "Industry voice",
+        "size": "half",
+        "surface": "outline",
+        "corner": "square",
+        "header": "none",
+        "variant": "stack",
         "color": "#7C4DFF",
         "image_query": "",
         "kind": "quote",

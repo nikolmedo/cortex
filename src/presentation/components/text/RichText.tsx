@@ -1,5 +1,5 @@
 import { useRef, type CSSProperties, type ReactElement } from 'react';
-import { STAGGER_CAP_MS } from '../../motion/motion';
+import { CASCADE_CAP_MS } from '../../scene/motionProfile';
 import styles from './RichText.module.css';
 
 /*
@@ -35,7 +35,10 @@ interface RichTextProps {
   text: string;
   /** Fade the text in phrase by phrase (arriving content). */
   reveal?: boolean;
-  /** Base delay before the first phrase, in ms. */
+  /**
+   * Delay before the first phrase, in ms, counted from the enclosing entrance
+   * (--enter-delay), which the phrases already wait for.
+   */
   delay?: number;
 }
 
@@ -66,7 +69,10 @@ export function RichText({ text, reveal = false, delay = 0 }: RichTextProps): Re
     });
   });
 
-  const budget = Math.max(0, STAGGER_CAP_MS - delay);
+  // The whole cascade, lead-in included, stays inside the inner budget: the
+  // block itself is already staggered, and a long paragraph must not add its
+  // own full cascade on top of that.
+  const budget = Math.max(0, CASCADE_CAP_MS - delay);
   const step = pieces.length > 1 ? Math.min(45, budget / (pieces.length - 1)) : 0;
   // Counted before this render adds to the map: on the first render every phrase
   // staggers, and later renders only stagger the phrases that just arrived.
@@ -79,7 +85,7 @@ export function RichText({ text, reveal = false, delay = 0 }: RichTextProps): Re
         const ms = known ?? Math.round(delay + Math.max(0, i - alreadySettled) * step);
         if (known === undefined) settled.current.set(key, ms);
         return (
-          <span key={key} className={styles.phrase} style={{ animationDelay: `${ms}ms` } as CSSProperties}>
+          <span key={key} className={styles.phrase} style={{ animationDelay: `calc(var(--enter-delay, 0ms) + ${ms}ms)` } as CSSProperties}>
             {renderToken(tok, key)}
           </span>
         );

@@ -47,6 +47,7 @@
       "mood": "archival",
       "motif": "rings",
       "density": "balanced",
+      "typeScale": "editorial",
       "palette": {
         "primary": "#29DBFF",
         "secondary": "#D9B84F",
@@ -56,6 +57,13 @@
     "modules": [
       {
         "category": "Historical timeline",
+        "size": "two-thirds",
+        "emphasis": "lead",
+        "surface": "glass",
+        "corner": "square",
+        "header": "numeral",
+        "pattern": "contour",
+        "variant": "stacked",
         "color": "#D9B84F",
         "image_query": "",
         "kind": "timeline",
@@ -78,6 +86,11 @@
       },
       {
         "category": "Cultural footprint",
+        "size": "third",
+        "surface": "outline",
+        "corner": "square",
+        "header": "rule",
+        "variant": "numbered",
         "color": "#D56953",
         "image_query": "",
         "kind": "list",
@@ -100,6 +113,10 @@
       },
       {
         "category": "Key demographics",
+        "surface": "solid",
+        "corner": "square",
+        "header": "rule",
+        "variant": "tiles",
         "color": "#29DBFF",
         "image_query": "",
         "kind": "stats",
@@ -123,6 +140,10 @@
       },
       {
         "category": "Cultural essence",
+        "size": "half",
+        "surface": "bare",
+        "header": "none",
+        "variant": "pull",
         "color": "#D56953",
         "image_query": "",
         "kind": "quote",

@@ -1,14 +1,15 @@
-import { useLayoutEffect, useRef, type ReactElement } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState, type ReactElement } from 'react';
 import { RotateCcw, TriangleAlert } from 'lucide-react';
 import { isInterrupted, type Turn } from '../../../application/useCortex';
 import { useI18n } from '../../../i18n/I18nContext';
 import { ThinkingCore, type CorePhase, type StepState } from '../../canvas/ThinkingCore';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
+import { fillCardGrammar, fillTypeScale } from '../../scene/cardFallback';
 import { turnPresentation } from '../../scene/presentation';
 import { SceneTheme } from '../../scene/SceneTheme';
 import { Composition } from '../compose/Composition';
 import { staggerDelay } from '../../motion/motion';
-import { Skeleton } from './Skeleton';
+import { Lingering, Skeleton } from './Skeleton';
 import styles from './TurnView.module.css';
 
 interface TurnViewProps {
@@ -50,12 +51,23 @@ function isEmptyScene(turn: Turn): boolean {
 export function TurnView({ turn, isLatest, reduced, onRetry, onFollowup }: TurnViewProps): ReactElement {
   const { t } = useI18n();
   const bp = useBreakpoint();
-  const presentation = turnPresentation(turn);
+  // The query is the one value that holds from the first frame to the last, so
+  // it seeds every choice made for what the model left plain.
+  const basePresentation = turnPresentation(turn);
+  const presentation = useMemo(
+    () => fillTypeScale(basePresentation, turn.preface?.mood ?? basePresentation.mood, turn.query),
+    [basePresentation, turn.preface?.mood, turn.query],
+  );
   const inFlight = turn.status === 'thinking' || turn.status === 'streaming';
   const staged = inFlight && !turn.scene;
   const steps = stepStates(turn);
   const coreSize = CORE_SIZE[bp];
   const glyphSize = GLYPH_SIZE[bp];
+  // Latched: once this view has seen the turn in flight, its content arrived
+  // live and may play its entrances once. A turn that was already resolved when
+  // it mounted (restored history) never animates.
+  const [watched, setWatched] = useState(inFlight);
+  if (inFlight && !watched) setWatched(true);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const coreRef = useRef<HTMLDivElement>(null);
@@ -88,7 +100,14 @@ export function TurnView({ turn, isLatest, reduced, onRetry, onFollowup }: TurnV
     };
   }, [staged, coreSize, glyphSize, turn.preface]);
 
-  const scene = turn.scene;
+  // Modules only arrive once the scene's presentation has settled, so its mood
+  // is safe to read here.
+  const scene = useMemo(
+    () => (turn.scene
+      ? { ...turn.scene, modules: fillCardGrammar(turn.scene.modules, turn.scene.presentation.mood, turn.query) }
+      : undefined),
+    [turn.scene, turn.query],
+  );
   const empty = isEmptyScene(turn);
   // The partial of an interrupted turn keeps the streaming treatment: the
   // skeleton tail stays, and follow-ups and sources stay closed.
@@ -154,7 +173,9 @@ export function TurnView({ turn, isLatest, reduced, onRetry, onFollowup }: TurnV
           </div>
         ) : null}
 
-        {staged ? <Skeleton layout={presentation.layout} /> : null}
+        <Lingering show={staged} fade={!reduced}>
+          <Skeleton layout={presentation.layout} />
+        </Lingering>
 
         {turn.status === 'error' ? (
           <div className={styles.notice} role="alert">
@@ -190,7 +211,8 @@ export function TurnView({ turn, isLatest, reduced, onRetry, onFollowup }: TurnV
         {scene && !empty ? (
           <Composition
             scene={scene}
-            reveal={isLatest && !reduced}
+            reveal={isLatest && watched && !reduced}
+            live={inFlight}
             pending={turn.status === 'streaming' || interrupted}
             onFollowup={onFollowup}
           />
