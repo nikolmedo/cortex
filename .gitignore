@@ -4,3 +4,6 @@ dist/
 
 # gentle-ai local skill registry (machine-specific, auto-generated)
 .atl/
+
+# Claude Code local settings
+.claude/settings.local.json
