@@ -7,13 +7,13 @@
   font-weight: 600;
 }
 
+/* Inline code: a hairline-framed mono run on the void, square. */
 .code {
   font-family: var(--font-mono);
   font-size: 0.88em;
   padding: 0.08em 0.36em;
-  border-radius: 5px;
-  background: color-mix(in srgb, var(--scene-primary) 10%, transparent);
-  border: 1px solid var(--line);
+  background: var(--ink-0);
+  border: 1px solid var(--line-strong);
   color: var(--text-hi);
   overflow-wrap: anywhere;
 }

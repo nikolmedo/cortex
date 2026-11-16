@@ -19,26 +19,26 @@
 
 /* Mood: how a card's frame is cut and lit. */
 .root[data-mood='calm'] {
-  --card-radius: 22px;
+  --card-radius: 0px;
   --hairline-mix: 40%;
   --hairline-inset: 40px;
 }
 
 .root[data-mood='kinetic'] {
-  --card-radius: 14px;
+  --card-radius: 0px;
   --hairline-mix: 72%;
   --hairline-inset: 12px;
 }
 
 .root[data-mood='archival'] {
-  --card-radius: 2px;
-  --card-border: rgb(176 206 236 / 0.07);
+  --card-radius: 0px;
+  --card-border: rgb(216 228 234 / 0.09);
   --hairline-mix: 22%;
   --hairline-inset: 0px;
 }
 
 .root[data-mood='volatile'] {
-  --card-radius: 6px;
+  --card-radius: 0px;
   --card-border: var(--line-strong);
   --hairline-mix: 95%;
   --hairline-inset: 0px;
