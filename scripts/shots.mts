@@ -41,8 +41,9 @@ const args = new Map(
 );
 
 const ROOT = process.cwd();
-const API_PORT = 3001;
-const WEB_PORT = 5173;
+// Override both to run beside a dev session that already holds 3001 and 5173.
+const API_PORT = Number(args.get('api-port') ?? 3001);
+const WEB_PORT = Number(args.get('web-port') ?? 5173);
 const WEB = `http://localhost:${WEB_PORT}`;
 const OUT = path.resolve(ROOT, args.get('out') ?? 'docs/screenshots');
 const FIXTURES_DIR = path.resolve(ROOT, args.get('fixtures-dir') ?? 'server/fixtures');
@@ -303,7 +304,10 @@ async function main(): Promise<void> {
       CORTEX_FIXTURES_DIR: FIXTURES_DIR,
       PORT: String(API_PORT),
     });
-    start('web', ['node_modules/vite/bin/vite.js', '--port', String(WEB_PORT), '--strictPort'], process.env);
+    start('web', ['node_modules/vite/bin/vite.js', '--port', String(WEB_PORT), '--strictPort'], {
+      ...process.env,
+      CORTEX_API_PORT: String(API_PORT),
+    });
     await waitFor(`http://localhost:${API_PORT}/api/health`, 30_000);
     await waitFor(WEB, 30_000);
   }

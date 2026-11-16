@@ -58,10 +58,11 @@ const HOST_STYLE = [
   'html{background:var(--bg)}',
   'body{margin:0;padding:16px;background:var(--bg);color:var(--text);font:15px/1.5 var(--font-body);overflow-wrap:anywhere}',
   'h1,h2,h3,h4{color:var(--text-hi);line-height:1.2}',
-  'button,input,select,textarea{font:inherit;color:inherit;border-radius:0}',
+  'button,input,select,textarea{font:inherit;color:inherit;border-radius:8px}',
+  'button{border-radius:999px;padding:6px 14px;cursor:pointer}',
   'button,input,select,textarea,fieldset{border:1px solid var(--line-strong);background:var(--surface)}',
   'img,svg,canvas,video{max-width:100%}',
-  ':focus-visible{outline:1px solid var(--paper);outline-offset:3px}',
+  ':focus-visible{outline:2px solid var(--signal);outline-offset:3px}',
 ].join('');
 
 /*

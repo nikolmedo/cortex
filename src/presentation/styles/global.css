@@ -16,9 +16,11 @@ html {
 
 body {
   min-height: 100dvh;
-  /* A survey grid: one faint dot every 24px, nothing else behind the content. */
+  /* A survey grid under two soft washes of the signal hue, so the void has depth. */
   background:
-    radial-gradient(circle at 1px 1px, rgb(216 228 234 / 0.06) 1px, transparent 1.5px) 0 0 / 24px 24px fixed,
+    radial-gradient(70% 45% at 85% -10%, color-mix(in srgb, var(--signal) 13%, transparent), transparent 70%) fixed,
+    radial-gradient(55% 40% at -5% 105%, color-mix(in srgb, var(--signal) 8%, transparent), transparent 70%) fixed,
+    radial-gradient(circle at 1px 1px, rgb(216 228 234 / 0.055) 1px, transparent 1.5px) 0 0 / 24px 24px fixed,
     var(--ink-0);
   font-family: var(--font-body);
   font-size: var(--fs-body);
@@ -52,8 +54,9 @@ a {
 }
 
 :focus-visible {
-  outline: 1px solid var(--paper);
+  outline: 2px solid color-mix(in srgb, var(--signal) 70%, var(--paper));
   outline-offset: 3px;
+  border-radius: var(--r-sm);
 }
 
 ::selection {
@@ -70,6 +73,7 @@ a {
 }
 ::-webkit-scrollbar-thumb {
   background: var(--line-strong);
+  border-radius: var(--r-pill);
 }
 
 .visually-hidden {
@@ -221,6 +225,22 @@ a {
   }
   to {
     clip-path: inset(0 0 0 0);
+  }
+}
+
+/* beam: a light travelling round a frame. Drives the registered --beam angle,
+   which a conic-gradient border reads (command bar focus, pending interface). */
+@keyframes beam {
+  to {
+    --beam: 360deg;
+  }
+}
+
+/* A slow breath for live markers that should feel alive rather than urgent. */
+@keyframes pulse {
+  50% {
+    opacity: 0.45;
+    transform: scale(0.82);
   }
 }
 

@@ -9,6 +9,10 @@
     --scene-primary var(--dur-slow) cubic-bezier(0.22, 1, 0.36, 1),
     --scene-secondary var(--dur-slow) cubic-bezier(0.22, 1, 0.36, 1),
     --scene-accent var(--dur-slow) cubic-bezier(0.22, 1, 0.36, 1);
+  /* Derived from the turn's palette. They are redeclared here because a var()
+     in a :root declaration resolves at :root and would keep the default hue. */
+  --signal-soft: color-mix(in srgb, var(--signal) 14%, transparent);
+  --signal-grad: linear-gradient(90deg, var(--signal), color-mix(in oklab, var(--signal) 45%, var(--scene-accent)));
 }
 
 /*

@@ -1,52 +1,63 @@
 /*
  * The module frame. One recipe for every kind:
- *   - a square hairline frame on a flat surface,
- *   - four corner brackets drawn in the signal colour (::before),
- *   - the title set as an inverted tag (.title).
- * A card's grammar (surface, corner, header, emphasis, tone) only re-weights
- * those three parts; it never introduces a radius, a gradient wash or a glow.
+ *   - a soft frame with one tight corner (--frame), where the tag docks,
+ *   - a lit ring: a 1px gradient border, brightest at the tab corner (::before),
+ *   - the title set as an inverted pill tag (.title),
+ *   - a highlight that follows the pointer and a small lift on hover.
+ * A card's grammar (surface, corner, header, emphasis, tone) re-weights those
+ * parts; it never changes what the card contains.
  */
 .card {
   /*
    * Module colour. The model may name one (--m-raw, validated hex, set inline by
-   * ModuleCard.tsx); it is pulled most of the way to steel so cards differ by a
-   * tint, not by a hue. Without it the card takes the scene's signal colour.
+   * ModuleCard.tsx); it is pulled part of the way to steel so neighbours differ
+   * by a tint. Without it the card takes the scene's signal colour.
    */
-  --m: color-mix(in srgb, var(--m-raw, var(--scene-primary)) 40%, #b4c0c6);
+  --m: color-mix(in srgb, var(--m-raw, var(--scene-primary)) 62%, #b4c0c6);
   /*
    * Signal colour. A neutral card signals with the module's own colour; a tone
    * swaps in one of three fixed recipes, so the valence of a card never depends
    * on a colour the model chose.
    */
   --tone: var(--m);
-  --radius: 0px;
-  --pad: var(--card-pad, clamp(16px, 1.1rem + 0.4vw, 22px));
+  --radius: var(--frame);
+  --pad: var(--card-pad, clamp(16px, 1.1rem + 0.5vw, 24px));
   container-type: inline-size;
   position: relative;
   height: 100%;
   padding: var(--pad);
-  border: var(--card-border-w, 1px) solid var(--card-border, var(--line));
-  background: var(--surface);
+  border: 1px solid var(--card-border, var(--line));
+  border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--m) 7%, transparent), transparent 130px),
+    var(--surface);
+  box-shadow: var(--sheen);
+  transition:
+    transform var(--dur-base) var(--ease),
+    box-shadow var(--dur-base) var(--ease),
+    border-color var(--dur-fast) linear;
 }
 
-/* Corner brackets: eight 1px strokes, two per corner, over the frame. */
+/* The lit ring: a gradient painted in the border box only (mask cuts the middle
+   out), strongest at the tab corner and fading round the frame. */
 .card::before {
-  --b: color-mix(in srgb, var(--tone) var(--hairline-mix, 70%), var(--line-strong));
+  --b: color-mix(in srgb, var(--tone) var(--hairline-mix, 75%), transparent);
   content: '';
   position: absolute;
   inset: -1px;
-  background:
-    linear-gradient(var(--b), var(--b)) top left / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) top left / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) top right / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) top right / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) bottom left / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) bottom left / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) bottom right / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) bottom right / 1px var(--tick);
-  background-repeat: no-repeat;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--b), transparent 30%, transparent 72%, color-mix(in srgb, var(--tone) 28%, transparent));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
   pointer-events: none;
   z-index: 2;
+  transition: opacity var(--dur-base) var(--ease);
 }
 
 /* Tone: three fixed recipes, so a valence reads the same wherever it appears. */
@@ -68,9 +79,10 @@
   content: '';
   position: absolute;
   left: -1px;
-  top: var(--pad);
+  top: calc(var(--pad) + 2px);
   width: 3px;
-  height: 28px;
+  height: 26px;
+  border-radius: 0 var(--r-pill) var(--r-pill) 0;
   background: var(--tone);
   pointer-events: none;
   z-index: 2;
@@ -78,9 +90,13 @@
 
 /* Emphasis changes how much presence a card has, never what it contains. */
 .card[data-emphasis='lead'] {
-  --tick: 16px;
-  border-color: var(--line-strong);
-  background: var(--surface-strong);
+  border-color: color-mix(in srgb, var(--tone) 26%, var(--line));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--m) 13%, transparent), transparent 190px),
+    var(--surface-strong);
+  box-shadow:
+    var(--sheen),
+    0 28px 70px -36px color-mix(in srgb, var(--tone) 55%, transparent);
 }
 
 .card[data-emphasis='lead'] .title {
@@ -90,6 +106,7 @@
 .card[data-emphasis='quiet'] {
   background: transparent;
   border-color: color-mix(in srgb, var(--line) 60%, transparent);
+  box-shadow: none;
 }
 
 .card[data-emphasis='quiet'] .title {
@@ -99,39 +116,54 @@
 }
 
 .card[data-emphasis='quiet']::before {
-  opacity: 0.45;
+  opacity: 0.4;
 }
 
 /* ---------- Surface: the card's material. Comes after emphasis so a named
-   surface wins. Every surface is flat; they differ in fill and frame only. ---------- */
+   surface wins. ---------- */
 
 .card[data-surface='solid'] {
   border-color: var(--line-strong);
   background: var(--surface-raised);
+  box-shadow: var(--sheen), var(--shadow-raise);
 }
 
 .card[data-surface='outline'] {
-  border-color: color-mix(in srgb, var(--m) 45%, var(--line));
+  border-color: color-mix(in srgb, var(--m) 42%, var(--line));
   background: transparent;
+  box-shadow: none;
 }
 
-/* bleed: a full-height signal bar on the leading edge instead of a wash. */
+/* bleed: the module colour washes in from the tab corner. */
 .card[data-surface='bleed'] {
-  border-left: 3px solid var(--tone);
-  background: var(--surface);
+  border-color: color-mix(in srgb, var(--tone) 22%, var(--line));
+  background:
+    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--m) 24%, transparent), transparent 62%),
+    var(--surface);
 }
 
-/* glass: a hatched field, the terminal's way of saying "overlay". */
+/* glass: a pane. Sheen and a lit top edge; the blur is cheap here because a
+   scene carries at most a couple of these. */
 .card[data-surface='glass'] {
-  border-color: var(--line-strong);
+  border-color: rgb(255 255 255 / 0.12);
   background:
-    repeating-linear-gradient(135deg, rgb(216 228 234 / 0.035) 0 1px, transparent 1px 7px),
-    var(--surface);
+    linear-gradient(160deg, rgb(255 255 255 / 0.07), rgb(255 255 255 / 0.012) 44%, transparent 72%),
+    rgb(22 27 31 / 0.5);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.13),
+    var(--shadow-raise);
 }
 
 .card[data-surface='bare'] {
   border-color: transparent;
   background: none;
+  box-shadow: none;
+}
+
+.card[data-surface='bare']::before {
+  display: none;
 }
 
 /*
@@ -142,11 +174,12 @@
 .card[data-surface='inverted'] {
   border-color: var(--line-strong);
   background: var(--ink-0);
+  overflow: clip;
 }
 
 .card[data-surface='inverted'] .head {
   margin: calc(-1 * var(--pad)) calc(-1 * var(--pad)) var(--sp-4);
-  padding: var(--sp-2) var(--pad);
+  padding: var(--sp-3) var(--pad);
   background: var(--paper);
 }
 
@@ -160,7 +193,8 @@
 }
 
 .card[data-surface='inverted'] .icon {
-  border-color: color-mix(in srgb, var(--paper-ink) 40%, transparent);
+  background: color-mix(in srgb, var(--paper-ink) 10%, transparent);
+  border-color: color-mix(in srgb, var(--paper-ink) 30%, transparent);
 }
 
 .card[data-surface='inverted'] .headline {
@@ -171,50 +205,24 @@
   background: color-mix(in srgb, var(--paper-ink) 45%, transparent);
 }
 
-/* ---------- Corner ---------- */
+/* ---------- Corner: three silhouettes. The default is the tab frame. ---------- */
 
-/* `round` and `square` both resolve to the square frame: the system has no radius. */
+.card[data-corner='round'] {
+  --radius: var(--r-lg);
+}
 
+.card[data-corner='square'] {
+  --radius: var(--r-sm);
+}
+
+/* notch: a leaf. Two tight corners on one diagonal, two wide ones on the other. */
 .card[data-corner='notch'] {
-  clip-path: polygon(
-    0 0,
-    calc(100% - var(--cut)) 0,
-    100% var(--cut),
-    100% 100%,
-    var(--cut) 100%,
-    0 calc(100% - var(--cut))
-  );
+  --radius: var(--r-tab) 30px var(--r-tab) 30px;
 }
 
-/* The clip removes the border along each cut, so the diagonals are redrawn. */
+/* The leaf needs no redrawn diagonals; the spans ModuleCard renders stay inert. */
 .notch {
-  position: absolute;
-  width: var(--cut);
-  height: var(--cut);
-  pointer-events: none;
-  z-index: 2;
-}
-
-.notch[data-at='top'] {
-  top: 0;
-  right: 0;
-  background: linear-gradient(
-    to bottom left,
-    transparent calc(50% - 0.75px),
-    var(--line-strong) 50%,
-    transparent calc(50% + 0.75px)
-  );
-}
-
-.notch[data-at='bottom'] {
-  bottom: 0;
-  left: 0;
-  background: linear-gradient(
-    to top right,
-    transparent calc(50% - 0.75px),
-    var(--line-strong) 50%,
-    transparent calc(50% + 0.75px)
-  );
+  display: none;
 }
 
 /* ---------- Pattern layer (CardPattern.tsx) ---------- */
@@ -223,8 +231,9 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  color: var(--text-dim);
-  opacity: 0.14;
+  border-radius: inherit;
+  color: var(--m);
+  opacity: 0.13;
   pointer-events: none;
   z-index: 0;
 }
@@ -237,24 +246,34 @@
 
 .pattern[data-pattern='contour'],
 .pattern[data-pattern='grid'] {
-  opacity: 0.2;
+  opacity: 0.18;
 }
 
-/* ---------- Hover: the frame firms up. No moving highlight. ---------- */
+/* ---------- Hover: the card lifts and a highlight follows the pointer
+   (ModuleCard.tsx writes --px / --py once per frame). ---------- */
 
 .glow {
   position: absolute;
-  inset: -1px;
+  inset: 0;
   z-index: 0;
   display: none;
+  overflow: hidden;
+  border-radius: inherit;
   pointer-events: none;
   opacity: 0;
-  border: 1px solid var(--line-strong);
-  transition: opacity var(--dur-fast) linear;
+  transition: opacity var(--dur-base) var(--ease);
 }
 
 .glowSpot {
-  display: none;
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 380px;
+  height: 380px;
+  margin: -190px 0 0 -190px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, color-mix(in srgb, var(--m) 15%, transparent), transparent);
+  transform: translate(var(--px, -500px), var(--py, -500px));
 }
 
 @media (hover: hover) and (pointer: fine) {
@@ -262,9 +281,34 @@
     display: block;
   }
 
-  .card:not([data-surface='bare']):hover .glow {
+  .card:not([data-surface='bare']):hover {
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--tone) 30%, var(--line-strong));
+    box-shadow: var(--sheen), var(--shadow-lift);
+  }
+
+  .card:hover .glow {
     opacity: 1;
   }
+}
+
+/* Reduced motion keeps the lit frame but neither the lift nor the moving highlight. */
+@media (prefers-reduced-motion: reduce) {
+  .glowSpot {
+    display: none;
+  }
+
+  .card:not([data-surface='bare']):hover {
+    transform: none;
+  }
+}
+
+:root[data-motion='reduced'] .glowSpot {
+  display: none;
+}
+
+:root[data-motion='reduced'] .card:not([data-surface='bare']):hover {
+  transform: none;
 }
 
 /* ---------- Header ---------- */
@@ -282,10 +326,12 @@
   flex: none;
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--r-sm);
   color: var(--tone);
-  border: 1px solid color-mix(in srgb, var(--tone) 45%, var(--line));
+  background: color-mix(in srgb, var(--tone) 13%, transparent);
+  border: 1px solid color-mix(in srgb, var(--tone) 28%, transparent);
 }
 
 .numeral {
@@ -293,7 +339,7 @@
   font-family: var(--font-mono);
   font-weight: 500;
   font-size: var(--fs-lead);
-  line-height: 24px;
+  line-height: 28px;
   letter-spacing: var(--readout-tracking);
   font-variant-numeric: tabular-nums;
   color: var(--tone);
@@ -302,13 +348,15 @@
 .titles {
   flex: 1;
   min-width: 0;
+  padding-top: 2px;
 }
 
-/* The inverted tag. box-decoration-break keeps the block intact when a long
-   title wraps, so each line is its own tag instead of one ragged slab. */
+/* The inverted tag, as a pill. box-decoration-break keeps the shape intact when
+   a long title wraps, so each line is its own pill instead of one ragged slab. */
 .title {
   display: inline;
-  padding: 3px 8px;
+  padding: 4px 11px;
+  border-radius: var(--r-pill);
   -webkit-box-decoration-break: clone;
   box-decoration-break: clone;
   background: var(--paper);
@@ -318,7 +366,7 @@
   font-size: var(--fs-caption);
   font-weight: 600;
   letter-spacing: var(--tag-tracking);
-  line-height: 24px;
+  line-height: 26px;
   text-transform: uppercase;
   overflow-wrap: anywhere;
 }
@@ -330,21 +378,22 @@
   color: var(--text-dim);
 }
 
-/* rule: the tag drops its block and runs into a hairline, like a section mark. */
+/* rule: the tag drops its pill and runs into a line that fades out. */
 .card[data-header='rule'] .title {
   display: flex;
   align-items: center;
   gap: var(--sp-3);
   padding: 0;
+  border-radius: 0;
   background: none;
-  color: color-mix(in srgb, var(--tone) 55%, var(--text-hi));
+  color: color-mix(in srgb, var(--tone) 60%, var(--text-hi));
 }
 
 .rule {
   flex: 1;
   min-width: 24px;
   height: 1px;
-  background: var(--line-strong);
+  background: linear-gradient(90deg, color-mix(in srgb, var(--tone) 55%, transparent), transparent);
 }
 
 .card[data-header='none'] .head {

@@ -17,9 +17,9 @@ function safeHex(value: string, fallback: string): string {
 }
 
 /**
- * The interface is near-monochrome: only the primary keeps its hue (it is the
- * scene's signal colour). The other two are pulled most of the way to steel and
- * paper, so a scene can lean warm or cool without turning the page into a
+ * The primary is the scene's signal colour and keeps its full hue. The other
+ * two are pulled part of the way to steel and paper: enough hue left to pair
+ * with the signal in fills (--signal-grad), not enough to turn the page into a
  * three-colour scheme. The hex is validated first; the mix targets are constants.
  */
 const STEEL = '#b4c0c6';
@@ -41,8 +41,8 @@ export function sceneCssVars(presentation: ScenePresentation): SceneCssVars {
     // Redeclared here because a var() on :root resolves there, so the :root
     // --signal would keep the default hue instead of following this turn.
     '--signal': safeHex(palette.primary, DEFAULT_PALETTE.primary),
-    '--scene-secondary': muted(safeHex(palette.secondary, DEFAULT_PALETTE.secondary), 30, STEEL),
-    '--scene-accent': muted(safeHex(palette.accent, DEFAULT_PALETTE.accent), 22, PAPER),
+    '--scene-secondary': muted(safeHex(palette.secondary, DEFAULT_PALETTE.secondary), 55, STEEL),
+    '--scene-accent': muted(safeHex(palette.accent, DEFAULT_PALETTE.accent), 60, PAPER),
     ...motionFor(presentation),
   };
 }
