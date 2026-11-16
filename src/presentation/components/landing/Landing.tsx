@@ -1,10 +1,7 @@
 import type { ReactElement } from 'react';
-import { Clock } from 'lucide-react';
-import { DEFAULT_PALETTE } from '../../../domain/Scene';
+import { ArrowRight } from 'lucide-react';
 import { useI18n } from '../../../i18n/I18nContext';
 import type { TranslationKey } from '../../../i18n/translations';
-import { ThinkingCore } from '../../canvas/ThinkingCore';
-import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { useTrendingQuestions } from '../../hooks/useTrendingQuestions';
 import { CommandBar } from '../command/CommandBar';
 import styles from './Landing.module.css';
@@ -23,9 +20,36 @@ interface LandingProps {
   onSubmit: (query: string) => void;
 }
 
+/** Two-digit index readout for a row ("01", "02"). */
+function indexOf(i: number): string {
+  return String(i + 1).padStart(2, '0');
+}
+
+interface QuestionRowsProps {
+  questions: readonly string[];
+  onSubmit: (query: string) => void;
+  className?: string;
+}
+
+/** A ruled list of questions; the whole row is the button. */
+function QuestionRows({ questions, onSubmit, className }: QuestionRowsProps): ReactElement {
+  return (
+    <ol className={[styles.list, className].filter(Boolean).join(' ')}>
+      {questions.map((question, i) => (
+        <li key={question}>
+          <button type="button" className={styles.row} onClick={() => onSubmit(question)}>
+            <span className={styles.rowIndex} aria-hidden="true">{indexOf(i)}</span>
+            <span className={styles.rowText}>{question}</span>
+            <ArrowRight className={styles.rowArrow} size={16} aria-hidden="true" />
+          </button>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export function Landing({ recent, reduced, onSubmit }: LandingProps): ReactElement {
   const { t, locale } = useI18n();
-  const bp = useBreakpoint();
   const trending = useTrendingQuestions(locale);
   const live = trending.questions !== null;
   const examples = trending.questions ?? EXAMPLE_KEYS.map(key => t(key));
@@ -34,15 +58,7 @@ export function Landing({ recent, reduced, onSubmit }: LandingProps): ReactEleme
 
   return (
     <main className={styles.landing}>
-      <div className={styles.center}>
-        <ThinkingCore
-          className={styles.core}
-          phase="idle"
-          palette={DEFAULT_PALETTE}
-          steps={[]}
-          size={bp === 'mobile' ? 104 : 144}
-          reduced={reduced}
-        />
+      <div className={styles.column}>
         <h1 className={styles.name}>{t('app.name')}</h1>
         <p className={styles.tagline}>{t('app.tagline')}</p>
 
@@ -52,39 +68,23 @@ export function Landing({ recent, reduced, onSubmit }: LandingProps): ReactEleme
 
         <section className={styles.section} aria-labelledby="landing-examples" data-trending={live ? 'live' : 'static'}>
           <h2 id="landing-examples" key={live ? 'live' : 'static'} className={[styles.sectionLabel, swapClass].filter(Boolean).join(' ')}>
-            {live ? (
-              <>
-                <span className={styles.liveDot} aria-hidden="true" />
-                {t('landing.trending')}
-              </>
-            ) : t('landing.examples')}
+            {live ? <span className={styles.liveMark} aria-hidden="true" /> : null}
+            {live ? t('landing.trending') : t('landing.examples')}
           </h2>
-          <div className={styles.chipArea}>
-            <ul key={live ? 'live' : 'static'} className={[styles.chips, swapClass].filter(Boolean).join(' ')}>
-              {examples.map(question => (
-                <li key={question}>
-                  <button type="button" className={styles.chip} onClick={() => onSubmit(question)}>
-                    {question}
-                  </button>
-                </li>
-              ))}
-            </ul>
+          <div className={styles.listArea}>
+            <QuestionRows
+              key={live ? 'live' : 'static'}
+              questions={examples}
+              onSubmit={onSubmit}
+              className={swapClass}
+            />
           </div>
         </section>
 
         {recent.length > 0 ? (
           <section className={styles.section} aria-labelledby="landing-recent">
             <h2 id="landing-recent" className={styles.sectionLabel}>{t('landing.recent')}</h2>
-            <ul className={styles.recent}>
-              {recent.map(q => (
-                <li key={q}>
-                  <button type="button" className={styles.recentItem} onClick={() => onSubmit(q)}>
-                    <Clock size={15} aria-hidden="true" />
-                    <span className={styles.recentText}>{q}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <QuestionRows questions={recent} onSubmit={onSubmit} />
           </section>
         ) : null}
       </div>

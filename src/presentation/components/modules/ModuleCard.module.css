@@ -12,7 +12,7 @@
    * ModuleCard.tsx); it is pulled most of the way to steel so cards differ by a
    * tint, not by a hue. Without it the card takes the scene's signal colour.
    */
-  --m: color-mix(in srgb, var(--m-raw, var(--scene-primary)) 55%, #b4c0c6);
+  --m: color-mix(in srgb, var(--m-raw, var(--scene-primary)) 40%, #b4c0c6);
   /*
    * Signal colour. A neutral card signals with the module's own colour; a tone
    * swaps in one of three fixed recipes, so the valence of a card never depends

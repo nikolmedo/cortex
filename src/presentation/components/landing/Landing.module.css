@@ -1,209 +1,177 @@
+/*
+ * The landing is one left-aligned column on the same grid as the session
+ * stream, set in the upper third: name, tagline, command, then ruled rows of
+ * questions. It is placed with padding rather than centred in a tall box, so
+ * nothing above the suggestions moves when the trending set replaces the
+ * static one.
+ */
 .landing {
   position: relative;
   z-index: var(--z-content);
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding-top: calc(var(--top-h) + env(safe-area-inset-top));
+  width: 100%;
+  max-width: calc(var(--content-max) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-top: calc(var(--top-h) + env(safe-area-inset-top) + clamp(32px, 12dvh, 128px));
   padding-bottom: calc(var(--sp-7) + env(safe-area-inset-bottom));
   padding-left: max(var(--gutter), env(safe-area-inset-left));
   padding-right: max(var(--gutter), env(safe-area-inset-right));
 }
 
-.center {
+.column {
   width: 100%;
-  max-width: 760px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-}
-
-.core {
-  margin-bottom: var(--sp-2);
-  animation: fadeIn var(--dur-slow) var(--ease) both;
+  max-width: 720px;
 }
 
 .name {
   font-family: var(--font-display);
-  font-weight: 300;
-  font-stretch: 90%;
-  font-size: var(--fs-display);
-  line-height: 1;
-  letter-spacing: -0.02em;
+  font-weight: 600;
+  font-stretch: 78%;
+  font-size: clamp(3.25rem, 2rem + 7vw, 7rem);
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
   color: var(--text-hi);
   animation: materialize var(--dur-slow) var(--ease) 60ms both;
 }
 
+/* A terminal cursor after the name: the same hard blink as the live marker. */
+.name::after {
+  content: '';
+  display: inline-block;
+  width: 0.14em;
+  height: 0.72em;
+  margin-left: 0.1em;
+  background: var(--signal);
+  animation: blink 1.4s steps(1, end) infinite;
+}
+
 .tagline {
-  margin-top: var(--sp-3);
-  max-width: 40ch;
+  margin-top: var(--sp-4);
+  max-width: 46ch;
   font-size: clamp(1rem, 0.95rem + 0.3vw, 1.125rem);
-  color: var(--text-dim);
-  text-wrap: balance;
+  color: var(--text);
   animation: materialize var(--dur-slow) var(--ease) 120ms both;
 }
 
 .command {
-  width: 100%;
   margin-top: var(--sp-6);
-  text-align: left;
   animation: materialize var(--dur-slow) var(--ease) 180ms both;
 }
 
 .section {
-  width: 100%;
-  margin-top: var(--sp-5);
+  margin-top: var(--sp-6);
   animation: materialize var(--dur-slow) var(--ease) 260ms both;
 }
 
+/* The section label is an inverted tag, like every other label in the system. */
 .sectionLabel {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding: 0 8px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-family: var(--font-display);
+  font-stretch: var(--tag-stretch);
   font-size: var(--fs-caption);
-  font-weight: 500;
-  color: var(--text-faint);
+  font-weight: 600;
+  letter-spacing: var(--tag-tracking);
+  line-height: 24px;
+  text-transform: uppercase;
 }
 
-/* Tiny live indicator for the trending label: a steady core with a slow halo. */
-.liveDot {
-  position: relative;
+/* Trending is live data: its tag carries a blinking square. */
+.liveMark {
   flex: none;
   width: 6px;
   height: 6px;
-  border-radius: 50%;
-  background: var(--scene-primary);
-  box-shadow: 0 0 6px color-mix(in srgb, var(--scene-primary) 70%, transparent);
+  background: var(--paper-ink);
+  animation: blink 1.4s steps(1, end) infinite;
 }
 
-.liveDot::after {
-  content: '';
-  position: absolute;
-  inset: -3px;
-  border-radius: 50%;
-  border: 1px solid color-mix(in srgb, var(--scene-primary) 60%, transparent);
-  animation: livePulse 2.4s var(--ease) infinite;
-}
-
-@keyframes livePulse {
-  0% {
-    opacity: 0.9;
-    transform: scale(0.6);
-  }
-  70%,
-  100% {
-    opacity: 0;
-    transform: scale(1.6);
-  }
-}
-
-/* Reserves the chip block's height so the vertically centred column does not
-   move when trending questions replace the static ones: three two-line chips
-   on phones, five one-line chips (up to 90 characters) from tablet up. */
-.chipArea {
+/* Reserves the list's height so the recent block does not move when trending
+   questions replace the static ones: three two-line rows on phones, five
+   one-line rows (up to 90 characters) from tablet up. */
+.listArea {
   min-height: 188px;
 }
 
-/* The static examples hand over to the trending set with a soft fade. */
+/* Phones show the first three examples; tablet and up show all five. */
+.listArea .list > li:nth-child(n + 4) {
+  display: none;
+}
+
+/* The static examples hand over to the trending set with a short fade. */
 .swap {
   animation: fadeIn 480ms var(--ease) both;
 }
 
-.chips {
+/* Rows: one hairline between each, the whole row is the button. */
+.list {
   list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
+  border-bottom: 1px solid var(--line);
 }
 
-.chips > li {
-  min-width: 0;
-  max-width: 100%;
+.list > li {
+  border-top: 1px solid var(--line);
 }
 
-.chips > li:nth-child(n + 4) {
-  display: none;
-}
-
-.chip {
-  min-height: var(--hit);
-  max-width: 100%;
-  padding: 10px 16px;
-  border-radius: 22px;
-  font-size: var(--fs-small);
-  line-height: 1.35;
-  text-align: left;
-  color: var(--text);
-  background: rgb(13 19 31 / 0.55);
-  border: 1px solid var(--line);
-  transition:
-    border-color var(--dur-fast) var(--ease),
-    color var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease);
-}
-
-.chip:hover {
-  color: var(--text-hi);
-  border-color: color-mix(in srgb, var(--scene-primary) 40%, transparent);
-}
-
-.chip:active {
-  transform: scale(0.98);
-}
-
-.recent {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  max-width: 560px;
-  margin-inline: auto;
-}
-
-.recentItem {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.row {
+  display: grid;
+  grid-template-columns: 3ch minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: var(--sp-4);
   width: 100%;
   min-height: var(--hit);
-  padding: 8px 14px;
-  border-radius: 12px;
+  padding: 10px var(--sp-3);
   text-align: left;
-  font-size: var(--fs-small);
-  color: var(--text-dim);
-  transition: background-color var(--dur-fast) var(--ease), color var(--dur-fast) var(--ease);
-}
-
-.recentItem:hover {
+  font-size: var(--fs-body);
+  line-height: 1.4;
   color: var(--text-hi);
-  background: var(--surface);
 }
 
-.recentItem svg {
-  flex: none;
-  color: var(--text-faint);
+.rowIndex {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
 }
 
-.recentText {
+.rowText {
   min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+}
+
+.rowArrow {
+  align-self: center;
+  color: var(--text-dim);
+}
+
+/* Hover and focus invert the row to paper; every child inherits the dark ink. */
+.row:hover,
+.row:focus-visible {
+  background: var(--paper);
+  color: var(--paper-ink);
+}
+
+.row:hover :is(.rowIndex, .rowArrow),
+.row:focus-visible :is(.rowIndex, .rowArrow) {
+  color: inherit;
+}
+
+.row:focus-visible {
+  outline-offset: -4px;
+  outline-color: var(--paper-ink);
 }
 
 @media (min-width: 768px) {
-  .chips > li:nth-child(n + 4) {
+  .listArea {
+    min-height: calc(5 * (var(--hit) + 1px));
+  }
+
+  .listArea .list > li:nth-child(n + 4) {
     display: list-item;
-  }
-  .chipArea {
-    min-height: calc(5 * var(--hit) + 4 * 8px);
-  }
-  .section {
-    margin-top: var(--sp-6);
   }
 }

@@ -10,6 +10,7 @@ describe('sceneCssVars palette', () => {
   it('passes the primary through as the signal colour', () => {
     const vars = varsFor({ primary: '#ff0055', secondary: '#00ff00', accent: '#0000ff' });
     expect(vars['--scene-primary']).toBe('#ff0055');
+    expect(vars['--signal']).toBe('#ff0055');
   });
 
   it('mutes the secondary and the accent toward fixed neutrals', () => {

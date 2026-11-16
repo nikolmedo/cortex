@@ -1,16 +1,25 @@
+/*
+ * The command line. A square hairline frame with corner brackets and a mono
+ * prompt glyph. Focus turns the frame to --line-strong and the brackets to the
+ * signal colour, and lengthens them; there is no ring, glow or travelling light.
+ * The send block is an inverted square when it can send and a hatched square
+ * when it cannot.
+ */
+
+/* Docked: a flat strip with a top hairline. It is opaque, so it takes the pointer. */
 .dock {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: var(--z-dock);
-  padding-top: 28px;
-  padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  padding-top: var(--sp-3);
+  padding-bottom: calc(var(--sp-2) + env(safe-area-inset-bottom));
   padding-left: max(var(--gutter), env(safe-area-inset-left));
   padding-right: max(var(--gutter), env(safe-area-inset-right));
-  background: linear-gradient(to top, rgb(5 7 12 / 0.96) 45%, rgb(5 7 12 / 0));
+  background: var(--ink-0);
+  border-top: 1px solid var(--line);
   transform: translateY(calc(-1 * var(--kb, 0px)));
-  pointer-events: none;
 }
 
 .bar {
@@ -18,7 +27,6 @@
   width: 100%;
   max-width: 760px;
   margin-inline: auto;
-  pointer-events: auto;
 }
 
 .bar[data-docked='true'] {
@@ -26,79 +34,59 @@
 }
 
 .frame {
+  --bracket: var(--text-dim);
   position: relative;
   display: flex;
   align-items: flex-end;
-  gap: 8px;
-  padding: 8px 8px 8px 20px;
-  border-radius: 26px;
+  gap: var(--sp-2);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
   background: var(--surface-strong);
-  border: 1px solid var(--line-strong);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  box-shadow: 0 24px 60px -24px rgb(0 0 0 / 0.7);
-  transition: border-color var(--dur-fast) var(--ease), box-shadow var(--dur-base) var(--ease);
+  border: 1px solid var(--line);
 }
 
 .bar[data-docked='false'] .frame {
-  padding: 10px 10px 10px 22px;
-  border-radius: 30px;
+  padding: 10px 10px 10px var(--sp-4);
+}
+
+/* Corner brackets, the same eight strokes a module card draws. */
+.frame::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background:
+    linear-gradient(var(--bracket), var(--bracket)) top left / var(--tick) 1px,
+    linear-gradient(var(--bracket), var(--bracket)) top left / 1px var(--tick),
+    linear-gradient(var(--bracket), var(--bracket)) top right / var(--tick) 1px,
+    linear-gradient(var(--bracket), var(--bracket)) top right / 1px var(--tick),
+    linear-gradient(var(--bracket), var(--bracket)) bottom left / var(--tick) 1px,
+    linear-gradient(var(--bracket), var(--bracket)) bottom left / 1px var(--tick),
+    linear-gradient(var(--bracket), var(--bracket)) bottom right / var(--tick) 1px,
+    linear-gradient(var(--bracket), var(--bracket)) bottom right / 1px var(--tick);
+  background-repeat: no-repeat;
+  pointer-events: none;
 }
 
 .frame:focus-within {
-  border-color: color-mix(in srgb, var(--scene-primary) 22%, transparent);
-  box-shadow:
-    0 0 48px -12px color-mix(in srgb, var(--scene-primary) 40%, transparent),
-    0 24px 60px -24px rgb(0 0 0 / 0.7);
+  --bracket: var(--signal);
+  --tick: 14px;
+  border-color: var(--line-strong);
 }
 
-/* Light travelling along the border while focused: a rotating conic layer, masked to a 1px ring. */
-.ring {
-  position: absolute;
-  inset: -1px;
-  padding: 1px;
-  border-radius: inherit;
-  overflow: hidden;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity var(--dur-base) var(--ease);
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: xor;
-  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+/* The prompt shares the input's line box, so its glyph sits on the first line. */
+.prompt {
+  flex: none;
+  padding: 10px 0;
+  font-family: var(--font-mono);
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--signal);
+  user-select: none;
 }
 
-.ring::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 160%;
-  aspect-ratio: 1;
-  background: conic-gradient(
-    from 0turn,
-    transparent 0turn,
-    transparent 0.6turn,
-    color-mix(in srgb, var(--scene-primary) 70%, transparent) 0.8turn,
-    #ffffff 0.85turn,
-    color-mix(in srgb, var(--scene-accent) 70%, transparent) 0.9turn,
-    transparent 0.98turn
-  );
-  transform: translate(-50%, -50%) rotate(0turn);
-  animation: ringSpin 4s linear infinite paused;
-}
-
-.frame:focus-within .ring {
-  opacity: 1;
-}
-
-.frame:focus-within .ring::before {
-  animation-play-state: running;
-}
-
-@keyframes ringSpin {
-  to {
-    transform: translate(-50%, -50%) rotate(1turn);
-  }
+.bar[data-docked='false'] .prompt {
+  padding: 11px 0;
+  font-size: clamp(1.0625rem, 1rem + 0.35vw, 1.25rem);
 }
 
 .field {
@@ -122,15 +110,16 @@
   padding: 10px 0;
   max-height: min(36dvh, 200px);
   overflow-y: auto;
-  caret-color: var(--scene-primary);
+  caret-color: var(--signal);
 }
 
+/* The frame carries the focus state (border, brackets); a second ring inside it would only be noise. */
 .input:focus-visible {
   outline: none;
 }
 
 .input::placeholder {
-  color: var(--text-faint);
+  color: var(--text-dim);
   opacity: 1;
 }
 
@@ -149,7 +138,7 @@
   right: 0;
   top: 11px;
   line-height: 1.5;
-  color: var(--text-faint);
+  color: var(--text-dim);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -163,40 +152,47 @@
   place-items: center;
   width: var(--hit);
   height: var(--hit);
-  border-radius: 50%;
-  color: var(--ink-0);
-  background: color-mix(in srgb, var(--scene-primary) 88%, white);
-  transition:
-    background-color var(--dur-fast) var(--ease),
-    color var(--dur-fast) var(--ease),
-    transform var(--dur-fast) var(--ease);
+  border: 1px solid var(--paper);
+  background: var(--paper);
+  color: var(--paper-ink);
 }
 
+.send:not(:disabled):hover {
+  border-color: var(--signal);
+  background: var(--signal);
+}
+
+/* Cannot send: a hatched block, the system's mark for "inactive". */
 .send:disabled {
   cursor: default;
-  color: var(--text-faint);
-  background: var(--line);
+  border-color: var(--line);
+  background: repeating-linear-gradient(135deg, var(--line-strong) 0 1px, transparent 1px 6px);
+  color: var(--text-dim);
 }
 
-.send:not(:disabled):active {
-  transform: scale(0.93);
-}
-
+/* Stop: outlined rather than filled, so it reads as a different action from send. */
 .stop {
+  border-color: var(--paper);
+  background: var(--surface-strong);
   color: var(--text-hi);
-  background: var(--surface-raised);
-  box-shadow: inset 0 0 0 1px var(--line-strong);
+}
+
+.stop:not(:disabled):hover {
+  background: var(--paper);
+  color: var(--paper-ink);
 }
 
 .meta {
   display: flex;
   justify-content: space-between;
-  gap: 12px;
+  gap: var(--sp-3);
   min-height: 22px;
-  padding: 6px 22px 0;
-  font-size: var(--fs-caption);
+  padding: 6px 0 0;
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
   line-height: 1.4;
-  color: var(--text-faint);
+  color: var(--text-dim);
 }
 
 .counter {

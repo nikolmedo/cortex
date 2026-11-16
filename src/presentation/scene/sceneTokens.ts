@@ -38,6 +38,9 @@ export function sceneCssVars(presentation: ScenePresentation): SceneCssVars {
   const { palette } = presentation;
   return {
     '--scene-primary': safeHex(palette.primary, DEFAULT_PALETTE.primary),
+    // Redeclared here because a var() on :root resolves there, so the :root
+    // --signal would keep the default hue instead of following this turn.
+    '--signal': safeHex(palette.primary, DEFAULT_PALETTE.primary),
     '--scene-secondary': muted(safeHex(palette.secondary, DEFAULT_PALETTE.secondary), 30, STEEL),
     '--scene-accent': muted(safeHex(palette.accent, DEFAULT_PALETTE.accent), 22, PAPER),
     ...motionFor(presentation),

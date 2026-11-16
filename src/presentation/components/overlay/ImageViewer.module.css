@@ -4,10 +4,8 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay);
-  background: rgb(5 7 12 / 0.86);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  animation: fadeIn var(--dur-fast) var(--ease) both;
+  background: rgb(6 8 10 / 0.88);
+  animation: fadeIn var(--dur-fast) linear both;
 }
 
 .panel {
@@ -38,10 +36,12 @@
   width: 100%;
   /* Whole image or nothing: this view exists because the figure had to crop. */
   object-fit: contain;
-  border-radius: var(--r-md);
+  border: 1px solid var(--line-strong);
+  background: var(--ink-0);
   pointer-events: auto;
 }
 
+/* The caption bar: a square strip under the picture, mono caption, square buttons. */
 .bar {
   flex: none;
   align-self: center;
@@ -49,12 +49,9 @@
   align-items: center;
   gap: var(--sp-3);
   max-width: 100%;
-  padding: 4px 4px 4px 16px;
-  border-radius: var(--r-pill);
+  padding: 0 0 0 var(--sp-4);
   background: var(--surface-strong);
   border: 1px solid var(--line-strong);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
   pointer-events: auto;
 }
 
@@ -63,30 +60,38 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: var(--fs-small);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--readout-tracking);
   color: var(--text-dim);
 }
 
 .link {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--sp-1);
   flex: none;
   min-height: var(--hit);
-  padding: 0 12px;
-  border-radius: var(--r-pill);
-  font-size: var(--fs-small);
+  padding: 0 var(--sp-3);
+  border-left: 1px solid var(--line-strong);
+  font-family: var(--font-display);
+  font-stretch: var(--tag-stretch);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--tag-tracking);
+  text-transform: uppercase;
   color: var(--text-hi);
   text-decoration: none;
-  transition: background-color var(--dur-fast) var(--ease);
 }
 
 .link:hover {
-  background: var(--surface-raised);
+  background: var(--paper);
+  color: var(--paper-ink);
 }
 
-.link svg {
-  color: var(--scene-primary);
+.link:focus-visible,
+.close:focus-visible {
+  outline-offset: -4px;
 }
 
 .close {
@@ -95,14 +100,13 @@
   flex: none;
   width: var(--hit);
   height: var(--hit);
-  border-radius: 50%;
+  border-left: 1px solid var(--line-strong);
   color: var(--text-dim);
-  transition: color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
 }
 
 .close:hover {
-  color: var(--text-hi);
-  background: var(--line);
+  background: var(--paper);
+  color: var(--paper-ink);
 }
 
 @media (max-width: 767px) {

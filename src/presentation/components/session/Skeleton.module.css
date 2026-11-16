@@ -1,3 +1,7 @@
+/*
+ * Placeholders are hatched square blocks with a single hairline scanning down
+ * each one. They carry no shimmer gradient and no colour beyond the signal line.
+ */
 .skeleton {
   display: flex;
   flex-direction: column;
@@ -9,23 +13,30 @@
   position: relative;
   display: block;
   overflow: hidden;
-  border-radius: 10px;
-  background: rgb(176 206 236 / 0.05);
-  border: 1px solid rgb(176 206 236 / 0.05);
+  background: repeating-linear-gradient(135deg, rgb(216 228 234 / 0.06) 0 1px, transparent 1px 7px);
+  border: 1px solid var(--line);
 }
 
+/* The scan line: one hairline, top to bottom, hard linear. */
 .bone::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--scene-primary) 9%, transparent),
-    transparent
-  );
-  transform: translateX(-100%);
-  animation: shimmer 1.8s var(--ease) infinite;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 1px;
+  background: var(--signal);
+  opacity: 0.7;
+  animation: boneScan 2.2s linear infinite;
+}
+
+@keyframes boneScan {
+  from {
+    top: 0;
+  }
+  to {
+    top: 100%;
+  }
 }
 
 .bone[data-shape='title'] {
@@ -45,7 +56,7 @@
 
 .bone[data-shape='card'] {
   height: 120px;
-  border-radius: var(--r-lg);
+  border-color: var(--line-strong);
 }
 
 .grid {

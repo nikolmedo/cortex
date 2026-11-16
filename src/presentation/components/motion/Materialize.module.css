@@ -25,19 +25,19 @@
 .enter::before {
   inset: 0 12px;
   background:
-    linear-gradient(90deg, transparent, color-mix(in srgb, var(--scene-primary) 90%, white), transparent) top / 100% 1px no-repeat,
-    linear-gradient(90deg, transparent, color-mix(in srgb, var(--scene-primary) 60%, white), transparent) bottom / 100% 1px no-repeat;
+    linear-gradient(90deg, transparent, var(--signal), transparent) top / 100% 1px no-repeat,
+    linear-gradient(90deg, transparent, color-mix(in srgb, var(--signal) 60%, transparent), transparent) bottom / 100% 1px no-repeat;
   animation: var(--enter-lock, none) var(--dur-slow) var(--ease) backwards;
   animation-delay: var(--enter-delay, 0ms);
 }
 
-/* scan: a lit band whose bottom edge is the line; it travels with the reveal. */
+/* scan: a thin lit band whose bottom edge is the line; it travels with the reveal. */
 .enter::after {
   background: linear-gradient(
     to bottom,
-    transparent calc(100% - 44px),
-    color-mix(in srgb, var(--scene-primary) 14%, transparent) calc(100% - 2px),
-    color-mix(in srgb, var(--scene-primary) 85%, white) 100%
+    transparent calc(100% - 24px),
+    color-mix(in srgb, var(--signal) 10%, transparent) calc(100% - 2px),
+    var(--signal) 100%
   );
   animation: var(--enter-scan, none) var(--dur-slow) var(--ease) backwards;
   animation-delay: var(--enter-delay, 0ms);
