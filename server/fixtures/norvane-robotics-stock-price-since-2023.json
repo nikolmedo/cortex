@@ -1,0 +1,353 @@
+{
+  "query": "Norvane Robotics stock price since 2023",
+  "lang": "en",
+  "preface": {
+    "intent": "analysis",
+    "title": "Norvane Robotics (NVRB) share price since 2023",
+    "layout": "mosaic",
+    "mood": "volatile",
+    "palette": {
+      "primary": "#7FE0C4",
+      "secondary": "#F2A65A",
+      "accent": "#C6B8FF"
+    },
+    "plan": [
+      "Pulling NVRB month-end closes since January 2023",
+      "Locating the 2024 drawdown and its trough",
+      "Comparing the latest close with the start of the series"
+    ]
+  },
+  "scene": {
+    "version": 3,
+    "intent": "analysis",
+    "type": "company",
+    "title": "Norvane Robotics (NVRB) share price since 2023",
+    "subtitle": "Month-end closes, January 2023 to December 2025 · fictional company",
+    "answer": {
+      "headline": "NVRB closed December 2025 at $52.40, up from $18.40 in January 2023, after a 34% drawdown in mid-2024.",
+      "body": [
+        "The share price climbed through 2023 and into early 2024, peaking at a month-end close of **$38.40** in March 2024 as warehouse-robot orders grew.",
+        "A guidance cut in May 2024 started a slide to **$25.30** in July 2024, a fall of about 34% from the March high. The recovery that followed took the price past that high by March 2025 and to **$52.40** at the end of 2025.",
+        "Over the full series the stock gained about 185%, but the 2024 drawdown shows how quickly sentiment on a single growth story can turn."
+      ],
+      "caveats": [
+        "Fixture data: Norvane Robotics is a fictional company and every figure here is illustrative, not market data.",
+        "Month-end closes only; intra-month highs and lows are not shown."
+      ]
+    },
+    "summary": "",
+    "image_url": "",
+    "image_query": "",
+    "meta": {
+      "Ticker": "NVRB (fictional)",
+      "Period": "Jan 2023 to Dec 2025",
+      "Interval": "Monthly close"
+    },
+    "presentation": {
+      "layout": "mosaic",
+      "mood": "volatile",
+      "motif": "grid",
+      "density": "balanced",
+      "typeScale": "monumental",
+      "palette": {
+        "primary": "#7FE0C4",
+        "secondary": "#F2A65A",
+        "accent": "#C6B8FF"
+      }
+    },
+    "spotlight": {
+      "kind": "stat",
+      "label": "Change since January 2023",
+      "value": "+185%",
+      "source": "Illustrative fixture data"
+    },
+    "modules": [
+      {
+        "category": "Month-end close",
+        "color": "#7FE0C4",
+        "image_query": "",
+        "kind": "chart",
+        "variant": "line",
+        "size": "full",
+        "emphasis": "lead",
+        "tone": "positive",
+        "reveal": "draw",
+        "surface": "solid",
+        "corner": "notch",
+        "header": "rule",
+        "headline": "A steady climb, a sharp 2024 drawdown, then new highs",
+        "facts": [
+          "$18.40 in January 2023",
+          "$38.40 high in March 2024",
+          "$25.30 low in July 2024",
+          "$52.40 in December 2025"
+        ],
+        "items": [
+          {
+            "label": "Jan 2023",
+            "value": "$18.40",
+            "weight": 35
+          },
+          {
+            "label": "Feb 2023",
+            "value": "$19.10",
+            "weight": 36
+          },
+          {
+            "label": "Mar 2023",
+            "value": "$18.70",
+            "weight": 36
+          },
+          {
+            "label": "Apr 2023",
+            "value": "$20.30",
+            "weight": 39
+          },
+          {
+            "label": "May 2023",
+            "value": "$22.80",
+            "weight": 44
+          },
+          {
+            "label": "Jun 2023",
+            "value": "$24.10",
+            "weight": 46
+          },
+          {
+            "label": "Jul 2023",
+            "value": "$23.60",
+            "weight": 45
+          },
+          {
+            "label": "Aug 2023",
+            "value": "$25.90",
+            "weight": 49
+          },
+          {
+            "label": "Sep 2023",
+            "value": "$27.40",
+            "weight": 52
+          },
+          {
+            "label": "Oct 2023",
+            "value": "$26.20",
+            "weight": 50
+          },
+          {
+            "label": "Nov 2023",
+            "value": "$28.80",
+            "weight": 55
+          },
+          {
+            "label": "Dec 2023",
+            "value": "$31.50",
+            "weight": 60
+          },
+          {
+            "label": "Jan 2024",
+            "value": "$33.20",
+            "weight": 63
+          },
+          {
+            "label": "Feb 2024",
+            "value": "$35.70",
+            "weight": 68
+          },
+          {
+            "label": "Mar 2024",
+            "value": "$38.40",
+            "weight": 73
+          },
+          {
+            "label": "Apr 2024",
+            "value": "$36.90",
+            "weight": 70
+          },
+          {
+            "label": "May 2024",
+            "value": "$32.10",
+            "weight": 61
+          },
+          {
+            "label": "Jun 2024",
+            "value": "$27.60",
+            "weight": 53
+          },
+          {
+            "label": "Jul 2024",
+            "value": "$25.30",
+            "weight": 48
+          },
+          {
+            "label": "Aug 2024",
+            "value": "$26.80",
+            "weight": 51
+          },
+          {
+            "label": "Sep 2024",
+            "value": "$29.40",
+            "weight": 56
+          },
+          {
+            "label": "Oct 2024",
+            "value": "$31.10",
+            "weight": 59
+          },
+          {
+            "label": "Nov 2024",
+            "value": "$33.90",
+            "weight": 65
+          },
+          {
+            "label": "Dec 2024",
+            "value": "$35.20",
+            "weight": 67
+          },
+          {
+            "label": "Jan 2025",
+            "value": "$37.80",
+            "weight": 72
+          },
+          {
+            "label": "Feb 2025",
+            "value": "$36.40",
+            "weight": 69
+          },
+          {
+            "label": "Mar 2025",
+            "value": "$39.60",
+            "weight": 76
+          },
+          {
+            "label": "Apr 2025",
+            "value": "$42.30",
+            "weight": 81
+          },
+          {
+            "label": "May 2025",
+            "value": "$41.10",
+            "weight": 78
+          },
+          {
+            "label": "Jun 2025",
+            "value": "$44.80",
+            "weight": 85
+          },
+          {
+            "label": "Jul 2025",
+            "value": "$47.20",
+            "weight": 90
+          },
+          {
+            "label": "Aug 2025",
+            "value": "$45.90",
+            "weight": 88
+          },
+          {
+            "label": "Sep 2025",
+            "value": "$48.60",
+            "weight": 93
+          },
+          {
+            "label": "Oct 2025",
+            "value": "$51.30",
+            "weight": 98
+          },
+          {
+            "label": "Nov 2025",
+            "value": "$49.70",
+            "weight": 95
+          },
+          {
+            "label": "Dec 2025",
+            "value": "$52.40",
+            "weight": 100
+          }
+        ]
+      },
+      {
+        "category": "Key levels",
+        "color": "#F2A65A",
+        "image_query": "",
+        "kind": "stats",
+        "variant": "tiles",
+        "size": "half",
+        "surface": "outline",
+        "header": "numeral",
+        "facts": [
+          "Start $18.40",
+          "Latest $52.40",
+          "2024 low $25.30"
+        ],
+        "items": [
+          {
+            "label": "First close",
+            "value": "$18.40",
+            "weight": 35
+          },
+          {
+            "label": "Latest close",
+            "value": "$52.40",
+            "weight": 100
+          },
+          {
+            "label": "2024 low",
+            "value": "$25.30",
+            "weight": 48
+          },
+          {
+            "label": "Peak-to-trough 2024",
+            "value": "-34%",
+            "weight": 34
+          }
+        ]
+      },
+      {
+        "category": "What moved it",
+        "color": "#C6B8FF",
+        "image_query": "",
+        "kind": "timeline",
+        "variant": "stacked",
+        "size": "half",
+        "tone": "caution",
+        "surface": "bare",
+        "header": "rule",
+        "facts": [
+          "Order growth through 2023",
+          "Guidance cut in May 2024",
+          "Recovery through 2025"
+        ],
+        "items": [
+          {
+            "label": "Warehouse-robot orders lift the stock through the year",
+            "value": "2023"
+          },
+          {
+            "label": "Month-end high of $38.40",
+            "value": "Mar 2024"
+          },
+          {
+            "label": "Guidance cut starts a three-month slide",
+            "value": "May 2024"
+          },
+          {
+            "label": "Trough at $25.30",
+            "value": "Jul 2024"
+          },
+          {
+            "label": "Back above the 2024 high",
+            "value": "Mar 2025"
+          }
+        ]
+      }
+    ],
+    "followups": [
+      "How do you measure a stock drawdown?",
+      "What is the difference between price return and total return?"
+    ]
+  },
+  "timing": {
+    "prefaceMs": 900,
+    "sceneMs": 9800
+  }
+}

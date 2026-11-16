@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CortexApiError, isAbortError, streamCortex, type CortexErrorKey, type ResearchInfo } from './cortexService';
-import type { Scene, ScenePreface } from '../domain/Scene';
+import type { AppletState, Scene, ScenePreface } from '../domain/Scene';
 import type { Locale } from '../i18n/translations';
 
 /**
@@ -26,6 +26,11 @@ export interface Turn {
    * treats a scene as a finished answer has to check `isInterrupted` first.
    */
   scene?: Scene;
+  /**
+   * The interactive tool, when the router asked for one. It settles on its own
+   * schedule: a turn can be 'done' while its applet is still 'pending'.
+   */
+  applet?: AppletState;
   error?: CortexErrorKey;
   /** Date.now() when the current attempt started. */
   startedAt: number;
@@ -58,6 +63,11 @@ interface ActiveRun {
   controller: AbortController;
 }
 
+/** A tool still pending when its run ends will never arrive; it is shown as failed. */
+function settleApplet(applet: AppletState | undefined): AppletState | undefined {
+  return applet?.status === 'pending' ? { status: 'failed', title: applet.title } : applet;
+}
+
 let seq = 0;
 const nextId = () => `turn-${Date.now().toString(36)}-${(seq += 1)}`;
 
@@ -78,11 +88,13 @@ export function useCortex(locale: Locale): CortexSession {
     if (!run) return;
     active.current = null;
     run.controller.abort();
-    if (markCancelled) {
-      update(run.turnId, t => (t.status === 'thinking' || t.status === 'streaming'
-        ? { ...t, status: 'error', error: 'error.cancelled' }
-        : t));
-    }
+    update(run.turnId, t => {
+      const applet = settleApplet(t.applet);
+      if (markCancelled && (t.status === 'thinking' || t.status === 'streaming')) {
+        return { ...t, status: 'error', error: 'error.cancelled', applet };
+      }
+      return applet === t.applet ? t : { ...t, applet };
+    });
   }, [update]);
 
   const start = useCallback((turnId: string, query: string, lang: Locale) => {
@@ -102,18 +114,25 @@ export function useCortex(locale: Locale): CortexSession {
       onPartial: scene => {
         if (isCurrent()) update(turnId, t => ({ ...t, status: 'streaming', scene }));
       },
+      // The answer is finished here even when an applet keeps the stream open.
+      onScene: scene => {
+        if (isCurrent()) update(turnId, t => ({ ...t, status: 'done', scene, error: undefined }));
+      },
+      onApplet: applet => {
+        if (isCurrent()) update(turnId, t => ({ ...t, applet }));
+      },
     })
       .then(scene => {
         if (!isCurrent()) return;
         active.current = null;
-        update(turnId, t => ({ ...t, status: 'done', scene, error: undefined }));
+        update(turnId, t => ({ ...t, status: 'done', scene, error: undefined, applet: settleApplet(t.applet) }));
       })
       .catch((err: unknown) => {
         if (!isCurrent()) return;
         active.current = null;
         if (isAbortError(err)) return;
         const key: CortexErrorKey = err instanceof CortexApiError ? err.key : 'error.unknown';
-        update(turnId, t => ({ ...t, status: 'error', error: key }));
+        update(turnId, t => ({ ...t, status: 'error', error: key, applet: settleApplet(t.applet) }));
       });
   }, [update]);
 

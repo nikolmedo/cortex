@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { FactKind, ModuleSize, SceneModule } from '../../../domain/Scene';
 import {
-  balancedSpans, chartReadsAsLine, columnsOf, fillRows, partitionModules, patternSeed, type IndexedModule,
+  axisTicks, balancedSpans, chartChange, chartExtremes, chartReadsAsLine, columnsOf, fillRows, parseChartValue,
+  partitionModules, patternSeed, showsPointMarkers, type IndexedModule,
 } from './items';
 
 function entry(index: number, kind: FactKind, size?: ModuleSize, rows = 3): IndexedModule {
@@ -180,5 +181,98 @@ describe('columnsOf', () => {
     expect(columnsOf('split', plain, 'compact', 'wide')).toBe(12);
     expect(columnsOf('split', entry(0, 'proscons').module, 'pair', 'wide')).toBe(6);
     expect(columnsOf('mosaic', plain, 'compact', 'narrow')).toBe(6);
+  });
+});
+
+describe('axisTicks', () => {
+  it('labels every point of a short series', () => {
+    expect(axisTicks(1)).toEqual([0]);
+    expect(axisTicks(4)).toEqual([0, 1, 2, 3]);
+    expect(axisTicks(5)).toEqual([0, 1, 2, 3, 4]);
+  });
+
+  it('thins a long series to the first, the last and evenly spaced labels between', () => {
+    expect(axisTicks(36)).toEqual([0, 9, 18, 26, 35]);
+    expect(axisTicks(60)).toEqual([0, 15, 30, 44, 59]);
+    expect(axisTicks(12, 3)).toEqual([0, 6, 11]);
+  });
+});
+
+describe('showsPointMarkers', () => {
+  it('draws a marker on every point only while there are few of them', () => {
+    expect(showsPointMarkers(12)).toBe(true);
+    expect(showsPointMarkers(16)).toBe(true);
+    expect(showsPointMarkers(17)).toBe(false);
+    expect(showsPointMarkers(60)).toBe(false);
+  });
+});
+
+describe('chartExtremes', () => {
+  it('finds the first lowest and first highest point by weight', () => {
+    expect(chartExtremes([{ weight: 40 }, { weight: 10 }, { weight: 90 }, { weight: 10 }, { weight: 90 }])).toEqual({ min: 1, max: 2 });
+    expect(chartExtremes([{ weight: 5 }])).toEqual({ min: 0, max: 0 });
+  });
+});
+
+describe('parseChartValue', () => {
+  it('reads currency, units and percentages, keeping the text around the number', () => {
+    expect(parseChartValue('$18.40')).toEqual({ value: 18.4, decimals: 2, template: '$#' });
+    expect(parseChartValue('25%')).toEqual({ value: 25, decimals: 0, template: '#%' });
+    expect(parseChartValue('12 GW')).toEqual({ value: 12, decimals: 0, template: '# GW' });
+    expect(parseChartValue('-3.5%')).toEqual({ value: -3.5, decimals: 1, template: '#%' });
+    expect(parseChartValue('−3.5%')).toEqual({ value: -3.5, decimals: 1, template: '#%' });
+  });
+
+  it('tells thousands separators from decimal separators', () => {
+    expect(parseChartValue('1,234.5 t')).toEqual({ value: 1234.5, decimals: 1, template: '# t' });
+    expect(parseChartValue('1.234,5 €')).toEqual({ value: 1234.5, decimals: 1, template: '# €' });
+    expect(parseChartValue('1,234,567')).toEqual({ value: 1234567, decimals: 0, template: '#' });
+    expect(parseChartValue('2,5%')).toEqual({ value: 2.5, decimals: 1, template: '#%' });
+    expect(parseChartValue('1.234.567 hab.')).toEqual({ value: 1234567, decimals: 0, template: '# hab.' });
+  });
+
+  it('returns null when there is no number to read', () => {
+    for (const text of [undefined, '', 'N/A', 'record high', '—']) expect(parseChartValue(text)).toBeNull();
+  });
+});
+
+describe('chartChange', () => {
+  it('states the first-to-last change in the unit of the series, absolute and relative', () => {
+    expect(chartChange('$18.40', '$52.40')).toEqual({ absolute: '+$34.00', percent: '+184.8%', direction: 'up' });
+    expect(chartChange('120 GW', '90 GW')).toEqual({ absolute: '−30 GW', percent: '−25.0%', direction: 'down' });
+    expect(chartChange('3.0', '3.0')).toEqual({ absolute: '0.0', percent: '0.0%', direction: 'flat' });
+  });
+
+  it('gives a change between percentages in points', () => {
+    expect(chartChange('1%', '25%')).toEqual({ absolute: '+24 pp', percent: '+2400.0%', direction: 'up' });
+  });
+
+  it('omits the percent when the series starts at zero', () => {
+    expect(chartChange('0 km', '12 km')).toEqual({ absolute: '+12 km', percent: null, direction: 'up' });
+  });
+
+  it('omits the readout when either end does not parse or the units differ', () => {
+    expect(chartChange(undefined, '$5')).toBeNull();
+    expect(chartChange('$5', 'n/a')).toBeNull();
+    expect(chartChange('$1.2B', '$900M')).toBeNull();
+    expect(chartChange('5 kg', '5 lb')).toBeNull();
+  });
+});
+
+describe('chartChange with a sign written before the currency symbol', () => {
+  it('reads -$5 as negative five dollars', () => {
+    expect(parseChartValue('-$5')).toEqual({ value: -5, decimals: 0, template: '$#' });
+    expect(parseChartValue('−€1.50')).toEqual({ value: -1.5, decimals: 2, template: '€#' });
+  });
+
+  it('reports a deepening loss as a fall', () => {
+    const change = chartChange('-$5', '-$10');
+    expect(change?.direction).toBe('down');
+    expect(change?.absolute).toBe('−$5');
+    expect(change?.percent).toBe('−100.0%');
+  });
+
+  it('keeps a sign after the symbol working as before', () => {
+    expect(parseChartValue('$-5')).toEqual({ value: -5, decimals: 0, template: '$#' });
   });
 });

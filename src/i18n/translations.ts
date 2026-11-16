@@ -48,6 +48,16 @@ export const en = {
   'turn.sources': 'Sources',
   'turn.followups': 'Keep exploring',
 
+  'applet.kind': 'Generated interface',
+  'applet.label': '{title}, generated interface',
+  'applet.building': 'Building the interface',
+  'applet.buildingHint': 'It appears here as soon as it is ready; the answer keeps loading below.',
+  'applet.failed': 'The interface could not be built. The answer below still covers the question.',
+  'applet.stopped': 'The interface tried to leave this page and was stopped. Reload starts it again.',
+  'applet.reload': 'Reload',
+  'applet.source': 'Source',
+  'applet.sourceLabel': 'Source of {title}',
+
   'intent.entity': 'Profile',
   'intent.explanation': 'Explanation',
   'intent.problem': 'Worked problem',
@@ -80,6 +90,11 @@ export const en = {
   'module.sideA': 'Option A',
   'module.sideB': 'Option B',
   'module.sections': 'Sections to compare',
+
+  'chart.min': 'Low',
+  'chart.max': 'High',
+  'chart.last': 'Last',
+  'chart.change': 'Change',
 
   'image.enlarge': 'Enlarge image',
   'image.close': 'Close image',
@@ -155,6 +170,16 @@ export const es: Translations = {
   'turn.sources': 'Fuentes',
   'turn.followups': 'Seguí explorando',
 
+  'applet.kind': 'Interfaz generada',
+  'applet.label': '{title}, interfaz generada',
+  'applet.building': 'Construyendo la interfaz',
+  'applet.buildingHint': 'Aparece aquí en cuanto está lista; la respuesta sigue cargando debajo.',
+  'applet.failed': 'No se pudo construir la interfaz. La respuesta de abajo cubre igualmente la pregunta.',
+  'applet.stopped': 'La interfaz intentó salir de esta página y se detuvo. Recargar la inicia de nuevo.',
+  'applet.reload': 'Recargar',
+  'applet.source': 'Código',
+  'applet.sourceLabel': 'Código de {title}',
+
   'intent.entity': 'Perfil',
   'intent.explanation': 'Explicación',
   'intent.problem': 'Problema resuelto',
@@ -187,6 +212,11 @@ export const es: Translations = {
   'module.sideA': 'Opción A',
   'module.sideB': 'Opción B',
   'module.sections': 'Secciones para comparar',
+
+  'chart.min': 'Mínimo',
+  'chart.max': 'Máximo',
+  'chart.last': 'Último',
+  'chart.change': 'Variación',
 
   'image.enlarge': 'Ampliar imagen',
   'image.close': 'Cerrar imagen',

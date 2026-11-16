@@ -156,3 +156,72 @@ describe('streamCortex', () => {
     await expect(streamCortex('q', 'en')).rejects.toBeInstanceOf(CortexApiError);
   });
 });
+
+describe('streamCortex: applet events', () => {
+  const HTML = '<div id="t"></div><script>if (1 < 2) document.getElementById("t").textContent = "ok";</script>';
+
+  it('reports pending then ready, and hands over the scene as soon as it arrives', async () => {
+    const order: string[] = [];
+    const onApplet = vi.fn((a: { status: string }) => { order.push(`applet:${a.status}`); });
+    const onScene = vi.fn(() => { order.push('scene'); });
+    stubFetch([
+      frame('preface', PREFACE),
+      frame('applet', { status: 'pending', title: 'Picker' }),
+      frame('scene', SCENE),
+      frame('applet', { status: 'ready', title: 'Picker', html: HTML }),
+      frame('done', {}),
+    ]);
+
+    const scene = await streamCortex('q', 'en', { onApplet, onScene });
+    expect(order).toEqual(['applet:pending', 'scene', 'applet:ready']);
+    expect(onApplet.mock.calls.map(c => c[0])).toEqual([
+      { status: 'pending', title: 'Picker' },
+      { status: 'ready', title: 'Picker', html: HTML },
+    ]);
+    expect(onScene).toHaveBeenCalledWith(scene);
+    expect(scene).toMatchObject({ answer: { headline: 'Final' } });
+  });
+
+  it('reports a failed applet without failing the stream', async () => {
+    const onApplet = vi.fn();
+    stubFetch([frame('applet', { status: 'pending', title: 'Picker' }), frame('scene', SCENE), frame('applet', { status: 'failed', title: 'Picker' }), frame('done', {})]);
+    await expect(streamCortex('q', 'en', { onApplet })).resolves.toMatchObject({ answer: { headline: 'Final' } });
+    expect(onApplet.mock.calls[onApplet.mock.calls.length - 1][0]).toEqual({ status: 'failed', title: 'Picker' });
+  });
+
+  it('turns a ready event with unusable markup into failed and skips malformed applet frames', async () => {
+    const onApplet = vi.fn();
+    stubFetch([
+      'event: applet\ndata: {not json\n\n',
+      frame('applet', { status: 'exploded', title: 'Picker' }),
+      frame('applet', { status: 'ready', title: 'Picker', html: '' }),
+      frame('scene', SCENE),
+      frame('done', {}),
+    ]);
+    await expect(streamCortex('q', 'en', { onApplet })).resolves.toMatchObject({ answer: { headline: 'Final' } });
+    expect(onApplet.mock.calls.map(c => c[0])).toEqual([{ status: 'failed', title: 'Picker' }]);
+  });
+
+  it('resolves with the scene when the connection drops while the applet is still pending', async () => {
+    // error() discards queued chunks, so the failure is raised only on the read after the scene.
+    let sent = false;
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(new ReadableStream<Uint8Array>({
+      pull(controller) {
+        if (sent) {
+          controller.error(new TypeError('network error'));
+          return;
+        }
+        sent = true;
+        controller.enqueue(encoder.encode(frame('applet', { status: 'pending', title: 'Picker' }) + frame('scene', SCENE)));
+      },
+    }), { status: 200 })));
+    await expect(streamCortex('q', 'en')).resolves.toMatchObject({ answer: { headline: 'Final' } });
+  });
+
+  it('calls onApplet never for a stream without an applet', async () => {
+    const onApplet = vi.fn();
+    stubFetch([frame('preface', PREFACE), frame('partial', PARTIAL), frame('scene', SCENE), frame('done', {})]);
+    await streamCortex('q', 'en', { onApplet });
+    expect(onApplet).not.toHaveBeenCalled();
+  });
+});

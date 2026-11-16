@@ -1,0 +1,211 @@
+/*
+ * The applet block: a hairline frame with signal-coloured corner brackets (the
+ * same gesture as ModuleCard's .card::before), a toolbar whose title is an
+ * inverted tag, and the sandboxed frame flush beneath it. No radius, no wash,
+ * no glow.
+ */
+.applet {
+  position: relative;
+  margin-block: var(--sp-5);
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.applet::before {
+  --b: color-mix(in srgb, var(--signal) 70%, var(--line-strong));
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background:
+    linear-gradient(var(--b), var(--b)) top left / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) top left / 1px var(--tick),
+    linear-gradient(var(--b), var(--b)) top right / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) top right / 1px var(--tick),
+    linear-gradient(var(--b), var(--b)) bottom left / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) bottom left / 1px var(--tick),
+    linear-gradient(var(--b), var(--b)) bottom right / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) bottom right / 1px var(--tick);
+  background-repeat: no-repeat;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.applet[data-state='failed']::before,
+.applet[data-state='stopped']::before {
+  --b: var(--line-strong);
+}
+
+.bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sp-2) var(--sp-3);
+  padding: var(--sp-2) var(--sp-3);
+  border-bottom: 1px solid var(--line);
+}
+
+.tag {
+  padding: 3px var(--sp-2);
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: var(--tag-tracking);
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.kind {
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.actions {
+  display: flex;
+  gap: var(--sp-2);
+  margin-left: auto;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--line-strong);
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-hi);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--tag-tracking);
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.button:hover {
+  border-color: var(--signal);
+}
+
+.button[aria-expanded='true'] {
+  background: var(--paper);
+  border-color: var(--paper);
+  color: var(--paper-ink);
+}
+
+.button:focus-visible {
+  outline: 1px solid var(--paper);
+  outline-offset: 3px;
+}
+
+@media (pointer: coarse) {
+  .button {
+    min-height: var(--hit);
+  }
+}
+
+.frame {
+  display: block;
+  width: 100%;
+  border: 0;
+  /* Same as the frame document's --bg, so nothing flashes before it paints. */
+  background: var(--ink-0);
+}
+
+.placeholder {
+  position: relative;
+  display: grid;
+  align-content: center;
+  justify-items: start;
+  gap: var(--sp-1);
+  min-height: 320px;
+  padding: var(--sp-5) var(--sp-4);
+  overflow: hidden;
+}
+
+/* A single hairline sweeping down the frame while the tool is generated. */
+.scan {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 1px;
+  background: color-mix(in srgb, var(--signal) 60%, transparent);
+  opacity: 0;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .scan {
+    opacity: 1;
+    animation: sweep 2.4s var(--ease-step, linear) infinite;
+  }
+}
+
+@keyframes sweep {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(320px);
+  }
+}
+
+.status {
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  letter-spacing: var(--readout-tracking);
+  text-transform: uppercase;
+  color: var(--text-hi);
+}
+
+.status::after {
+  content: '_';
+  color: var(--signal);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .status::after {
+    animation: blink 1s steps(1, end) infinite;
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.hint {
+  max-width: 52ch;
+  font-size: var(--fs-small);
+  color: var(--text-dim);
+}
+
+.message {
+  padding: var(--sp-5) var(--sp-4);
+  font-size: var(--fs-small);
+  color: var(--text);
+}
+
+.source {
+  max-height: 360px;
+  margin: 0;
+  padding: var(--sp-3) var(--sp-4);
+  overflow: auto;
+  border-top: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  line-height: 1.55;
+  color: var(--text-dim);
+  white-space: pre;
+  tab-size: 2;
+}
+
+.source:focus-visible {
+  outline: 1px solid var(--paper);
+  outline-offset: -1px;
+}

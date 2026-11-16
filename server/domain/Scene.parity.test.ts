@@ -22,6 +22,7 @@ describe('shared constant tables', () => {
     'FACT_KINDS', 'SPOTLIGHT_KINDS', 'ITEM_SIDES', 'MODULE_SLOTS', 'MODULE_SPANS', 'MODULE_EMPHASES',
     'MODULE_TONES', 'MODULE_REVEALS', 'ITEM_SHAPES', 'MODULE_SURFACES', 'MODULE_CORNERS', 'MODULE_HEADERS',
     'MODULE_PATTERNS', 'MODULE_SIZES', 'MODULE_VARIANTS', 'SCENE_TYPE_SCALES', 'VARIANTS_BY_KIND',
+    'APPLET_THEME_VARS', 'APPLET_STATUSES',
   ] as const;
 
   it.each(tables)('%s is identical in both mirrors', name => {
@@ -205,6 +206,30 @@ describe('entry-point parity on a shared payload', () => {
   it('validatePreface and sanitizePreface agree', () => {
     const preface = { intent: 'howto', title: 'P', layout: 'zzz', mood: 'kinetic', palette: 'x', plan: ['a', 'b', 'c', 'd'] };
     expect(client.sanitizePreface(preface)).toEqual(server.validatePreface(preface));
+  });
+
+  it.each([
+    { title: `Colour <picker>${NUL}`, brief: `HSL sliders\n${'x'.repeat(500)}` },
+    { title: '', brief: 'b' },
+    { title: 't' },
+    null,
+    'picker',
+    undefined,
+  ])('validatePreface and sanitizePreface agree on applet %j, key order included', applet => {
+    const preface = { intent: 'howto', title: 'P', palette: {}, plan: ['a'], applet };
+    expect(JSON.stringify(client.sanitizePreface(preface))).toBe(JSON.stringify(server.validatePreface(preface)));
+  });
+
+  it.each([
+    '<style>.a > b {}</style>\r\n<script>if (1 < 2) go();</script>',
+    `<p>a${NUL}b${BEL}</p>`,
+    '',
+    '   ',
+    'x'.repeat(server.LIMITS.appletHtml + 1),
+    42,
+    null,
+  ])('sanitizeAppletHtml(%j) matches', input => {
+    expect(client.sanitizeAppletHtml(input)).toBe(server.sanitizeAppletHtml(input));
   });
 
   it('both reject a payload with no title', () => {
