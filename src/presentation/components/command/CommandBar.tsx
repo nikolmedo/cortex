@@ -20,7 +20,7 @@ const GHOST_PERIOD_MS = 4200;
 const COUNTER_FROM = MAX_QUERY_LENGTH - 300;
 
 interface CommandBarProps {
-  /** Landing: centered in flow. Docked: fixed to the bottom above the keyboard. */
+  /** Landing: in the flow of its column. Docked: fixed to the bottom above the keyboard. */
   docked: boolean;
   /** The latest turn is in flight; an empty bar offers "stop". */
   busy: boolean;
@@ -113,7 +113,7 @@ export function CommandBar({ docked, busy, onSubmit, onStop }: CommandBarProps):
   const form = (
     <form className={styles.bar} data-docked={docked} role="search" onSubmit={onFormSubmit}>
       <div className={styles.frame}>
-        <span className={styles.ring} aria-hidden="true" />
+        <span className={styles.prompt} aria-hidden="true">&gt;</span>
         <div className={styles.field}>
           {!docked && value === '' ? (
             <span key={ghost} className={styles.ghost} aria-hidden="true">{t(GHOST_KEYS[ghost])}</span>

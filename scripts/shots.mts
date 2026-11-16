@@ -342,6 +342,9 @@ async function main(): Promise<void> {
         const page = await newPage(browser, w, h, fx.lang);
         await submit(page, fx.query);
         await page.waitForSelector('[data-status="done"]', { timeout: 20_000 });
+        // A turn is done when its scene lands; a generated interface can still
+        // be building, so wait for its frame (or its failure) before capturing.
+        await page.waitForSelector('section[data-state="pending"]', { state: 'detached', timeout: 15_000 });
         await captureFrozen(page, `${fx.name}-${w}`);
         await settle(page, 1600);
         const file = pngName(`${fx.name}-${w}`);

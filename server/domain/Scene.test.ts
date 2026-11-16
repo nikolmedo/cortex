@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CortexError } from './errors.js';
 import {
+  APPLET_THEME_VARS,
   DEFAULT_PALETTE,
   FACT_KINDS,
   LIMITS,
@@ -15,6 +16,7 @@ import {
   moduleVariant,
   normalizeHex,
   safeHttpsUrl,
+  sanitizeAppletHtml,
   sanitizeCode,
   sanitizeText,
   truncateText,
@@ -356,6 +358,64 @@ describe('validatePreface', () => {
     expect(validatePreface({ intent: 'howto', title: 'P' })?.layout).toBe('sequence');
     expect(validatePreface({ intent: 'comparison', title: 'P' })?.layout).toBe('split');
     expect(validatePreface({})?.layout).toBe('focus');
+  });
+
+  it('carries no applet key when the router asked for none', () => {
+    for (const applet of [undefined, null, 'picker', 42, [], {}, { title: '', brief: 'b' }, { title: 't', brief: '   ' }]) {
+      const preface = validatePreface({ intent: 'howto', title: 'P', applet });
+      expect(preface).not.toBeNull();
+      expect(Object.keys(preface!)).toEqual(['intent', 'title', 'layout', 'mood', 'palette', 'plan']);
+    }
+  });
+
+  it('keeps an applet brief, sanitised and capped, as the last key', () => {
+    const preface = validatePreface({
+      intent: 'howto',
+      title: 'P',
+      applet: { title: `Colour <picker>${NUL}`, brief: `  HSL   sliders\nand ${'x'.repeat(500)}`, extra: 1 },
+    });
+    expect(Object.keys(preface!)).toEqual(['intent', 'title', 'layout', 'mood', 'palette', 'plan', 'applet']);
+    expect(preface!.applet!.title).toBe(`Colour ${LSAQ}picker${RSAQ}`);
+    expect(preface!.applet!.brief.startsWith('HSL sliders and x')).toBe(true);
+    expect(preface!.applet!.brief.length).toBeLessThanOrEqual(LIMITS.appletBrief);
+    expect(Object.keys(preface!.applet!)).toEqual(['title', 'brief']);
+    expect(validatePreface({ applet: { title: 'y'.repeat(200), brief: 'b' } })!.applet!.title.length).toBeLessThanOrEqual(LIMITS.appletTitle);
+  });
+});
+
+describe('sanitizeAppletHtml', () => {
+  it('returns markup untouched, angle brackets and indentation included', () => {
+    const html = '<style>\n  .a > b { color: var(--text); }\n</style>\n<div class="x">\n\t<script>if (1 < 2) go();</script>\n</div>';
+    expect(sanitizeAppletHtml(html)).toBe(html);
+  });
+
+  it('strips control characters except tab and newline, normalising CRLF', () => {
+    expect(sanitizeAppletHtml(`<p>a${NUL}b${BEL}</p>\r\n\t<p>c</p>\r`)).toBe('<p>ab</p>\n\t<p>c</p>');
+  });
+
+  it('rejects non-strings, blank input and oversize markup instead of truncating it', () => {
+    for (const raw of [undefined, null, 42, {}, [], '', '   \n\t ']) expect(sanitizeAppletHtml(raw)).toBeNull();
+    expect(sanitizeAppletHtml('x'.repeat(LIMITS.appletHtml))).toBe('x'.repeat(LIMITS.appletHtml));
+    expect(sanitizeAppletHtml('x'.repeat(LIMITS.appletHtml + 1))).toBeNull();
+  });
+});
+
+describe('applet theme variables', () => {
+  it('lists the custom properties the host injects into every applet', () => {
+    expect(APPLET_THEME_VARS).toEqual([
+      '--bg', '--surface', '--raised', '--line', '--line-strong', '--text', '--text-hi', '--text-dim',
+      '--paper', '--paper-ink', '--signal', '--danger', '--ok', '--font-body', '--font-mono',
+    ]);
+  });
+});
+
+describe('chart point cap', () => {
+  it('keeps up to 60 points of a time series and drops the rest', () => {
+    expect(LIMITS.maxChartPoints).toBe(60);
+    const items = Array.from({ length: 75 }, (_, i) => ({ label: `M${i}`, value: `${i}`, weight: i }));
+    const scene = validateScene({ title: 'T', modules: [{ category: 'C', kind: 'chart', items }] });
+    expect(scene.modules[0].items).toHaveLength(60);
+    expect(scene.modules[0].items![59]).toEqual({ label: 'M59', value: '59', weight: 59 });
   });
 });
 

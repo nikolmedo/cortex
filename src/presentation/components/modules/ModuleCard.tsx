@@ -74,7 +74,8 @@ export function ModuleCard({ module, bare = false, ordinal, seed = module.kind, 
       // Not `data-motion`: that attribute is the app-wide reduced-motion switch
       // on :root, and a second meaning on the card is a collision waiting to happen.
       data-enter={entrance ?? 'rise'}
-      style={color ? ({ '--m': color } as CSSProperties) : undefined}
+      // The stylesheet mutes this toward steel; the raw hue never paints a card.
+      style={color ? ({ '--m-raw': color } as CSSProperties) : undefined}
       aria-label={title}
       onPointerMove={onPointerMove}
     >

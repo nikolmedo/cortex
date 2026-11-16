@@ -5,6 +5,7 @@ import { useI18n } from '../../../i18n/I18nContext';
 import { ThinkingCore, type CorePhase, type StepState } from '../../canvas/ThinkingCore';
 import { useBreakpoint } from '../../hooks/useBreakpoint';
 import { fillCardGrammar, fillTypeScale } from '../../scene/cardFallback';
+import { AppletFrame } from '../applet/AppletFrame';
 import { turnPresentation } from '../../scene/presentation';
 import { SceneTheme } from '../../scene/SceneTheme';
 import { Composition } from '../compose/Composition';
@@ -172,6 +173,9 @@ export function TurnView({ turn, isLatest, reduced, onRetry, onFollowup }: TurnV
             </div>
           </div>
         ) : null}
+
+        {/* The tool leads the turn: above the composed answer from its pending state on. */}
+        {turn.applet ? <AppletFrame applet={turn.applet} lang={turn.lang} /> : null}
 
         <Lingering show={staged} fade={!reduced}>
           <Skeleton layout={presentation.layout} />

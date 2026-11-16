@@ -1,50 +1,69 @@
+/*
+ * Scene blocks: header, answer, spotlight, details, hero, sources, follow-ups
+ * and the mobile split tabs. Frames are square hairlines, labels are inverted
+ * tags, secondary readouts are mono, and the only entrance this file owns is
+ * the intent tag printing in (tagIn).
+ */
+
 /* Scene header */
 
 .sceneHeader {
   max-width: 920px;
 }
 
+/* The intent tag: an inverted block that prints in once, on a live turn only. */
 .eyebrow {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding: 0 8px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-family: var(--font-display);
+  font-stretch: var(--tag-stretch);
   font-size: var(--fs-caption);
-  font-weight: 500;
-  color: var(--text-dim);
+  font-weight: 600;
+  letter-spacing: var(--tag-tracking);
+  line-height: 24px;
+  text-transform: uppercase;
+}
+
+[data-reveal='true'] .eyebrow {
+  animation: tagIn 360ms steps(10, end) backwards;
 }
 
 .eyebrowDot {
+  flex: none;
   width: 6px;
   height: 6px;
-  border-radius: 50%;
-  background: var(--scene-primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--scene-primary) 22%, transparent);
+  background: var(--paper-ink);
 }
 
 .title {
   font-family: var(--font-display);
-  font-weight: var(--display-weight, 400);
-  font-stretch: var(--display-stretch, 92%);
+  font-weight: var(--display-weight, 500);
+  font-stretch: var(--display-stretch, 84%);
   font-size: var(--fs-title);
-  line-height: 1.08;
-  letter-spacing: var(--display-tracking, -0.015em);
+  line-height: 1.05;
+  letter-spacing: var(--display-tracking, 0);
   color: var(--text-hi);
   overflow-wrap: anywhere;
   text-wrap: balance;
 }
 
 .subtitle {
-  margin-top: 8px;
+  margin-top: var(--sp-2);
   max-width: 60ch;
   color: var(--text-dim);
 }
 
+/* The headline takeaway: a 3px signal bar, then the sentence. */
 .lead {
-  margin-top: 20px;
-  padding-left: 16px;
+  margin-top: var(--sp-5);
+  padding-left: var(--sp-4);
   max-width: 62ch;
-  border-left: 2px solid color-mix(in srgb, var(--scene-primary) 70%, transparent);
+  border-left: 3px solid var(--signal);
   font-size: var(--fs-lead);
   line-height: 1.5;
   color: var(--text-hi);
@@ -67,82 +86,115 @@
   margin-top: 1em;
 }
 
+/* Section labels (caveats, details, sources, follow-ups): a small inverted tag. */
 .blockLabel {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  font-size: var(--fs-small);
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  padding: 0 8px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-family: var(--font-display);
+  font-stretch: var(--tag-stretch);
+  font-size: var(--fs-caption);
   font-weight: 600;
-  color: var(--text-hi);
+  letter-spacing: var(--tag-tracking);
+  line-height: 24px;
+  text-transform: uppercase;
 }
 
+.blockLabel svg {
+  flex: none;
+}
+
+/* Caveats: a hatched frame with a warn edge bar; the items are mono-marked rows. */
 .caveats {
-  margin-top: 24px;
-  padding: 16px 18px;
-  border-radius: var(--r-md);
-  background: color-mix(in srgb, var(--scene-primary) 5%, transparent);
-  border: 1px solid var(--line);
+  position: relative;
+  margin-top: var(--sp-5);
+  padding: var(--sp-4) var(--sp-4) var(--sp-4) var(--sp-5);
+  border: 1px solid var(--line-strong);
+  background:
+    repeating-linear-gradient(135deg, rgb(216 228 234 / 0.035) 0 1px, transparent 1px 7px),
+    var(--surface);
 }
 
-.caveats .blockLabel svg {
-  color: var(--scene-primary);
+.caveats::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: -1px;
+  bottom: -1px;
+  width: 3px;
+  background: var(--warn);
 }
 
 .caveats ul {
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-2);
 }
 
 .caveats li {
   position: relative;
-  padding-left: 16px;
+  padding-left: var(--sp-4);
   font-size: var(--fs-small);
   line-height: 1.55;
-  color: var(--text-dim);
+  color: var(--text);
 }
 
 .caveats li::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 0.75em;
+  top: 0.62em;
   width: 6px;
-  height: 1px;
-  background: var(--text-faint);
+  height: 6px;
+  border: 1px solid var(--warn);
 }
 
-/* Spotlight */
-
+/* Spotlight: the key figure, inside the card frame recipe (brackets, hairline). */
 .spotlight {
   position: relative;
-  padding: 20px 22px;
-  border-radius: var(--r-lg);
-  border: 1px solid color-mix(in srgb, var(--scene-primary) 28%, transparent);
+  padding: var(--sp-5);
+  border: 1px solid var(--line-strong);
+  background: var(--surface-strong);
+}
+
+.spotlight::before {
+  --b: var(--signal);
+  content: '';
+  position: absolute;
+  inset: -1px;
   background:
-    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--scene-primary) 18%, transparent), transparent 60%),
-    var(--surface);
-  overflow: hidden;
+    linear-gradient(var(--b), var(--b)) top left / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) top left / 1px var(--tick),
+    linear-gradient(var(--b), var(--b)) top right / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) top right / 1px var(--tick),
+    linear-gradient(var(--b), var(--b)) bottom left / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) bottom left / 1px var(--tick),
+    linear-gradient(var(--b), var(--b)) bottom right / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) bottom right / 1px var(--tick);
+  background-repeat: no-repeat;
+  pointer-events: none;
 }
 
 .spotValue {
   display: block;
   font-family: var(--font-display);
-  font-weight: 300;
-  font-stretch: var(--figure-stretch, 90%);
+  font-weight: var(--figure-weight, 500);
+  font-stretch: var(--figure-stretch, 82%);
   font-size: var(--fs-display);
   line-height: 1;
-  letter-spacing: -0.02em;
-  color: color-mix(in srgb, var(--scene-primary) 30%, white);
+  color: var(--text-hi);
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
 
 .spotLabel {
   display: block;
-  margin-top: 10px;
+  margin-top: var(--sp-3);
   line-height: 1.45;
   color: var(--text);
 }
@@ -150,61 +202,60 @@
 .spotCallout,
 .spotQuote {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: 500;
+  font-stretch: 90%;
   font-size: var(--fs-lead);
   line-height: 1.3;
   color: var(--text-hi);
 }
 
-.spotQuote {
-  font-weight: 300;
-}
-
-/* Callouts and quotes carry no big figure, so the card leads with a mark instead. */
+/* Callouts and quotes carry no big figure, so they lead with a 3px signal bar. */
 .spotlight:is([data-kind='callout'], [data-kind='quote']) {
-  padding-left: 26px;
+  padding-left: var(--sp-6);
 }
 
-.spotlight:is([data-kind='callout'], [data-kind='quote'])::before {
+.spotlight:is([data-kind='callout'], [data-kind='quote'])::after {
   content: '';
   position: absolute;
-  left: 12px;
-  top: 22px;
-  bottom: 22px;
-  width: 2px;
-  border-radius: 2px;
-  background: linear-gradient(to bottom, var(--scene-primary), color-mix(in srgb, var(--scene-accent) 70%, transparent));
-}
-
-.spotlight[data-kind='quote'] .spotQuote::before {
-  content: '“';
-  margin-right: 2px;
-  color: var(--scene-primary);
+  left: var(--sp-4);
+  top: var(--sp-5);
+  bottom: var(--sp-5);
+  width: 3px;
+  background: var(--signal);
 }
 
 .spotSource {
   display: block;
-  margin-top: 12px;
-  font-size: var(--fs-caption);
-  color: var(--text-faint);
+  margin-top: var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
+  color: var(--text-dim);
 }
 
 /* Meta */
 
+.meta {
+  min-width: 0;
+}
+
 .metaGrid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 16px;
+  gap: var(--sp-3) var(--sp-4);
 }
 
 .metaPair {
   min-width: 0;
-  padding-top: 10px;
-  border-top: 1px solid var(--line);
+  padding-top: var(--sp-2);
+  border-top: 1px solid var(--line-strong);
 }
 
 .metaPair dt {
-  font-size: var(--fs-caption);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
+  text-transform: uppercase;
   color: var(--text-dim);
 }
 
@@ -235,10 +286,12 @@
   aspect-ratio: var(--hero-ratio, var(--hero-default));
   max-height: min(70vh, 420px);
   width: 100%;
-  border-radius: var(--r-lg);
   overflow: hidden;
-  background: var(--ink-1);
-  border: 1px solid var(--line);
+  /* Whatever the image letterboxes shows a hatch, the terminal's "no signal" field. */
+  background:
+    repeating-linear-gradient(135deg, rgb(216 228 234 / 0.05) 0 1px, transparent 1px 8px),
+    var(--ink-1);
+  border: 1px solid var(--line-strong);
 }
 
 @media (min-width: 1280px) {
@@ -254,12 +307,7 @@
   width: 100%;
   height: 100%;
   min-height: var(--hit);
-  /*
-   * The figure clips too, but the scaled .heroFill below is a transformed
-   * descendant of THIS box, and a transformed box counts toward its ancestors'
-   * scrollable overflow. Without this the button reported a scrollWidth 7.5%
-   * wider than itself (the scale(1.15) blur copy) on every dossier capture.
-   */
+  /* The figure clips too; this keeps any child from widening the button. */
   overflow: hidden;
   cursor: zoom-in;
 }
@@ -274,21 +322,11 @@
 }
 
 /*
- * Fills the letterbox with the image's own colours instead of a flat band. A
- * second <img> and not background-image: url(...): safeHttpsUrl rejects
- * whitespace but not quotes or parentheses, and a React attribute is escaped
- * where a CSS url() token is not.
+ * The old blurred copy that filled the letterbox. The system has no blur, so the
+ * letterbox is the hatch on .hero and this duplicate image is never painted.
  */
 .heroFill {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  filter: blur(28px) saturate(1.2);
-  transform: scale(1.15);
-  opacity: 0.55;
-  transition: opacity var(--dur-base) var(--ease);
+  display: none;
 }
 
 .heroImg {
@@ -298,32 +336,37 @@
   height: 100%;
   /* contain, so a landscape keeps its sides and a portrait keeps its head. */
   object-fit: contain;
-  transition: opacity var(--dur-base) var(--ease);
 }
 
+/* A faint scrim and corner brackets frame the picture like a camera feed. */
 .heroShade {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  --b: var(--signal);
   background:
-    linear-gradient(to top, rgb(5 7 12 / 0.5), transparent 45%),
-    linear-gradient(135deg, color-mix(in srgb, var(--scene-primary) 14%, transparent), transparent 55%);
+    linear-gradient(var(--b), var(--b)) top left / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) top left / 1px var(--tick),
+    linear-gradient(var(--b), var(--b)) top right / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) top right / 1px var(--tick),
+    linear-gradient(var(--b), var(--b)) bottom left / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) bottom left / 1px var(--tick),
+    linear-gradient(var(--b), var(--b)) bottom right / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) bottom right / 1px var(--tick);
+  background-repeat: no-repeat;
 }
 
 .heroBadge {
   position: absolute;
-  right: 10px;
-  bottom: 10px;
+  right: var(--sp-3);
+  bottom: var(--sp-3);
   display: grid;
   place-items: center;
   width: 34px;
   height: 34px;
-  border-radius: 50%;
-  color: var(--text-hi);
-  background: var(--surface-strong);
-  border: 1px solid var(--line-strong);
+  color: var(--paper-ink);
+  background: var(--paper);
   opacity: 0;
-  transition: opacity var(--dur-fast) var(--ease);
 }
 
 .heroFrame:hover .heroBadge,
@@ -339,21 +382,26 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: rgb(176 206 236 / 0.05);
+  background: repeating-linear-gradient(135deg, rgb(216 228 234 / 0.07) 0 1px, transparent 1px 7px);
 }
 
+/* One hairline sweeping down the field. */
 .heroBone::after {
   content: '';
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    color-mix(in srgb, var(--scene-primary) 9%, transparent),
-    transparent
-  );
-  transform: translateX(-100%);
-  animation: shimmer 1.8s var(--ease) infinite;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: var(--signal);
+  animation: heroScan 2.4s linear infinite;
+}
+
+@keyframes heroScan {
+  from {
+    top: 0;
+  }
+  to {
+    top: 100%;
+  }
 }
 
 .heroFallback {
@@ -363,122 +411,170 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
-  font-size: var(--fs-small);
+  gap: var(--sp-3);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
+  text-transform: uppercase;
   color: var(--text-dim);
-  background: radial-gradient(120% 140% at 50% 0%, color-mix(in srgb, var(--scene-primary) 14%, transparent), transparent 70%);
 }
 
 .heroMark {
   width: 28px;
-  height: 2px;
-  border-radius: 2px;
-  background: linear-gradient(to right, var(--scene-primary), color-mix(in srgb, var(--scene-accent) 70%, transparent));
+  height: 3px;
+  background: var(--signal);
 }
 
-.hero[data-state='loading'] .heroImg,
-.hero[data-state='loading'] .heroFill {
+.hero[data-state='loading'] .heroImg {
   opacity: 0;
 }
 
 .hero[data-state='error'] .heroImg,
-.hero[data-state='error'] .heroFill,
 .hero[data-state='error'] .heroShade {
   display: none;
 }
 
-/* Sources */
+/* Sources: ruled rows, an index readout, the title, the host in mono. */
+
+.sources,
+.followups {
+  min-width: 0;
+}
 
 .sourceList {
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+  counter-reset: source;
+  border-bottom: 1px solid var(--line);
+}
+
+.sourceList > li {
+  counter-increment: source;
+  border-top: 1px solid var(--line);
 }
 
 .source {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: 3ch minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: var(--sp-3);
   min-height: var(--hit);
-  padding: 8px 12px;
-  border-radius: 12px;
+  padding: var(--sp-2) var(--sp-3);
   text-decoration: none;
-  transition: background-color var(--dur-fast) var(--ease);
+  color: var(--text);
 }
 
-.source:hover {
-  background: var(--surface-raised);
+.source::before {
+  content: counter(source, decimal-leading-zero) / '';
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
 }
 
 .sourceTitle {
   font-size: var(--fs-small);
-  color: var(--text);
+  color: inherit;
   overflow-wrap: anywhere;
 }
 
 .sourceHost {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: var(--fs-caption);
-  color: var(--text-faint);
+  gap: var(--sp-1);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
+  color: var(--text-dim);
 }
 
-/* Follow-ups */
+/* Hover inverts the row; every child follows the dark ink. */
+.source:hover,
+.source:focus-visible {
+  background: var(--paper);
+  color: var(--paper-ink);
+}
+
+.source:hover::before,
+.source:hover .sourceHost,
+.source:focus-visible::before,
+.source:focus-visible .sourceHost {
+  color: inherit;
+}
+
+.source:focus-visible {
+  outline-offset: -4px;
+  outline-color: var(--paper-ink);
+}
+
+/* Follow-ups: the same row grammar, an index and an arrow. */
 
 .chips {
   list-style: none;
+  counter-reset: followup;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr));
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr);
+  border-bottom: 1px solid var(--line);
 }
 
 .chips > li {
   display: flex;
   min-width: 0;
+  counter-increment: followup;
+  border-top: 1px solid var(--line);
 }
 
 .chip {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
+  gap: var(--sp-3);
   width: 100%;
-  min-height: 48px;
-  padding: 10px 14px 10px 18px;
-  border-radius: 16px;
+  min-height: var(--hit);
+  padding: 10px var(--sp-3);
   text-align: left;
   font-size: var(--fs-small);
   line-height: 1.4;
   color: var(--text-hi);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  /* Fixed and short: a chip answers the pointer, it does not take the mood's tempo. */
-  transition:
-    border-color 120ms var(--ease),
-    background-color 120ms var(--ease),
-    transform 120ms var(--ease);
+}
+
+.chip::before {
+  content: counter(followup, decimal-leading-zero) / '';
+  flex: none;
+  min-width: 3ch;
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-dim);
+}
+
+.chip > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .chip svg {
   flex: none;
-  color: var(--scene-primary);
-  transition: transform 140ms var(--ease);
+  color: var(--text-dim);
 }
 
-.chip:hover {
-  border-color: color-mix(in srgb, var(--scene-primary) 45%, transparent);
-  background: color-mix(in srgb, var(--scene-primary) 8%, var(--surface));
+.chip:hover,
+.chip:focus-visible {
+  background: var(--paper);
+  color: var(--paper-ink);
 }
 
-.chip:hover svg {
-  transform: translateX(3px);
+.chip:hover::before,
+.chip:hover svg,
+.chip:focus-visible::before,
+.chip:focus-visible svg {
+  color: inherit;
 }
 
-.chip:active {
-  transform: scale(0.97);
-  transition-duration: 90ms;
+.chip:focus-visible {
+  outline-offset: -4px;
+  outline-color: var(--paper-ink);
 }
 
 /* Follow-ups arrive after everything else, one after another, in a short run. */
@@ -488,44 +584,56 @@
 
 /* Split tabs (mobile) */
 
+.tabs {
+  min-width: 0;
+}
+
 .tabList {
   position: relative;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding: 4px;
-  margin-bottom: 12px;
-  border-radius: 16px;
+  margin-bottom: var(--sp-3);
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
 }
 
+/* The selected tab is a paper block; it cuts across, it does not glide. */
 .tabIndicator {
   position: absolute;
-  top: 4px;
-  bottom: 4px;
-  left: 4px;
-  width: calc(50% - 4px);
-  border-radius: 12px;
-  background: var(--surface-raised);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--scene-primary) 35%, transparent);
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 50%;
+  background: var(--paper);
   transform: translateX(calc(var(--tab, 0) * 100%));
-  transition: transform var(--dur-base) var(--ease);
 }
 
 .tab {
   position: relative;
   z-index: 1;
   min-height: var(--hit);
-  padding: 8px 10px;
-  border-radius: 12px;
-  font-size: var(--fs-small);
+  padding: var(--sp-2) 10px;
+  font-family: var(--font-display);
+  font-stretch: var(--tag-stretch);
+  font-size: var(--fs-caption);
+  font-weight: 600;
+  letter-spacing: var(--tag-tracking);
   line-height: 1.25;
+  text-transform: uppercase;
   color: var(--text-dim);
-  transition: color var(--dur-fast) var(--ease);
 }
 
 .tab[aria-selected='true'] {
-  color: var(--text-hi);
+  color: var(--paper-ink);
+}
+
+.tab:focus-visible {
+  outline-offset: -4px;
+  outline-color: var(--signal);
+}
+
+.tab[aria-selected='true']:focus-visible {
+  outline-color: var(--paper-ink);
 }
 
 .tabPanel {

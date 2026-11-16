@@ -9,7 +9,7 @@ interface AmbientFieldProps {
   palette: ScenePalette;
   mood: SceneMood;
   motif: SceneMotif;
-  /** True while the latest turn is in flight; the field brightens and quickens. */
+  /** True while the latest turn is in flight; the graph brightens and quickens. */
   active: boolean;
   reduced: boolean;
 }
@@ -21,30 +21,32 @@ interface Target {
   energy: number;
 }
 
-interface Mote {
+interface Node {
   x: number;
   y: number;
-  life: number;
-  bright: boolean;
+  vx: number;
+  vy: number;
+  /** One node in eight carries the scene's signal colour instead of paper. */
+  signal: boolean;
 }
 
-const PARTICLES = { mobile: 26, tablet: 48, desktop: 72 } as const;
+const NODES = { mobile: 14, tablet: 22, desktop: 32 } as const;
+
+/** Edges join nodes closer than this, as a share of the shorter screen side (floored in px). */
+const LINK_SHARE = 0.34;
+const LINK_MIN = 120;
+const LINK_MAX = 260;
+
+/** Neutral paper tone for nodes and edges. The only colour is the sparse signal node. */
+const PAPER: Rgb = [216, 228, 234];
+
+/** Edge alpha steps, nearest to farthest: three paths a frame instead of one stroke per edge. */
+const EDGE_ALPHAS = [0.085, 0.055, 0.03] as const;
 
 /**
- * How strongly the flow motes show over each motif. Flow is made of them; rings
- * keep a faint drift; a grid is already a field of points, so it gets none.
- */
-const MOTE_ALPHA: Record<SceneMotif, number> = { flow: 1, rings: 0.3, grid: 0, none: 0.45 };
-
-/** A glow's gradient, drawn at unit alpha around the origin and reused until its colour or size changes. */
-interface GlowCache {
-  key: string;
-  gradient: CanvasGradient;
-}
-
-/**
- * The single background layer: palette-tinted light plus one motif
- * (flow, rings, grid or none), drifting at the mood's speed.
+ * The single background layer: a sparse network graph. Square nodes drift at the
+ * mood's speed and thin straight lines join the ones that come near each other.
+ * It is deliberately low contrast and has no glow; the motif is not drawn.
  */
 export function AmbientField({ palette, mood, motif, active, reduced }: AmbientFieldProps): ReactElement {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -62,134 +64,33 @@ export function AmbientField({ palette, mood, motif, active, reduced }: AmbientF
     const dprCap = tier === 'mobile' ? 1 : 1.5;
     let w = 0;
     let h = 0;
-    let motes: Mote[] = [];
+    let nodes: Node[] = [];
     const state = {
       palette: { ...target.current.palette },
       speed: target.current.speed,
       energy: target.current.energy,
-      motif: target.current.motif,
-      motifAlpha: 1,
-      clock: 0,
     };
 
     const seed = () => {
-      motes = Array.from({ length: PARTICLES[deviceTier()] }, () => ({
-        x: Math.random() * w,
-        y: Math.random() * h,
-        life: Math.random(),
-        bright: Math.random() < 0.2,
-      }));
+      nodes = Array.from({ length: NODES[deviceTier()] }, (_, i) => {
+        const angle = Math.random() * Math.PI * 2;
+        const pace = 0.5 + Math.random();
+        return {
+          x: Math.random() * w,
+          y: Math.random() * h,
+          vx: Math.cos(angle) * pace,
+          vy: Math.sin(angle) * pace,
+          signal: i % 8 === 0,
+        };
+      });
     };
-
-    const glows: Array<GlowCache | null> = [null, null, null];
 
     const resize = () => {
       w = window.innerWidth;
       h = window.innerHeight;
       const dpr = fitCanvas(canvas, w, h, dprCap);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      glows.fill(null);
       seed();
-    };
-
-    // Position and strength change every frame, so they are a translate and a
-    // globalAlpha; only a new colour (the palette easing in) or radius rebuilds it.
-    const glow = (slot: number, x: number, y: number, r: number, c: Rgb, a: number) => {
-      const key = `${Math.round(c[0])},${Math.round(c[1])},${Math.round(c[2])},${Math.round(r)}`;
-      let cached = glows[slot];
-      if (!cached || cached.key !== key) {
-        const g = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-        g.addColorStop(0, rgba(c, 1));
-        g.addColorStop(0.45, rgba(c, 0.4));
-        g.addColorStop(1, rgba(c, 0));
-        cached = { key, gradient: g };
-        glows[slot] = cached;
-      }
-      ctx.save();
-      ctx.globalAlpha = a;
-      ctx.translate(x, y);
-      ctx.fillStyle = cached.gradient;
-      ctx.fillRect(Math.max(-r, -x), Math.max(-r, -y), r * 2, r * 2);
-      ctx.restore();
-    };
-
-    const drawFlow = (t: number, dt: number, alpha: number, move: boolean) => {
-      const c = state.palette.primary;
-      const v = 0.018 * state.speed * (0.7 + state.energy * 0.6);
-      ctx.lineWidth = 1;
-      ctx.lineCap = 'round';
-      for (const bright of [false, true]) {
-        ctx.beginPath();
-        for (const m of motes) {
-          if (m.bright !== bright) continue;
-          const angle = Math.sin(m.x * 0.0016 + t * 0.00005) * Math.cos(m.y * 0.0019 - t * 0.00004) * Math.PI * 2;
-          const dx = Math.cos(angle);
-          const dy = Math.sin(angle);
-          if (move) {
-            m.x += dx * v * dt;
-            m.y += dy * v * dt;
-            m.life += dt * 0.00008;
-            if (m.x < -20 || m.x > w + 20 || m.y < -20 || m.y > h + 20 || m.life > 1) {
-              m.x = Math.random() * w;
-              m.y = Math.random() * h;
-              m.life = 0;
-            }
-          }
-          const len = bright ? 14 : 8;
-          ctx.moveTo(m.x, m.y);
-          ctx.lineTo(m.x - dx * len, m.y - dy * len);
-        }
-        ctx.strokeStyle = rgba(c, (bright ? 0.42 : 0.2) * alpha);
-        ctx.stroke();
-      }
-    };
-
-    const drawRings = (t: number, alpha: number) => {
-      const cx = w * 0.86;
-      const cy = h * 0.16;
-      const base = Math.max(w, h);
-      const radii = [0.22, 0.36, 0.52, 0.72];
-      ctx.lineWidth = 1;
-      radii.forEach((f, i) => {
-        const r = base * f;
-        const rot = t * 0.00002 * state.speed * (i % 2 === 0 ? 1 : -1) * (1 + i * 0.3);
-        ctx.strokeStyle = rgba(i % 2 === 0 ? state.palette.primary : state.palette.secondary, 0.075 * alpha);
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, rot, rot + Math.PI * 0.62);
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, rot + Math.PI * 0.9, rot + Math.PI * 1.15);
-        ctx.stroke();
-      });
-      const r = base * 0.36;
-      const start = t * 0.00003 * state.speed;
-      ctx.strokeStyle = rgba(state.palette.primary, 0.12 * alpha);
-      ctx.beginPath();
-      for (let k = 0; k < 24; k += 1) {
-        const a = start + k * (Math.PI / 90);
-        ctx.moveTo(cx + Math.cos(a) * (r + 6), cy + Math.sin(a) * (r + 6));
-        ctx.lineTo(cx + Math.cos(a) * (r + 12), cy + Math.sin(a) * (r + 12));
-      }
-      ctx.stroke();
-    };
-
-    // One path per brightness level: four fills a frame instead of one per dot.
-    const gridAlphas = [0.05, 0.08, 0.14, 0.24];
-    const drawGrid = (t: number, alpha: number) => {
-      const gap = w < 768 ? 40 : 48;
-      const oy = (t * 0.004 * state.speed) % gap;
-      const paths = [new Path2D(), new Path2D(), new Path2D(), new Path2D()];
-      for (let y = -gap + oy; y < h + gap; y += gap) {
-        for (let x = gap / 2; x < w; x += gap) {
-          const wave = Math.sin(x * 0.004 + y * 0.003 - t * 0.0006 * state.speed);
-          const level = wave > 0.9 ? 3 : wave > 0.6 ? 2 : wave > 0 ? 1 : 0;
-          paths[level].rect(x - 0.75, y - 0.75, 1.5, 1.5);
-        }
-      }
-      paths.forEach((path, level) => {
-        ctx.fillStyle = rgba(state.palette.primary, gridAlphas[level] * alpha);
-        ctx.fill(path);
-      });
     };
 
     const render = (dt: number, move: boolean) => {
@@ -198,30 +99,52 @@ export function AmbientField({ palette, mood, motif, active, reduced }: AmbientF
       approachPalette(state.palette, tgt.palette, k);
       state.speed += (tgt.speed - state.speed) * k;
       state.energy += (tgt.energy - state.energy) * (move ? smoothing(dt, 900) : 1);
-      if (tgt.motif !== state.motif) {
-        state.motifAlpha -= move ? dt / 360 : 1;
-        if (state.motifAlpha <= 0) {
-          state.motif = tgt.motif;
-          state.motifAlpha = 0;
+
+      // A drift of a few pixels a second; a turn in flight quickens it a little.
+      const v = 0.012 * state.speed * (0.8 + state.energy * 0.5);
+      if (move) {
+        for (const n of nodes) {
+          n.x += n.vx * v * dt;
+          n.y += n.vy * v * dt;
+          if (n.x < -20) n.x = w + 20;
+          else if (n.x > w + 20) n.x = -20;
+          if (n.y < -20) n.y = h + 20;
+          else if (n.y > h + 20) n.y = -20;
         }
-      } else if (state.motifAlpha < 1) {
-        state.motifAlpha = move ? Math.min(1, state.motifAlpha + dt / 640) : 1;
       }
-      if (move) state.clock += dt * (0.6 + state.energy * 0.6);
-      const t = move ? state.clock : 12000;
 
       ctx.clearRect(0, 0, w, h);
-      const e = state.energy;
-      const big = Math.max(w, h);
-      glow(0, w * 0.18 + Math.sin(t * 0.00007) * w * 0.05, h * 0.1 + Math.cos(t * 0.00005) * h * 0.04, big * 0.55, state.palette.primary, 0.1 + e * 0.05);
-      glow(1, w * 0.88 + Math.cos(t * 0.00006) * w * 0.04, h * 0.92, big * 0.5, state.palette.secondary, 0.065 + e * 0.03);
-      glow(2, w * 0.55, h * 0.4 + Math.sin(t * 0.00004) * h * 0.06, big * 0.32, state.palette.accent, 0.025 + e * 0.035);
+      const boost = 1 + state.energy * 0.45;
+      const reach = Math.min(LINK_MAX, Math.max(LINK_MIN, Math.min(w, h) * LINK_SHARE));
+      const reachSq = reach * reach;
 
-      const a = state.motifAlpha;
-      if (state.motif === 'rings') drawRings(t, a);
-      else if (state.motif === 'grid') drawGrid(t, a);
-      const moteAlpha = MOTE_ALPHA[state.motif];
-      if (moteAlpha > 0 && motes.length > 0) drawFlow(t, dt, a * moteAlpha, move);
+      const paths = [new Path2D(), new Path2D(), new Path2D()];
+      for (let i = 0; i < nodes.length; i += 1) {
+        for (let j = i + 1; j < nodes.length; j += 1) {
+          const dx = nodes[i].x - nodes[j].x;
+          const dy = nodes[i].y - nodes[j].y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 > reachSq) continue;
+          const band = d2 < reachSq * 0.25 ? 0 : d2 < reachSq * 0.6 ? 1 : 2;
+          paths[band].moveTo(nodes[i].x, nodes[i].y);
+          paths[band].lineTo(nodes[j].x, nodes[j].y);
+        }
+      }
+      ctx.lineWidth = 1;
+      paths.forEach((path, band) => {
+        ctx.strokeStyle = rgba(PAPER, EDGE_ALPHAS[band] * boost);
+        ctx.stroke(path);
+      });
+
+      // Nodes are small squares: paper for most, the scene's signal for a few.
+      ctx.fillStyle = rgba(PAPER, 0.2 * boost);
+      for (const n of nodes) {
+        if (!n.signal) ctx.fillRect(Math.round(n.x) - 1, Math.round(n.y) - 1, 2, 2);
+      }
+      ctx.fillStyle = rgba(state.palette.primary, 0.4 * boost);
+      for (const n of nodes) {
+        if (n.signal) ctx.fillRect(Math.round(n.x) - 2, Math.round(n.y) - 2, 4, 4);
+      }
     };
 
     redraw.current = reduced ? () => render(16, false) : () => undefined;

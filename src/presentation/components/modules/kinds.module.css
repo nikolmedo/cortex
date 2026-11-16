@@ -1,3 +1,11 @@
+/*
+ * Module kinds, drawn inside the card frame (ModuleCard.module.css). One
+ * grammar for all of them: figures in condensed display type, captions and
+ * keys in small mono capitals, hairline rules between rows, square marks and
+ * square tracks. Colour is information: --m / --tone for the module's own
+ * signal, --ok and --danger for valence, neutrals for everything else.
+ */
+
 /* Shared text roles */
 
 .label {
@@ -8,7 +16,7 @@
 }
 
 .detail {
-  margin-top: 4px;
+  margin-top: var(--sp-1);
   font-size: var(--fs-small);
   line-height: 1.55;
   color: var(--text-dim);
@@ -26,7 +34,7 @@
 .listItem {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  column-gap: 12px;
+  column-gap: var(--sp-3);
   padding: 10px 0;
   border-top: 1px solid var(--line);
 }
@@ -36,13 +44,12 @@
   padding-top: 0;
 }
 
+/* A square bullet. */
 .dot {
   width: 6px;
   height: 6px;
-  margin-top: 0.55em;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--m) 85%, white);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--m) 18%, transparent);
+  margin-top: 0.62em;
+  background: var(--m);
 }
 
 .listText {
@@ -52,7 +59,10 @@
 .listValue {
   grid-column: 2;
   margin-top: 2px;
-  font-size: var(--fs-small);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--readout-tracking);
+  font-variant-numeric: tabular-nums;
   color: var(--text-dim);
 }
 
@@ -62,18 +72,18 @@
   }
   .listValue {
     grid-column: 3;
-    margin: 0 0 0 16px;
+    margin: 0 0 0 var(--sp-4);
     text-align: right;
     max-width: 22ch;
   }
 }
 
-/* Timeline */
+/* Timeline: a vertical hairline with square nodes. */
 
 .timeline {
   list-style: none;
   position: relative;
-  padding-left: 22px;
+  padding-left: 24px;
 }
 
 .timeline::before {
@@ -83,7 +93,7 @@
   top: 8px;
   bottom: 8px;
   width: 1px;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--m) 60%, transparent), var(--line));
+  background: var(--line-strong);
   /* One rail for the whole list, so it draws top-down without a per-item index. */
   transform-origin: top;
   animation: railDraw var(--dur-slow) var(--ease) var(--enter-delay, 0ms) both;
@@ -102,23 +112,24 @@
 
 .tlNode {
   position: absolute;
-  left: -22px;
+  left: -24px;
   top: 6px;
   width: 9px;
   height: 9px;
-  border-radius: 50%;
-  background: var(--ink-1);
-  border: 1.5px solid color-mix(in srgb, var(--m) 85%, white);
-  /* Dots land behind the rail: it has a head start, then each node pops in turn. */
+  background: var(--ink-0);
+  border: 1px solid var(--m);
+  /* Nodes land behind the rail: it has a head start, then each one pops in turn. */
   animation: nodeIn var(--dur-base) var(--ease) calc(var(--enter-delay, 0ms) + var(--dur-slow) * 0.45 + min(var(--i, 0) * var(--stagger, 60ms), var(--cascade, 240ms))) both;
 }
 
 .tlDate {
-  font-family: var(--font-display);
-  font-stretch: 92%;
-  font-size: var(--fs-small);
-  color: color-mix(in srgb, var(--m) 70%, var(--text-hi));
-  line-height: 1.5;
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--readout-tracking);
+  font-variant-numeric: tabular-nums;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--m) 55%, var(--text-hi));
+  line-height: 1.6;
 }
 
 /* Stats */
@@ -126,13 +137,13 @@
 .stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 16px 20px;
+  gap: var(--sp-4) var(--sp-5);
 }
 
 .stat {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
+  gap: var(--sp-3);
   min-width: 0;
 }
 
@@ -142,11 +153,12 @@
   min-width: 0;
 }
 
+/* A radial gauge is functionally a circle, so it keeps its round ring. */
 .gauge {
   flex: none;
   width: 40px;
   height: 40px;
-  margin-top: 4px;
+  margin-top: var(--sp-1);
 }
 
 .gaugeTrack {
@@ -157,9 +169,9 @@
 
 .gaugeFill {
   fill: none;
-  stroke: color-mix(in srgb, var(--m) 85%, white);
+  stroke: var(--m);
   stroke-width: 3;
-  stroke-linecap: round;
+  stroke-linecap: butt;
   /* pathLength is 100: one dash as long as the ring with a longer gap, shifted
      so only --dash of it shows. The sweep animates the offset, never the array. */
   stroke-dasharray: 100 200;
@@ -169,23 +181,29 @@
 
 .figure {
   font-family: var(--font-display);
-  font-stretch: var(--figure-stretch, 92%);
-  font-weight: var(--figure-weight, 400);
-  font-size: var(--fs-figure);
+  font-stretch: var(--figure-stretch, 82%);
+  font-weight: var(--figure-weight, 500);
+  /* Scales with the card (the nearest container) so a figure such as "$18.40"
+     fits its cell in a three-column grid instead of breaking mid-number. */
+  font-size: clamp(1.5rem, 7.5cqi, var(--fs-figure));
   line-height: 1.05;
   color: var(--text-hi);
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
+/* The unit caption under a figure: small mono capitals. */
 .statLabel {
-  margin-top: 4px;
-  font-size: var(--fs-small);
+  margin-top: var(--sp-1);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
+  text-transform: uppercase;
+  line-height: 1.5;
   color: var(--text-dim);
-  line-height: 1.4;
 }
 
-/* Comparison */
+/* Comparison: a hairline table with mono keys. */
 
 .rows {
   display: flex;
@@ -196,7 +214,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 2px;
-  padding: 12px 0;
+  padding: 10px 0;
   border-top: 1px solid var(--line);
 }
 
@@ -206,7 +224,10 @@
 }
 
 .rowKey {
-  font-size: var(--fs-small);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
+  text-transform: uppercase;
   color: var(--text-dim);
 }
 
@@ -218,14 +239,14 @@
 @container (min-width: 520px) {
   .row {
     grid-template-columns: minmax(140px, 1fr) minmax(0, 2.4fr);
-    gap: 20px;
+    gap: var(--sp-5);
   }
 }
 
 .sides {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 20px;
+  gap: var(--sp-5);
 }
 
 @container (min-width: 480px) {
@@ -237,24 +258,36 @@
 .side {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--sp-3);
 }
 
+/* Side A is a solid tag, side B an outlined one: told apart without a second hue. */
 .sideHead {
-  font-size: var(--fs-small);
+  align-self: flex-start;
+  padding: 0 8px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-family: var(--font-display);
+  font-stretch: var(--tag-stretch);
+  font-size: var(--fs-caption);
   font-weight: 600;
-  color: var(--text-hi);
-  padding-bottom: 8px;
-  border-bottom: 1px solid color-mix(in srgb, var(--m) 40%, transparent);
+  letter-spacing: var(--tag-tracking);
+  line-height: 22px;
+  text-transform: uppercase;
 }
 
 .side[data-side='b'] .sideHead {
-  border-bottom-color: color-mix(in srgb, var(--scene-secondary) 45%, transparent);
+  background: transparent;
+  color: var(--text-hi);
+  border: 1px solid var(--paper);
+  line-height: 20px;
 }
 
 .sideCell {
   display: flex;
   flex-direction: column;
+  padding-top: var(--sp-3);
+  border-top: 1px solid var(--line);
 }
 
 .sideValue {
@@ -262,30 +295,33 @@
   color: var(--text);
 }
 
-/* Quote */
+/* Quote: a 3px bar and the words. No decorative glyph. */
 
 .quotes {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: var(--sp-4);
 }
 
 .quote {
-  padding-left: 16px;
-  border-left: 2px solid color-mix(in srgb, var(--m) 60%, transparent);
+  padding-left: var(--sp-4);
+  border-left: 3px solid var(--m);
 }
 
 .quoteText {
   font-family: var(--font-display);
-  font-weight: 300;
+  font-weight: 400;
+  font-stretch: 90%;
   font-size: var(--fs-lead);
   line-height: 1.4;
   color: var(--text-hi);
 }
 
 .cite {
-  margin-top: 6px;
-  font-size: var(--fs-small);
+  margin-top: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--readout-tracking);
   color: var(--text-dim);
 }
 
@@ -295,21 +331,22 @@
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: var(--sp-4);
 }
 
 .rankRow {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto;
-  column-gap: 10px;
+  grid-template-columns: 3ch minmax(0, 1fr) auto;
+  column-gap: var(--sp-3);
   row-gap: 6px;
   align-items: baseline;
 }
 
 .rankNum {
-  font-family: var(--font-display);
-  font-size: var(--fs-small);
-  color: var(--text-faint);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--readout-tracking);
+  color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
 
@@ -320,7 +357,10 @@
 }
 
 .rankValue {
-  font-size: var(--fs-small);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--readout-tracking);
+  font-variant-numeric: tabular-nums;
   color: var(--text-dim);
   text-align: right;
 }
@@ -329,20 +369,20 @@
   grid-column: 2 / -1;
 }
 
+/* A square track: hairline frame, a tick every tenth, a solid fill. */
 .track {
   display: block;
   position: relative;
-  height: 4px;
-  border-radius: 4px;
-  background: var(--line);
+  height: 7px;
+  border: 1px solid var(--line-strong);
+  background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 1px), var(--line) calc(10% - 1px) 10%);
   overflow: hidden;
 }
 
 .fill {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  background: linear-gradient(90deg, color-mix(in srgb, var(--m) 55%, transparent), color-mix(in srgb, var(--m) 95%, white));
+  background: var(--tone, var(--m));
   transform-origin: left center;
   transform: scaleX(var(--w, 0));
   animation: fillIn var(--dur-slow) var(--ease) calc(var(--enter-delay, 0ms) + min(var(--i, 0) * var(--stagger, 60ms), var(--cascade, 240ms))) both;
@@ -357,30 +397,32 @@
 .progress {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--sp-4);
 }
 
 .progRow {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-2);
 }
 
 .progHead {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  gap: 12px;
+  gap: var(--sp-3);
 }
 
 .progValue {
-  font-family: var(--font-display);
+  font-family: var(--font-mono);
+  font-size: var(--fs-small);
+  letter-spacing: var(--readout-tracking);
   color: var(--text-hi);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-/* Key-value */
+/* Key-value: a hairline table, mono keys. */
 
 .kv {
   display: grid;
@@ -401,7 +443,10 @@
 }
 
 .kvKey {
-  font-size: var(--fs-small);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
+  text-transform: uppercase;
   color: var(--text-dim);
   overflow-wrap: anywhere;
 }
@@ -415,7 +460,7 @@
 @container (min-width: 560px) {
   .kv {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    column-gap: 28px;
+    column-gap: var(--sp-6);
   }
   .kvPair:nth-child(2) {
     border-top: 0;
@@ -423,13 +468,13 @@
   }
 }
 
-/* Tags */
+/* Tags: bordered square chips. */
 
 .tags {
   list-style: none;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--sp-2);
 }
 
 .tag {
@@ -437,20 +482,21 @@
   align-items: baseline;
   gap: 6px;
   max-width: 100%;
-  padding: 5px 12px;
-  border-radius: var(--r-pill);
+  padding: 4px 10px;
   font-size: var(--fs-small);
   color: var(--text);
-  background: color-mix(in srgb, var(--m) 9%, transparent);
-  border: 1px solid color-mix(in srgb, var(--m) 22%, transparent);
+  border: 1px solid var(--line-strong);
   overflow-wrap: anywhere;
 }
 
 .tagValue {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--readout-tracking);
   color: var(--text-dim);
 }
 
-/* Steps */
+/* Steps: square numbered nodes on a dashed connector. */
 
 .steps {
   list-style: none;
@@ -461,8 +507,8 @@
 .step {
   position: relative;
   display: grid;
-  grid-template-columns: 32px minmax(0, 1fr);
-  column-gap: 14px;
+  grid-template-columns: 28px minmax(0, 1fr);
+  column-gap: var(--sp-3);
   padding-bottom: 20px;
 }
 
@@ -473,11 +519,11 @@
 .step:not(:last-child)::before {
   content: '';
   position: absolute;
-  left: 15.5px;
-  top: 34px;
+  left: 13.5px;
+  top: 32px;
   bottom: 4px;
   width: 1px;
-  background: linear-gradient(to bottom, color-mix(in srgb, var(--m) 45%, transparent), var(--line));
+  background: repeating-linear-gradient(to bottom, var(--line-strong) 0 3px, transparent 3px 6px);
   /* One segment per step, so each draws after its own number has appeared. */
   transform-origin: top;
   animation: railDraw var(--dur-base) var(--ease) calc(var(--enter-delay, 0ms) + min(var(--i, 0) * var(--stagger, 60ms), var(--cascade, 240ms)) + var(--dur-fast)) both;
@@ -486,28 +532,27 @@
 .stepNum {
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  font-family: var(--font-display);
-  font-size: var(--fs-small);
+  width: 28px;
+  height: 28px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
   color: var(--text-hi);
-  background: color-mix(in srgb, var(--m) 12%, var(--ink-1));
-  border: 1px solid color-mix(in srgb, var(--m) 45%, transparent);
+  background: var(--ink-0);
+  border: 1px solid var(--m);
   font-variant-numeric: tabular-nums;
   animation: nodeIn var(--dur-base) var(--ease) calc(var(--enter-delay, 0ms) + min(var(--i, 0) * var(--stagger, 60ms), var(--cascade, 240ms))) both;
 }
 
 .stepBody {
   min-width: 0;
-  padding-top: 4px;
+  padding-top: 3px;
 }
 
 .stepHead {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 12px;
+  gap: 4px var(--sp-3);
 }
 
 .stepLabel {
@@ -518,13 +563,13 @@
 }
 
 .stepResult {
-  font-size: var(--fs-small);
-  line-height: 1.35;
-  padding: 1px 10px;
-  border-radius: var(--r-pill);
-  color: color-mix(in srgb, var(--m) 60%, var(--text-hi));
-  background: color-mix(in srgb, var(--m) 10%, transparent);
-  border: 1px solid color-mix(in srgb, var(--m) 26%, transparent);
+  padding: 1px 8px;
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--readout-tracking);
+  line-height: 1.5;
+  color: var(--text-hi);
+  border: 1px solid var(--line-strong);
   overflow-wrap: anywhere;
 }
 
@@ -545,7 +590,7 @@
 .formulas {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--sp-4);
 }
 
 .formula {
@@ -557,30 +602,34 @@
   font-size: clamp(0.95rem, 0.9rem + 0.4vw, 1.15rem);
   line-height: 1.6;
   color: var(--text-hi);
-  padding: 14px 16px;
-  border-radius: var(--r-md);
+  padding: 14px var(--sp-4);
   background: var(--ink-0);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   overflow-x: auto;
   white-space: pre;
   tab-size: 2;
 }
 
+.formulaExpr:focus-visible {
+  outline-offset: -4px;
+}
+
 .formulaCaption {
-  margin-top: 8px;
+  margin-top: var(--sp-2);
 }
 
 .formulaName {
-  font-size: var(--fs-small);
-  font-weight: 600;
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--readout-tracking);
+  text-transform: uppercase;
   color: var(--text);
 }
 
-/* Code */
+/* Code: a hairline frame on the void, a mono bar over the listing. */
 
 .code {
-  border-radius: var(--r-md);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   background: var(--ink-0);
   overflow: hidden;
 }
@@ -589,14 +638,16 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 0 4px 0 14px;
+  gap: var(--sp-3);
+  padding: 0 0 0 14px;
   border-bottom: 1px solid var(--line);
 }
 
 .codeLang {
   font-family: var(--font-mono);
-  font-size: var(--fs-caption);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
+  text-transform: uppercase;
   color: var(--text-dim);
 }
 
@@ -605,21 +656,29 @@
   align-items: center;
   gap: 6px;
   min-height: var(--hit);
-  padding: 0 12px;
-  border-radius: var(--r-sm);
-  font-size: var(--fs-small);
+  padding: 0 14px;
+  border-left: 1px solid var(--line);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
+  text-transform: uppercase;
   color: var(--text-dim);
-  transition: color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
 }
 
 .copy:hover {
-  color: var(--text-hi);
-  background: var(--line);
+  background: var(--paper);
+  color: var(--paper-ink);
+}
+
+/* Inside overflow: hidden boxes the default outward ring would be clipped. */
+.copy:focus-visible,
+.codePre:focus-visible {
+  outline-offset: -4px;
 }
 
 .codePre {
   margin: 0;
-  padding: 14px 16px 16px;
+  padding: 14px var(--sp-4) var(--sp-4);
   font-family: var(--font-mono);
   font-size: 0.8125rem;
   line-height: 1.65;
@@ -641,18 +700,18 @@
   margin-top: 0.9em;
 }
 
-/* Pros and cons */
+/* Pros and cons: pros in --ok, cons in --danger, each with a square sign. */
 
 .pc {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 18px;
+  gap: var(--sp-4);
 }
 
 @container (min-width: 480px) {
   .pc {
     grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
-    gap: 24px;
+    gap: var(--sp-5);
   }
 }
 
@@ -663,24 +722,27 @@
 .pcHead {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: var(--fs-small);
+  gap: var(--sp-2);
+  margin-bottom: var(--sp-3);
+  font-family: var(--font-display);
+  font-stretch: var(--tag-stretch);
+  font-size: var(--fs-caption);
   font-weight: 600;
+  letter-spacing: var(--tag-tracking);
+  text-transform: uppercase;
   color: var(--text-hi);
-  margin-bottom: 10px;
 }
 
 .pcHead svg {
   width: 20px;
   height: 20px;
   padding: 3px;
-  border-radius: 50%;
   color: var(--ink-0);
-  background: color-mix(in srgb, var(--scene-accent) 85%, white);
+  background: var(--ok);
 }
 
 .pcCol[data-side='con'] .pcHead svg {
-  background: color-mix(in srgb, var(--danger) 85%, white);
+  background: var(--danger);
 }
 
 .pcList {
@@ -690,12 +752,12 @@
 }
 
 .pcItem {
-  padding: 10px 0 10px 12px;
-  border-left: 1px solid color-mix(in srgb, var(--scene-accent) 40%, transparent);
+  padding: 10px 0 10px var(--sp-3);
+  border-left: 1px solid var(--ok);
 }
 
 .pcCol[data-side='con'] .pcItem {
-  border-left-color: color-mix(in srgb, var(--danger) 40%, transparent);
+  border-left-color: var(--danger);
 }
 
 .pcItemHead {
@@ -706,7 +768,9 @@
 }
 
 .pcValue {
-  font-size: var(--fs-small);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  letter-spacing: var(--readout-tracking);
   color: var(--text-dim);
 }
 
@@ -719,7 +783,8 @@
   font-family: var(--font-mono);
   font-size: var(--fs-caption);
   line-height: 1.9;
-  color: color-mix(in srgb, var(--m) 70%, var(--text-hi));
+  letter-spacing: var(--readout-tracking);
+  color: color-mix(in srgb, var(--m) 55%, var(--text-hi));
   font-variant-numeric: tabular-nums;
 }
 
@@ -731,11 +796,9 @@
 
 .list[data-variant='cards'] .listItem {
   grid-template-columns: minmax(0, 1fr);
-  row-gap: 8px;
+  row-gap: var(--sp-2);
   padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  background: color-mix(in srgb, var(--m) 4%, transparent);
+  border: 1px solid var(--line-strong);
 }
 
 .list[data-variant='cards'] .listValue {
@@ -777,7 +840,6 @@
   bottom: auto;
   width: auto;
   height: 1px;
-  background: linear-gradient(to right, color-mix(in srgb, var(--m) 60%, transparent), var(--line));
   transform-origin: left;
   animation-name: railDrawX;
 }
@@ -794,8 +856,7 @@
 }
 
 .timeline[data-variant='ribbon']:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--m) 70%, white);
-  outline-offset: 2px;
+  outline-offset: -3px;
 }
 
 /* stacked: the dates become a column of their own, no rail. */
@@ -823,13 +884,13 @@
 }
 
 .timeline[data-variant='stacked'] .tlDate {
-  font-size: var(--fs-lead);
-  line-height: 1.2;
+  font-size: var(--fs-small);
+  line-height: 1.5;
 }
 
 @container (min-width: 420px) {
   .timeline[data-variant='stacked'] .tlItem {
-    grid-template-columns: 9ch minmax(0, 1fr);
+    grid-template-columns: 11ch minmax(0, 1fr);
   }
   .timeline[data-variant='stacked'] .tlItem > :not(.tlDate) {
     grid-column: 2;
@@ -861,38 +922,35 @@
 }
 
 .stats[data-variant='tiles'] {
+  /* Each tile draws its own outline; the 1px gap makes neighbours share it.
+     A grid-wide fill would paint the empty cells of an unfinished last row. */
   gap: 1px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-md);
-  background: var(--line);
-  overflow: hidden;
+  padding: 1px;
+}
+
+/* Tiles sit three or four to a row, so their figures take a smaller share of the card. */
+.stats[data-variant='tiles'] .figure {
+  font-size: clamp(1.25rem, 4.6cqi, var(--fs-figure));
 }
 
 .stats[data-variant='tiles'] .stat {
+  outline: 1px solid var(--line-strong);
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
-  padding: 14px 16px;
-  background: var(--ink-1);
-}
-
-.stats[data-variant='tiles'] .statLabel,
-.heroStat .statLabel {
-  font-family: var(--font-mono);
-  font-size: var(--fs-caption);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  padding: 14px var(--sp-4);
+  background: var(--surface-strong);
 }
 
 .stats[data-variant='inline'] {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px 0;
+  gap: var(--sp-3) 0;
 }
 
 .stats[data-variant='inline'] .stat {
-  padding: 0 20px;
-  border-left: 1px solid var(--line);
+  padding: 0 var(--sp-5);
+  border-left: 1px solid var(--line-strong);
 }
 
 .stats[data-variant='inline'] .stat:first-child {
@@ -913,47 +971,31 @@
 .heroStat {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--sp-2);
 }
 
 .heroStat .figure {
   font-size: clamp(3.25rem, 2.2rem + 4.5vw, 5.75rem);
-  font-weight: 300;
+  font-weight: var(--figure-weight, 500);
   line-height: 0.92;
-  letter-spacing: -0.03em;
-  color: color-mix(in srgb, var(--m) 30%, var(--text-hi));
+  color: var(--text-hi);
 }
 
 .statsHero > .stats {
   padding-top: 14px;
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--line-strong);
 }
 
 /* Quote */
 
 .quotes[data-variant='pull'] .quote:first-child {
-  position: relative;
-  padding: 18px 0 0;
-  border-left: 0;
-}
-
-.quotes[data-variant='pull'] .quote:first-child::before {
-  content: '\201C';
-  position: absolute;
-  top: -0.2em;
-  left: -0.04em;
-  font-family: var(--font-display);
-  font-size: 4.5rem;
-  line-height: 1;
-  color: color-mix(in srgb, var(--m) 55%, transparent);
-  pointer-events: none;
+  padding: 2px 0 2px var(--sp-5);
+  border-left-width: 3px;
 }
 
 .quotes[data-variant='pull'] .quote:first-child .quoteText {
-  position: relative;
   font-size: clamp(1.375rem, 1.1rem + 1.2vw, 2.125rem);
   line-height: 1.25;
-  letter-spacing: -0.01em;
 }
 
 .quotes[data-variant='stack'] {
@@ -962,42 +1004,34 @@
 
 .quotes[data-variant='stack'] .quote {
   padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-left: 2px solid color-mix(in srgb, var(--m) 60%, transparent);
-  border-radius: 0 var(--r-sm) var(--r-sm) 0;
-  background: color-mix(in srgb, var(--m) 4%, transparent);
+  border: 1px solid var(--line-strong);
+  border-left: 3px solid var(--m);
 }
 
 .quotes[data-variant='stack'] .quoteText {
   font-family: var(--font-body);
   font-weight: 400;
+  font-stretch: 100%;
   font-size: var(--fs-body);
 }
 
-.quotes[data-variant='stack'] .cite {
-  font-family: var(--font-mono);
-  font-size: var(--fs-caption);
-}
-
-/* Steps: path keeps the line and swaps the numbered discs for bare nodes. */
+/* Steps: path keeps the line and swaps the numbered squares for bare nodes. */
 
 .stepTag {
   display: block;
   margin-bottom: 2px;
   font-family: var(--font-mono);
   font-size: var(--fs-caption);
-  letter-spacing: 0.1em;
-  color: color-mix(in srgb, var(--m) 70%, var(--text-hi));
+  letter-spacing: var(--readout-tracking);
+  color: color-mix(in srgb, var(--m) 55%, var(--text-hi));
 }
 
 .steps[data-variant='path'] .stepNum {
   justify-self: center;
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   margin-top: 6px;
-  border-radius: 0;
-  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
-  background: color-mix(in srgb, var(--m) 85%, white);
+  background: var(--m);
   border: 0;
 }
 
@@ -1020,9 +1054,7 @@
   grid-template-columns: minmax(0, 1fr);
   row-gap: 10px;
   padding: 14px;
-  border: 1px solid var(--line);
-  border-radius: var(--r-sm);
-  background: color-mix(in srgb, var(--m) 4%, transparent);
+  border: 1px solid var(--line-strong);
 }
 
 .steps[data-variant='cards'] .step::before {
@@ -1034,10 +1066,11 @@
   height: auto;
   place-items: start;
   border: 0;
-  border-radius: 0;
   background: none;
+  font-family: var(--font-display);
+  font-stretch: var(--figure-stretch, 82%);
   font-size: var(--fs-figure);
-  font-weight: 300;
+  font-weight: var(--figure-weight, 500);
   line-height: 1;
   color: color-mix(in srgb, var(--m) 55%, var(--text-hi));
 }

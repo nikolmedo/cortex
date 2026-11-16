@@ -16,8 +16,8 @@ export function TopBar({ session, onNewSession, onOpenSettings }: TopBarProps): 
     <header className={styles.bar} data-session={session}>
       {session ? (
         <span className={styles.brand}>
+          <span className={styles.brandName}>{t('app.name')}</span>
           <span className={styles.brandMark} aria-hidden="true" />
-          {t('app.name')}
         </span>
       ) : (
         <span />

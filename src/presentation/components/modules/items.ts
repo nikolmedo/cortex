@@ -265,6 +265,114 @@ export function chartReadsAsLine(items: readonly SceneItem[]): boolean {
   return points.length >= 5 && points.every(p => p.label.length <= 12);
 }
 
+/**
+ * Indices of the x-axis labels: every point of a short series, otherwise the
+ * first, the last and evenly spaced ones between, `max` in all. Sixty labels
+ * would overlap at any width; five still read on a phone.
+ */
+export function axisTicks(count: number, max = 5): number[] {
+  if (count <= max) return Array.from({ length: count }, (_, i) => i);
+  const ticks = Array.from({ length: max }, (_, k) => Math.round((k * (count - 1)) / (max - 1)));
+  return Array.from(new Set(ticks));
+}
+
+/** Above this many points a marker on each one becomes a smear; only min, max and last keep theirs. */
+const MAX_MARKED_POINTS = 16;
+
+export function showsPointMarkers(count: number): boolean {
+  return count <= MAX_MARKED_POINTS;
+}
+
+/** Index of the first lowest and the first highest point, by weight (what the plot draws). */
+export function chartExtremes(points: ReadonlyArray<{ weight: number }>): { min: number; max: number } {
+  let min = 0;
+  let max = 0;
+  points.forEach((p, i) => {
+    if (p.weight < points[min].weight) min = i;
+    if (p.weight > points[max].weight) max = i;
+  });
+  return { min, max };
+}
+
+export interface ParsedValue {
+  value: number;
+  /** Digits after the decimal separator, as written. */
+  decimals: number;
+  /** The text with its number replaced by "#", e.g. "$#" or "# GW". */
+  template: string;
+}
+
+/** A number ending in a digit, so a trailing full stop stays in the template. */
+const NUMBER_RE = /[-−+]?\d(?:[\d.,]*\d)?/;
+
+/**
+ * Reads the number out of a chart value written for people ("$18.40", "25%",
+ * "1.234,5 €"). With both separators present the last one is the decimal mark;
+ * a lone comma is a thousands separator only in groups of three, and a lone
+ * full stop only when it separates two or more such groups.
+ */
+export function parseChartValue(text: string | undefined): ParsedValue | null {
+  if (!text) return null;
+  const match = NUMBER_RE.exec(text);
+  if (!match) return null;
+  const token = match[0];
+  // A sign can sit before the currency symbol ("-$5"), outside the number token.
+  let prefix = text.slice(0, match.index);
+  const leadingSign = /^\s*[-−]\s*(?=\D*$)/.exec(prefix);
+  if (leadingSign) prefix = prefix.slice(leadingSign[0].length);
+  const negative = leadingSign !== null || token.startsWith('-') || token.startsWith('−');
+  const digits = token.replace(/^[-−+]/, '');
+  let decimalMark: '.' | ',' | null = null;
+  if (digits.includes('.') && digits.includes(',')) decimalMark = digits.lastIndexOf('.') > digits.lastIndexOf(',') ? '.' : ',';
+  else if (digits.includes(',')) decimalMark = /^\d{1,3}(,\d{3})+$/.test(digits) ? null : ',';
+  else if (digits.includes('.')) decimalMark = /^\d{1,3}(\.\d{3}){2,}$/.test(digits) ? null : '.';
+  const cut = decimalMark ? digits.lastIndexOf(decimalMark) : digits.length;
+  const whole = digits.slice(0, cut).replace(/[.,]/g, '');
+  const fraction = decimalMark ? digits.slice(cut + 1) : '';
+  const value = Number(fraction ? `${whole}.${fraction}` : whole);
+  if (!Number.isFinite(value)) return null;
+  return {
+    value: negative ? -value : value,
+    decimals: fraction.length,
+    template: `${prefix}#${text.slice(match.index + token.length)}`.trim(),
+  };
+}
+
+export interface ChartChange {
+  /** In the series' own unit, signed: "+$34.00", "−30 GW", or points for a percentage. */
+  absolute: string;
+  /** Relative to the first value; null when the series starts at zero. */
+  percent: string | null;
+  direction: 'up' | 'down' | 'flat';
+}
+
+const signed = (n: number, digits: number) => {
+  const text = Math.abs(n).toFixed(digits);
+  if (Number(text) === 0) return text;
+  return `${n > 0 ? '+' : '−'}${text}`;
+};
+
+/**
+ * First-to-last change of a series, computed from the written values. Omitted
+ * when either end does not parse or the two are written in different units
+ * ("$1.2B" against "$900M" would otherwise read as a 99% fall).
+ */
+export function chartChange(first: string | undefined, last: string | undefined): ChartChange | null {
+  const a = parseChartValue(first);
+  const b = parseChartValue(last);
+  if (!a || !b || a.template !== b.template) return null;
+  const diff = b.value - a.value;
+  const digits = Math.max(a.decimals, b.decimals);
+  const amount = signed(diff, digits);
+  const sign = amount.startsWith('+') || amount.startsWith('−') ? amount[0] : '';
+  const absolute = a.template === '#%'
+    ? `${amount} pp`
+    : `${sign}${a.template.replace('#', amount.slice(sign.length))}`;
+  const percent = a.value === 0 ? null : `${signed((diff / Math.abs(a.value)) * 100, 1)}%`;
+  const direction = Number(amount.slice(sign.length)) === 0 ? 'flat' : diff > 0 ? 'up' : 'down';
+  return { absolute, percent, direction };
+}
+
 /** Rendered height of one item row, per kind, in px. */
 const ROW_PX: Partial<Record<FactKind, number>> = {
   steps: 86,

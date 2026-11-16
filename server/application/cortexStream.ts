@@ -1,6 +1,16 @@
 import { CortexError, type ErrorCode } from '../domain/errors.js';
-import { validatePreface, validateScene, type Scene, type ScenePreface } from '../domain/Scene.js';
-import { captureDir, fixturesEnabled, pickFixture, writeFixture } from '../infrastructure/fixtures.js';
+import {
+  LIMITS,
+  sanitizeAppletHtml,
+  sanitizeText,
+  validatePreface,
+  validateScene,
+  type AppletBrief,
+  type Scene,
+  type ScenePreface,
+} from '../domain/Scene.js';
+import { captureDir, fixturesEnabled, pickFixture, writeFixture, type FixtureFile } from '../infrastructure/fixtures.js';
+import { generateApplet } from './applet.js';
 import { generateScene } from './cortexFlow.js';
 import { generatePreface } from './preface.js';
 import { runResearch } from './research.js';
@@ -15,14 +25,31 @@ export interface StreamTiming {
 }
 
 /**
+ * The interactive tool of a turn. `pending` is sent once, as soon as the
+ * preface asks for a tool; exactly one of `ready` or `failed` follows it.
+ * The html only ever reaches a sandboxed iframe on the client.
+ */
+export type AppletEvent =
+  | { status: 'pending'; title: string }
+  | { status: 'ready'; title: string; html: string }
+  | { status: 'failed'; title: string };
+
+/**
  * Server-sent events, in order: `preface` (optional, at most once), `research`
  * (optional, once the grounded stage returns), any number of `partial` scenes,
  * then either `scene` or `error`, then always `done`. Nothing is emitted after
  * the client disconnects. Every partial is a scene payload with only the
  * finished fields; the final `scene` is the authoritative one.
+ *
+ * When the preface asks for a tool, `applet` {status: 'pending'} follows it
+ * directly, and `applet` {status: 'ready' | 'failed'} arrives whenever the
+ * generation settles: before, between or after the partials and the scene,
+ * but always before `done`, which waits for it. A failed applet never turns
+ * into an `error` event. A stream with no applet is unchanged, event for event.
  */
 export type StreamEvent =
   | { event: 'preface'; data: ScenePreface }
+  | { event: 'applet'; data: AppletEvent }
   | { event: 'research'; data: { sources: number; searches: number } }
   | { event: 'partial'; data: Record<string, unknown> }
   | { event: 'scene'; data: Scene }
@@ -63,10 +90,42 @@ function wait(ms: number, signal: AbortSignal): Promise<void> {
 /** Grace period for the preface once research is back: its intent picks the thinking level. */
 const PREFACE_GRACE_MS = 700;
 
+interface FinishedApplet {
+  title: string;
+  html: string;
+}
+
 async function runLive({ query, lang }: StreamInput, { emit, signal }: StreamContext): Promise<void> {
   const started = Date.now();
   const timing = newTiming();
   let preface: ScenePreface | null = null;
+  let scene: Scene | null = null;
+  /** Null until the preface asks for a tool; then settles once the tool is ready or failed, never rejecting. */
+  let appletTask = null as Promise<FinishedApplet | null> | null;
+  /** Set just before `done`: a preface that lands later starts no tool. */
+  let closing = false;
+
+  // Runs beside research and the scene from the moment the preface asks for it,
+  // so a slow tool never holds the answer back; only `done` waits for it.
+  const startApplet = (brief: AppletBrief) => {
+    if (closing || signal.aborted) return;
+    const { title } = brief;
+    emit({ event: 'applet', data: { status: 'pending', title } });
+    appletTask = generateApplet({ query, lang, applet: brief, signal })
+      .then((html): FinishedApplet | null => {
+        if (signal.aborted) return null;
+        emit(html === null
+          ? { event: 'applet', data: { status: 'failed', title } }
+          : { event: 'applet', data: { status: 'ready', title, html } });
+        return html === null ? null : { title, html };
+      })
+      .catch((err: unknown) => {
+        console.warn(`[cortex] applet event failed: ${err instanceof Error ? err.message : String(err)}`);
+        // The client was told `pending`; it is owed an ending.
+        if (!signal.aborted) emit({ event: 'applet', data: { status: 'failed', title } });
+        return null;
+      });
+  };
 
   // Preface (fast router) and research (grounded search) run together from t=0.
   const prefaceTask = generatePreface({ query, lang, signal })
@@ -75,6 +134,7 @@ async function runLive({ query, lang }: StreamInput, { emit, signal }: StreamCon
       if (result) {
         timing.prefaceMs = Date.now() - started;
         if (!signal.aborted) emit({ event: 'preface', data: result });
+        if (result.applet) startApplet(result.applet);
       }
       return result;
     });
@@ -90,7 +150,7 @@ async function runLive({ query, lang }: StreamInput, { emit, signal }: StreamCon
     if (!preface) await Promise.race([prefaceTask, wait(PREFACE_GRACE_MS, signal)]);
     if (signal.aborted) return;
 
-    const scene = await generateScene({
+    const result = await generateScene({
       query,
       lang,
       signal,
@@ -103,18 +163,10 @@ async function runLive({ query, lang }: StreamInput, { emit, signal }: StreamCon
       },
     });
     timing.sceneMs = Date.now() - started;
-    timing.sources = scene.sources?.length ?? timing.sources;
+    timing.sources = result.sources?.length ?? timing.sources;
     if (signal.aborted) return;
-    emit({ event: 'scene', data: scene });
-
-    const dir = captureDir();
-    if (dir) {
-      const file = await writeFixture(dir, { query, lang, preface: await prefaceTask, scene, timing }).catch((err: unknown) => {
-        console.warn(`[cortex] capture failed: ${err instanceof Error ? err.message : String(err)}`);
-        return null;
-      });
-      if (file) console.log(`[cortex] captured ${file}`);
-    }
+    scene = result;
+    emit({ event: 'scene', data: result });
   } catch (err) {
     if (signal.aborted) return;
     const code = errorCode(err);
@@ -124,7 +176,22 @@ async function runLive({ query, lang }: StreamInput, { emit, signal }: StreamCon
     emit({ event: 'error', data: { code } });
   }
 
+  closing = true;
+  const applet = appletTask ? await appletTask : null;
   if (signal.aborted) return;
+
+  // After the applet settles, so a captured fixture carries its markup too.
+  const dir = scene ? captureDir() : null;
+  if (scene && dir) {
+    const fixture: FixtureFile = { query, lang, preface: await prefaceTask, scene, timing };
+    if (applet) fixture.applet = applet;
+    const file = await writeFixture(dir, fixture).catch((err: unknown) => {
+      console.warn(`[cortex] capture failed: ${err instanceof Error ? err.message : String(err)}`);
+      return null;
+    });
+    if (file) console.log(`[cortex] captured ${file}`);
+    if (signal.aborted) return;
+  }
   console.log(
     `[cortex] stream done preface_ms=${timing.prefaceMs ?? '-'} research_ms=${timing.researchMs ?? '-'} `
     + `first_partial_ms=${timing.firstPartialMs ?? '-'} scene_ms=${timing.sceneMs ?? '-'} sources=${timing.sources}`,
@@ -179,6 +246,20 @@ export function fixturePartials(scene: Scene): Array<Record<string, unknown>> {
   return steps;
 }
 
+/**
+ * The applet a fixture carries, read as untrusted as live output is. `html` is
+ * null when the markup fails validation, which replays as a failed applet.
+ */
+function fixtureApplet(raw: unknown): { title: string; html: string | null } | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const { title, html } = raw as { title?: unknown; html?: unknown };
+  const name = typeof title === 'string' ? sanitizeText(title, LIMITS.appletTitle) : '';
+  return name === '' ? null : { title: name, html: sanitizeAppletHtml(html) };
+}
+
+/** When a replayed applet turns ready, measured from the start of the stream: mid-answer, like a live one. */
+const FIXTURE_APPLET_MS = 4200;
+
 /** Replays a captured fixture with realistic timing (preface ~0.7 s, research ~3 s, partials, scene). */
 async function runFixture({ query, lang }: StreamInput, { emit, signal }: StreamContext): Promise<void> {
   const started = Date.now();
@@ -191,6 +272,20 @@ async function runFixture({ query, lang }: StreamInput, { emit, signal }: Stream
   if (preface) {
     timing.prefaceMs = Date.now() - started;
     emit({ event: 'preface', data: preface });
+  }
+
+  // Pending right after the preface and settled mid-answer, the way the live
+  // path does it, so fixture mode exercises the frame's waiting state too.
+  const applet = fixture ? fixtureApplet(fixture.applet) : null;
+  let appletTask: Promise<void> | null = null;
+  if (applet) {
+    emit({ event: 'applet', data: { status: 'pending', title: applet.title } });
+    appletTask = wait(FIXTURE_APPLET_MS + Math.random() * 800 - (Date.now() - started), signal).then(() => {
+      if (signal.aborted) return;
+      emit(applet.html === null
+        ? { event: 'applet', data: { status: 'failed', title: applet.title } }
+        : { event: 'applet', data: { status: 'ready', title: applet.title, html: applet.html } });
+    });
   }
 
   try {
@@ -220,6 +315,7 @@ async function runFixture({ query, lang }: StreamInput, { emit, signal }: Stream
     console.warn(`[cortex] fixture stream failed: ${err instanceof Error ? err.message : String(err)}`);
     emit({ event: 'error', data: { code: errorCode(err) } });
   }
+  if (appletTask) await appletTask;
   if (signal.aborted) return;
   emit({ event: 'done', data: timing });
 }

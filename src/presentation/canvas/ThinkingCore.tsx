@@ -4,13 +4,18 @@ import { approachPalette, mixRgb, paletteToRgb, rgba, smoothing, type Rgb, type 
 import { deviceTier, fitCanvas, subscribeTick } from './ticker';
 
 /**
- * idle: landing emblem, slow breathing.
- * thinking: request sent, nothing back yet; rings search in the default palette.
- * planned: preface arrived; palette handoff, one ring per plan step.
- * streaming: partial scenes are arriving; the core has contracted into the
- * header glyph but keeps running while the answer grows.
- * resolved: the scene arrived; the core contracts and settles, then stops drawing.
- * error: the core cools to grey and stills, still legible at glyph size.
+ * A square reticle: four corner brackets that turn in 45-degree steps while the
+ * answer is being built, three nested square outlines (one per plan step) and a
+ * small central square. Nothing glows.
+ *
+ * idle: still, the central square blinks slowly.
+ * thinking: request sent, nothing back yet; the brackets step-rotate.
+ * planned: preface arrived; palette handoff, one outline per plan step.
+ * streaming: partial scenes are arriving; the reticle has contracted into the
+ * header glyph but keeps stepping while the answer grows.
+ * resolved: the scene arrived; the brackets square up, the centre flashes once,
+ * then the loop stops drawing.
+ * error: the reticle cools to grey and stills, still legible at glyph size.
  */
 export type CorePhase = 'idle' | 'thinking' | 'planned' | 'streaming' | 'resolved' | 'error';
 export type StepState = 'pending' | 'active' | 'done';
@@ -27,31 +32,36 @@ interface ThinkingCoreProps {
   style?: CSSProperties;
 }
 
-interface Particle {
-  angle: number;
-  radius: number;
-  speed: number;
-  big: boolean;
-}
-
 const GREY: Rgb = [139, 152, 171];
 const WHITE: Rgb = [255, 255, 255];
-const RING_RADII = [0.25, 0.345, 0.44];
+/** The paper tone of an inverted tag, used for the brackets so only the live parts take the signal colour. */
+const PAPER: Rgb = [238, 242, 243];
+/** Half-sizes of the nested outlines as a share of the canvas side, one per plan step. */
+const OUTLINE_HALF = [0.1, 0.17, 0.24];
 const SETTLE_MS = 1100;
+/** How long the brackets hold between turns, in clock milliseconds. */
+const STEP_MS = 900;
+const QUARTER = Math.PI / 2;
+const EIGHTH = Math.PI / 4;
 
 const ENERGY: Record<CorePhase, number> = { idle: 0.4, thinking: 0.75, planned: 1, streaming: 0.9, resolved: 0.2, error: 0.3 };
 
-/** Phases where the core sits at glyph size in the header. */
+/** Phases where the reticle sits at glyph size in the header. */
 function isContracted(phase: CorePhase): boolean {
   return phase === 'streaming' || phase === 'resolved' || phase === 'error';
 }
 
-function ringTarget(phase: CorePhase, step: StepState | undefined): number {
+/** Phases where the brackets keep turning. */
+function isStepping(phase: CorePhase): boolean {
+  return phase === 'thinking' || phase === 'planned' || phase === 'streaming';
+}
+
+function outlineTarget(phase: CorePhase, step: StepState | undefined): number {
   if (phase === 'resolved') return 0.5;
   if (phase === 'error') return 0.6;
   if (phase === 'idle') return 0.34;
   if (!step) return phase === 'streaming' ? 0.7 : 0.42;
-  return step === 'active' ? 0.9 : step === 'done' ? 0.6 : 0.2;
+  return step === 'active' ? 0.95 : step === 'done' ? 0.6 : 0.2;
 }
 
 export function ThinkingCore({ phase, palette, steps, size, reduced, className, style }: ThinkingCoreProps): ReactElement {
@@ -69,8 +79,11 @@ export function ThinkingCore({ phase, palette, steps, size, reduced, className, 
     cool: number;
     flare: number;
     clock: number;
-    rings: number[];
-    particles: Particle[];
+    outlines: number[];
+    /** Bracket rotation now, where it is heading, and the time since its last step. */
+    angle: number;
+    turn: number;
+    hold: number;
     phaseAt: number;
     lastPhase: CorePhase;
   } | null>(null);
@@ -83,22 +96,18 @@ export function ThinkingCore({ phase, palette, steps, size, reduced, className, 
     const dpr = fitCanvas(canvas, size, size, tier === 'mobile' ? 1.5 : 2);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const count = Math.round(Math.min(tier === 'mobile' ? 48 : 90, size * 0.42));
-    if (!sim.current || sim.current.particles.length !== count) {
+    if (!sim.current) {
       sim.current = {
-        palette: sim.current?.palette ?? { ...props.current.palette },
-        energy: sim.current?.energy ?? ENERGY[props.current.phase],
-        contraction: sim.current?.contraction ?? 0,
-        cool: sim.current?.cool ?? 0,
+        palette: { ...props.current.palette },
+        energy: ENERGY[props.current.phase],
+        contraction: 0,
+        cool: 0,
         flare: 0,
-        clock: sim.current?.clock ?? Math.random() * 10000,
-        rings: sim.current?.rings ?? RING_RADII.map(() => 0.3),
-        particles: Array.from({ length: count }, () => ({
-          angle: Math.random() * Math.PI * 2,
-          radius: 0.14 + Math.random() * 0.36,
-          speed: 0.6 + Math.random() * 0.8,
-          big: Math.random() < 0.12,
-        })),
+        clock: Math.random() * 10000,
+        outlines: OUTLINE_HALF.map(() => 0.3),
+        angle: 0,
+        turn: 0,
+        hold: 0,
         phaseAt: performance.now(),
         lastPhase: props.current.phase,
       };
@@ -120,121 +129,81 @@ export function ThinkingCore({ phase, palette, steps, size, reduced, className, 
       s.contraction += ((isContracted(ph) ? 1 : 0) - s.contraction) * k;
       s.cool += ((ph === 'error' ? 1 : 0) - s.cool) * k;
       s.flare = animate ? Math.max(0, s.flare - dt / 640) : 0;
-      RING_RADII.forEach((_, i) => {
-        s.rings[i] += (ringTarget(ph, st.length > 0 ? st[i] ?? 'pending' : undefined) - s.rings[i]) * (animate ? smoothing(dt, 360) : 1);
+      OUTLINE_HALF.forEach((_, i) => {
+        s.outlines[i] += (outlineTarget(ph, st.length > 0 ? st[i] ?? 'pending' : undefined) - s.outlines[i]) * (animate ? smoothing(dt, 360) : 1);
       });
-      if (animate) s.clock += dt * (0.2 + s.energy);
+      if (animate) {
+        s.clock += dt * (0.2 + s.energy);
+        if (isStepping(ph)) {
+          // One 45-degree step, then a hold; the angle snaps over ~140ms rather than gliding.
+          s.hold += dt * (0.5 + s.energy);
+          if (s.hold >= STEP_MS) {
+            s.hold = 0;
+            s.turn += EIGHTH;
+          }
+        } else {
+          // Settle on the nearest square orientation.
+          s.turn = Math.round(s.turn / QUARTER) * QUARTER;
+        }
+        s.angle += (s.turn - s.angle) * smoothing(dt, 140);
+      } else {
+        s.turn = 0;
+        s.angle = 0;
+      }
 
       const P = mixRgb(s.palette.primary, GREY, s.cool);
-      const Sec = mixRgb(s.palette.secondary, GREY, s.cool);
-      const A = mixRgb(s.palette.accent, GREY, s.cool);
+      const ink = mixRgb(PAPER, GREY, s.cool);
       const t = s.clock;
-      const shrink = 1 - 0.32 * s.contraction;
 
       ctx.clearRect(0, 0, S, S);
 
-      // Halo
-      const haloA = 0.1 + s.energy * 0.12 + s.flare * 0.2;
-      const halo = ctx.createRadialGradient(c, c, 0, c, c, c);
-      halo.addColorStop(0, rgba(P, haloA));
-      halo.addColorStop(0.5, rgba(P, haloA * 0.35));
-      halo.addColorStop(1, rgba(P, 0));
-      ctx.fillStyle = halo;
-      ctx.fillRect(0, 0, S, S);
-
-      // Rings: each one is a live readout of a plan step. Strokes thicken as the core
-      // contracts so the settled emblem still reads once it is scaled into the header.
+      // Strokes thicken as the reticle contracts so the settled emblem still
+      // reads once it is scaled down into the header.
       const weight = 1 + s.contraction * 3.2;
-      ctx.lineCap = 'round';
-      RING_RADII.forEach((f, i) => {
-        const r = S * f * shrink;
-        const alpha = s.rings[i];
+      ctx.lineCap = 'butt';
+      ctx.lineJoin = 'miter';
+
+      // Nested outlines: one per plan step. Pending is a hairline, active runs a
+      // dashed trace in the signal colour, done is solid.
+      OUTLINE_HALF.forEach((f, i) => {
+        const half = S * f;
         const step = st[i];
-        const color = step === 'done' || ph === 'resolved' ? mixRgb(P, A, 0.35) : i === 1 ? mixRgb(P, Sec, 0.4) : P;
-        ctx.lineWidth = Math.max(1, S / 160) * weight;
-
-        ctx.strokeStyle = rgba(color, 0.07 + alpha * 0.12);
-        ctx.beginPath();
-        ctx.arc(c, c, r, 0, Math.PI * 2);
-        ctx.stroke();
-
-        const dir = i % 2 === 0 ? 1 : -1;
-        const rot = t * 0.0007 * dir * (1 + i * 0.35) + i * 2.1;
-        const closed = ph === 'resolved' || ph === 'error' || step === 'done';
-        const sweep = closed
-          ? Math.PI * (1.2 + 0.8 * s.contraction)
-          : Math.PI * (0.32 + 0.22 * Math.sin(t * 0.0012 + i * 1.7)) * (step === 'active' ? 1.6 : 1);
-        ctx.strokeStyle = rgba(color, alpha);
-        ctx.lineWidth = Math.max(1.2, S / (step === 'active' ? 90 : 130)) * weight;
-        ctx.beginPath();
-        ctx.arc(c, c, r, rot, rot + sweep);
-        ctx.stroke();
-        if (!closed) {
-          ctx.strokeStyle = rgba(color, alpha * 0.5);
-          ctx.beginPath();
-          ctx.arc(c, c, r, rot + Math.PI, rot + Math.PI + sweep * 0.35);
-          ctx.stroke();
-        }
-
-        if (step === 'active' && ph === 'planned') {
-          const hx = c + Math.cos(rot + sweep) * r;
-          const hy = c + Math.sin(rot + sweep) * r;
-          const head = ctx.createRadialGradient(hx, hy, 0, hx, hy, S * 0.045);
-          head.addColorStop(0, rgba(mixRgb(color, WHITE, 0.6), 0.95));
-          head.addColorStop(1, rgba(color, 0));
-          ctx.fillStyle = head;
-          ctx.fillRect(hx - S * 0.045, hy - S * 0.045, S * 0.09, S * 0.09);
-        }
+        const alpha = s.outlines[i];
+        const active = step === 'active' && ph !== 'resolved' && ph !== 'error';
+        const done = step === 'done' || ph === 'resolved';
+        ctx.strokeStyle = rgba(active || done ? P : ink, active ? alpha : done ? alpha * 0.8 : 0.12 + alpha * 0.2);
+        ctx.lineWidth = Math.max(1, S / 150) * weight * (active ? 1.4 : 1);
+        ctx.setLineDash(active ? [S / 40, S / 40] : []);
+        ctx.lineDashOffset = -t * 0.03;
+        ctx.strokeRect(c - half, c - half, half * 2, half * 2);
       });
+      ctx.setLineDash([]);
 
-      // Readout ticks on the outer ring
-      const outer = S * 0.49 * shrink;
-      ctx.strokeStyle = rgba(P, 0.1 + s.energy * 0.12);
-      ctx.lineWidth = 1;
+      // Corner brackets: the outer frame. They turn as a unit about the centre.
+      const R = S * 0.34 * (1 - 0.08 * s.contraction);
+      const L = S * 0.15;
+      ctx.save();
+      ctx.translate(c, c);
+      ctx.rotate(s.angle);
+      ctx.strokeStyle = rgba(ink, 0.9);
+      ctx.lineWidth = Math.max(1.5, S / 100) * weight;
       ctx.beginPath();
-      const tickStart = -t * 0.00025;
-      for (let n = 0; n < 48; n += 1) {
-        const a = tickStart + (n / 48) * Math.PI * 2;
-        const len = n % 4 === 0 ? S * 0.022 : S * 0.011;
-        ctx.moveTo(c + Math.cos(a) * outer, c + Math.sin(a) * outer);
-        ctx.lineTo(c + Math.cos(a) * (outer - len), c + Math.sin(a) * (outer - len));
+      for (const sx of [-1, 1]) {
+        for (const sy of [-1, 1]) {
+          ctx.moveTo(sx * R, sy * (R - L));
+          ctx.lineTo(sx * R, sy * R);
+          ctx.lineTo(sx * (R - L), sy * R);
+        }
       }
       ctx.stroke();
+      ctx.restore();
 
-      // Particle flow spiralling inward
-      const visible = (1 - 0.9 * s.contraction) * (1 - 0.7 * s.cool);
-      if (visible > 0.02) {
-        ctx.fillStyle = rgba(mixRgb(P, WHITE, 0.25), 1);
-        for (const p of s.particles) {
-          if (animate) {
-            const inward = (0.000028 + 0.00006 * s.energy) * (1 + s.contraction * 4) * p.speed;
-            p.radius -= inward * dt;
-            p.angle += (0.0006 + 0.0012 / Math.max(0.12, p.radius * 3)) * dt * (0.3 + s.energy) * p.speed;
-            if (p.radius < 0.09) {
-              p.radius = 0.42 + Math.random() * 0.08;
-              p.angle = Math.random() * Math.PI * 2;
-            }
-          }
-          const fadeIn = Math.min(1, (0.5 - p.radius) / 0.08);
-          const fadeOut = Math.min(1, (p.radius - 0.09) / 0.06);
-          ctx.globalAlpha = Math.max(0, fadeIn * fadeOut) * 0.75 * visible;
-          const pr = S * p.radius * shrink;
-          const dot = p.big ? 1.7 : 1.05;
-          ctx.fillRect(c + Math.cos(p.angle) * pr - dot / 2, c + Math.sin(p.angle) * pr - dot / 2, dot, dot);
-        }
-        ctx.globalAlpha = 1;
-      }
-
-      // Nucleus
-      const pulse = 1 + 0.07 * Math.sin(t * 0.003);
-      const nr = S * 0.11 * pulse * (1 - 0.2 * s.contraction) * (1 + s.flare * 0.5);
-      const glowA = 0.55 + s.energy * 0.4 + s.flare * 0.3;
-      const nucleus = ctx.createRadialGradient(c, c, 0, c, c, nr);
-      nucleus.addColorStop(0, rgba(mixRgb(P, WHITE, 0.75), Math.min(1, glowA)));
-      nucleus.addColorStop(0.35, rgba(P, glowA * 0.6));
-      nucleus.addColorStop(1, rgba(P, 0));
-      ctx.fillStyle = nucleus;
-      ctx.fillRect(c - nr, c - nr, nr * 2, nr * 2);
+      // Centre square: blinks hard while working, one bright flash when resolved.
+      const working = ph === 'thinking' || ph === 'planned' || ph === 'streaming' || ph === 'idle';
+      const lit = !working || Math.floor(t / 450) % 2 === 0;
+      const half = S * 0.04 * (1 - 0.15 * s.contraction) * (1 + s.flare * 0.9);
+      ctx.fillStyle = rgba(mixRgb(P, WHITE, 0.55 + s.flare * 0.4), lit ? 1 : 0.3);
+      ctx.fillRect(c - half, c - half, half * 2, half * 2);
     };
 
     if (reduced) {

@@ -1,21 +1,28 @@
 import { useId, type CSSProperties, type ReactElement } from 'react';
 import type { SceneItem } from '../../../domain/Scene';
+import { useI18n } from '../../../i18n/I18nContext';
 import { staggerIndex } from '../../hooks/useCountUp';
-import { chartReadsAsLine, moduleItems } from './items';
+import { axisTicks, chartChange, chartExtremes, chartReadsAsLine, moduleItems, showsPointMarkers } from './items';
 import { ListModule } from './kinds';
 import type { ModuleRendererProps } from './registry';
 import styles from './ChartModule.module.css';
 
 /*
  * Single-series chart. `weight` (0-100, relative) sets geometry; `value` is the
- * real number and is shown as text only, never parsed. Short ordinal labels with
- * five or more points read as a line; everything else as horizontal bars, which
- * reflow on narrow screens. A `variant` replaces that guess: the model's is taken
- * as given, and the card fallback only assigns a line or area where the guess
- * would have drawn one.
+ * real number and is shown as text. The one place it is parsed is the line's
+ * first-to-last change readout, which is left out when the values do not read
+ * as numbers in one unit. Short ordinal labels with five or more points read as
+ * a line; everything else as horizontal bars, which reflow on narrow screens. A
+ * `variant` replaces that guess: the model's is taken as given, and the card
+ * fallback only assigns a line or area where the guess would have drawn one.
+ *
+ * A line holds up to 60 points (a few years of monthly closes): its x labels are
+ * thinned to five, and past 16 points only the lowest, highest and last points
+ * keep a marker.
  */
 
 type Point = SceneItem & { weight: number };
+type Mark = 'min' | 'max' | 'last';
 
 const LINE_H = 40;
 /** Horizontal inset, in plot percent, so the 10 px end marker stays inside the plot box. */
@@ -38,7 +45,10 @@ function Dots({ points }: { points: Point[] }) {
             <svg className={styles.barSvg} height="12" role="img" aria-label={p.value ? `${p.label}: ${p.value}` : p.label}>
               <rect className={styles.barTrack} x="0" y="5.5" width="100%" height="1" />
               <rect className={styles.barMark} x="0" y="5" width={`${w.toFixed(2)}%`} height="2" />
-              <circle className={styles.dotMark} cx={`${w.toFixed(2)}%`} cy="6" r="5" />
+              {/* Square like every marker in the system; nested so the offset is in px while x is in %. */}
+              <svg x={`${w.toFixed(2)}%`} y="0" overflow="visible">
+                <rect className={styles.dotMark} x="-5" y="1" width="10" height="10" />
+              </svg>
             </svg>
           </li>
         );
@@ -58,7 +68,7 @@ function Bars({ points }: { points: Point[] }) {
             <span className={styles.barValue}>{p.value ?? ''}</span>
             <svg className={styles.barSvg} height="10" role="img" aria-label={p.value ? `${p.label}: ${p.value}` : p.label}>
               <rect className={styles.barTrack} x="0" y="4.5" width="100%" height="1" />
-              <rect className={styles.barMark} x="0" y="0" width={`${w.toFixed(2)}%`} height="10" rx="3" />
+              <rect className={styles.barMark} x="0" y="0" width={`${w.toFixed(2)}%`} height="10" />
             </svg>
           </li>
         );
@@ -68,6 +78,7 @@ function Bars({ points }: { points: Point[] }) {
 }
 
 function Line({ points, filled = false }: { points: Point[]; filled?: boolean }) {
+  const { t } = useI18n();
   const n = points.length;
   // Interpolated into a url(#...) reference, so it is reduced to characters that
   // are always valid in a fragment identifier whatever React's id format is.
@@ -78,11 +89,21 @@ function Line({ points, filled = false }: { points: Point[]; filled?: boolean })
   }));
   const line = coords.map(c => `${c.x.toFixed(2)},${c.y.toFixed(2)}`).join(' ');
   const area = `${coords[0].x.toFixed(2)},${LINE_H} ${line} ${coords[n - 1].x.toFixed(2)},${LINE_H}`;
-  const peak = points.reduce((best, p, i) => (p.weight > points[best].weight ? i : best), 0);
-  const labelIdx = Array.from(new Set([0, Math.floor((n - 1) / 2), n - 1]));
+  const { min, max } = chartExtremes(points);
+  const last = n - 1;
+  const markOf = (i: number): Mark | undefined => (i === last ? 'last' : i === max ? 'max' : i === min ? 'min' : undefined);
+  const dense = !showsPointMarkers(n);
+  const marked = dense ? Array.from(new Set([min, max, last])).sort((a, b) => a - b) : coords.map((_, i) => i);
+  const ticks = axisTicks(n);
+  const change = n > 1 ? chartChange(points[0].value, points[last].value) : null;
+  const readouts: Array<{ mark: Mark; index: number }> = [
+    { mark: 'min', index: min },
+    { mark: 'max', index: max },
+    { mark: 'last', index: last },
+  ];
 
   return (
-    <figure className={styles.lineFigure} data-variant={filled ? 'area' : undefined}>
+    <figure className={styles.lineFigure} data-variant={filled ? 'area' : undefined} data-dense={dense ? 'true' : undefined}>
       <div className={styles.plot}>
         <div className={styles.plotInner}>
         <svg className={styles.lineSvg} viewBox={`0 0 100 ${LINE_H}`} preserveAspectRatio="none" aria-hidden="true">
@@ -105,32 +126,62 @@ function Line({ points, filled = false }: { points: Point[]; filled?: boolean })
           <polygon className={styles.area} points={area} />
           <polyline className={styles.stroke} points={line} vectorEffect="non-scaling-stroke" clipPath={`url(#${clipId})`} />
         </svg>
-        {coords.map((c, i) => (
+        {marked.map(i => (
           <span
             key={i}
-            className={i === peak || i === n - 1 ? styles.markerStrong : styles.marker}
-            style={{ left: `${c.x}%`, top: `${(c.y / LINE_H) * 100}%`, '--i': i } as CSSProperties}
+            className={markOf(i) ? styles.markerStrong : styles.marker}
+            data-mark={markOf(i)}
+            style={{ left: `${coords[i].x}%`, top: `${(coords[i].y / LINE_H) * 100}%`, '--i': i } as CSSProperties}
           />
         ))}
-        {points[peak].value ? (
+        {points[max].value ? (
           <span
             className={styles.callout}
             // Near an edge the label anchors to that edge instead of straddling it.
-            data-edge={coords[peak].x > 70 ? 'end' : coords[peak].x < 30 ? 'start' : 'mid'}
-            style={{ left: `${coords[peak].x}%`, top: `${(coords[peak].y / LINE_H) * 100}%` }}
+            data-edge={coords[max].x > 70 ? 'end' : coords[max].x < 30 ? 'start' : 'mid'}
+            style={{ left: `${coords[max].x}%`, top: `${(coords[max].y / LINE_H) * 100}%` }}
           >
-            {points[peak].value}
+            {points[max].value}
           </span>
         ) : null}
         </div>
       </div>
       <div className={styles.axis} aria-hidden="true">
-        {labelIdx.map(i => (
-          <span key={i} className={styles.tick} style={{ left: `${coords[i].x}%` }} data-edge={i === 0 ? 'start' : i === n - 1 ? 'end' : 'mid'}>
+        {ticks.map((i, k) => (
+          <span
+            key={i}
+            className={styles.tick}
+            style={{ left: `${coords[i].x}%` }}
+            data-edge={i === 0 ? 'start' : i === n - 1 ? 'end' : 'mid'}
+            // Every other inner label gives way first when the card is narrow.
+            data-minor={k > 0 && k < ticks.length - 1 && k % 2 === 1 ? 'true' : undefined}
+          >
             {points[i].label}
           </span>
         ))}
       </div>
+      {n > 1 ? (
+        <dl className={styles.readout}>
+          {readouts.map(({ mark, index }) => (points[index].value ? (
+            <div key={mark} className={styles.readoutItem} data-mark={mark}>
+              <dt>{t(`chart.${mark}`)}</dt>
+              <dd>
+                {points[index].value}
+                <span className={styles.readoutAt}>{points[index].label}</span>
+              </dd>
+            </div>
+          ) : null))}
+          {change ? (
+            <div className={styles.readoutItem} data-mark="change" data-direction={change.direction}>
+              <dt>{t('chart.change')}</dt>
+              <dd>
+                {change.absolute}
+                {change.percent ? <span className={styles.readoutAt}>{change.percent}</span> : null}
+              </dd>
+            </div>
+          ) : null}
+        </dl>
+      ) : null}
       <ul className="visually-hidden">
         {points.map((p, i) => <li key={i}>{p.value ? `${p.label}: ${p.value}` : p.label}</li>)}
       </ul>

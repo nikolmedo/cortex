@@ -16,7 +16,10 @@ html {
 
 body {
   min-height: 100dvh;
-  background: radial-gradient(120% 80% at 50% 0%, var(--ink-1) 0%, var(--ink-0) 60%) fixed, var(--ink-0);
+  /* A survey grid: one faint dot every 24px, nothing else behind the content. */
+  background:
+    radial-gradient(circle at 1px 1px, rgb(216 228 234 / 0.06) 1px, transparent 1.5px) 0 0 / 24px 24px fixed,
+    var(--ink-0);
   font-family: var(--font-body);
   font-size: var(--fs-body);
   line-height: var(--lh-body);
@@ -49,25 +52,24 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--scene-primary) 80%, white);
-  outline-offset: 2px;
+  outline: 1px solid var(--paper);
+  outline-offset: 3px;
 }
 
 ::selection {
-  background: color-mix(in srgb, var(--scene-primary) 35%, transparent);
-  color: var(--text-hi);
+  background: var(--paper);
+  color: var(--paper-ink);
 }
 
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: var(--line-strong);
-  border-radius: 8px;
 }
 
 .visually-hidden {
@@ -208,6 +210,24 @@ a {
   }
   to {
     transform: translateX(100%);
+  }
+}
+
+/* tagIn: an inverted tag printing itself left to right. The one signature
+   entrance; used for the turn title tag and nowhere else by default. */
+@keyframes tagIn {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* A live marker: hard on/off, never a fade. */
+@keyframes blink {
+  50% {
+    opacity: 0;
   }
 }
 

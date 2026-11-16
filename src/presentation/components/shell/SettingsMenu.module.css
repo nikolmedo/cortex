@@ -1,38 +1,63 @@
+/* Settings: a square hairline panel over a flat dark backdrop. No blur, no shadow. */
+
 .backdrop {
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay);
-  background: rgb(5 7 12 / 0.5);
-  animation: fadeIn var(--dur-fast) var(--ease) both;
+  background: rgb(6 8 10 / 0.88);
+  animation: fadeIn var(--dur-fast) linear both;
 }
 
 .panel {
   position: fixed;
   z-index: var(--z-overlay);
-  top: calc(var(--top-h) + env(safe-area-inset-top) + 4px);
+  top: calc(var(--top-h) + env(safe-area-inset-top) + var(--sp-2));
   right: max(var(--gutter), env(safe-area-inset-right));
   width: min(360px, calc(100% - 2 * var(--gutter)));
   padding: var(--sp-5);
-  border-radius: var(--r-lg);
   background: var(--surface-strong);
   border: 1px solid var(--line-strong);
-  backdrop-filter: var(--blur);
-  -webkit-backdrop-filter: var(--blur);
-  box-shadow: 0 30px 80px -30px rgb(0 0 0 / 0.8);
   animation: materialize var(--dur-base) var(--ease) both;
+}
+
+/* Corner brackets, as on every frame. */
+.panel::before {
+  --b: var(--signal);
+  content: '';
+  position: absolute;
+  inset: -1px;
+  background:
+    linear-gradient(var(--b), var(--b)) top left / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) top left / 1px var(--tick),
+    linear-gradient(var(--b), var(--b)) top right / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) top right / 1px var(--tick),
+    linear-gradient(var(--b), var(--b)) bottom left / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) bottom left / 1px var(--tick),
+    linear-gradient(var(--b), var(--b)) bottom right / var(--tick) 1px,
+    linear-gradient(var(--b), var(--b)) bottom right / 1px var(--tick);
+  background-repeat: no-repeat;
+  pointer-events: none;
 }
 
 .head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin: -8px -10px 4px 0;
+  margin: calc(-1 * var(--sp-2)) calc(-1 * var(--sp-2)) var(--sp-4) 0;
 }
 
+/* The inverted title tag. */
 .title {
-  font-size: var(--fs-h3);
+  padding: 0 8px;
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-family: var(--font-display);
+  font-stretch: var(--tag-stretch);
+  font-size: var(--fs-small);
   font-weight: 600;
-  color: var(--text-hi);
+  letter-spacing: var(--tag-tracking);
+  line-height: 24px;
+  text-transform: uppercase;
 }
 
 .close {
@@ -40,13 +65,14 @@
   place-items: center;
   width: var(--hit);
   height: var(--hit);
-  border-radius: 50%;
+  border: 1px solid var(--line-strong);
   color: var(--text-dim);
 }
 
 .close:hover {
-  color: var(--text-hi);
-  background: var(--line);
+  border-color: var(--paper);
+  background: var(--paper);
+  color: var(--paper-ink);
 }
 
 .group + .group {
@@ -54,38 +80,56 @@
 }
 
 .groupLabel {
-  margin-bottom: 8px;
-  font-size: var(--fs-small);
+  margin-bottom: var(--sp-2);
+  font-family: var(--font-mono);
+  font-size: var(--fs-micro);
+  letter-spacing: var(--readout-tracking);
+  text-transform: uppercase;
   color: var(--text-dim);
 }
 
 .segment {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 4px;
-  padding: 4px;
-  border-radius: 14px;
+  border: 1px solid var(--line-strong);
   background: var(--ink-0);
-  border: 1px solid var(--line);
 }
 
 .option {
   min-height: var(--hit);
-  border-radius: 10px;
   font-size: var(--fs-small);
-  color: var(--text-dim);
-  transition: color var(--dur-fast) var(--ease), background-color var(--dur-fast) var(--ease);
+  color: var(--text);
+}
+
+.option + .option {
+  border-left: 1px solid var(--line-strong);
+}
+
+/* Items invert on hover; the chosen one stays a solid paper block. */
+.option:hover {
+  background: var(--paper);
+  color: var(--paper-ink);
 }
 
 .option[aria-checked='true'] {
-  color: var(--text-hi);
-  background: var(--surface-raised);
-  box-shadow: inset 0 0 0 1px var(--line-strong);
+  background: var(--paper);
+  color: var(--paper-ink);
+  font-weight: 600;
+}
+
+.option:focus-visible {
+  outline-offset: -4px;
+  outline-color: var(--signal);
+}
+
+.option[aria-checked='true']:focus-visible,
+.option:hover:focus-visible {
+  outline-color: var(--paper-ink);
 }
 
 .hint {
-  margin-top: 8px;
+  margin-top: var(--sp-2);
   font-size: var(--fs-caption);
   line-height: 1.45;
-  color: var(--text-faint);
+  color: var(--text-dim);
 }

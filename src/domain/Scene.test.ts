@@ -17,6 +17,8 @@ import {
   moduleVariant,
   normalizeHex,
   safeHttpsUrl,
+  sanitizeAppletEvent,
+  sanitizeAppletHtml,
   sanitizeCode,
   sanitizePreface,
   sanitizeScene,
@@ -332,6 +334,74 @@ describe('sanitizePreface', () => {
     expect(sanitizePreface({ intent: 'howto', title: 'P' })?.layout).toBe('sequence');
     expect(sanitizePreface({ intent: 'comparison', title: 'P' })?.layout).toBe('split');
     expect(sanitizePreface({})?.layout).toBe('focus');
+  });
+
+  it('carries no applet key when the router asked for none', () => {
+    for (const applet of [undefined, null, 'picker', 42, [], {}, { title: '', brief: 'b' }, { title: 't', brief: '   ' }]) {
+      const preface = sanitizePreface({ intent: 'howto', title: 'P', applet });
+      expect(preface).not.toBeNull();
+      expect(Object.keys(preface!)).toEqual(['intent', 'title', 'layout', 'mood', 'palette', 'plan']);
+    }
+  });
+
+  it('keeps an applet brief, sanitised and capped, as the last key', () => {
+    const preface = sanitizePreface({
+      intent: 'howto',
+      title: 'P',
+      applet: { title: `Colour <picker>${NUL}`, brief: `  HSL   sliders\nand ${'x'.repeat(500)}`, extra: 1 },
+    });
+    expect(Object.keys(preface!)).toEqual(['intent', 'title', 'layout', 'mood', 'palette', 'plan', 'applet']);
+    expect(preface!.applet!.title).toBe(`Colour ${LSAQ}picker${RSAQ}`);
+    expect(preface!.applet!.brief.startsWith('HSL sliders and x')).toBe(true);
+    expect(preface!.applet!.brief.length).toBeLessThanOrEqual(LIMITS.appletBrief);
+    expect(Object.keys(preface!.applet!)).toEqual(['title', 'brief']);
+  });
+});
+
+describe('sanitizeAppletHtml', () => {
+  it('returns markup untouched, angle brackets and indentation included', () => {
+    const html = '<style>\n  .a > b { color: var(--text); }\n</style>\n<div class="x">\n\t<script>if (1 < 2) go();</script>\n</div>';
+    expect(sanitizeAppletHtml(html)).toBe(html);
+  });
+
+  it('strips control characters except tab and newline, normalising CRLF', () => {
+    expect(sanitizeAppletHtml(`<p>a${NUL}b${BEL}</p>\r\n\t<p>c</p>\r`)).toBe('<p>ab</p>\n\t<p>c</p>');
+  });
+
+  it('rejects non-strings, blank input and oversize markup instead of truncating it', () => {
+    for (const raw of [undefined, null, 42, {}, [], '', '   \n\t ']) expect(sanitizeAppletHtml(raw)).toBeNull();
+    expect(sanitizeAppletHtml('x'.repeat(LIMITS.appletHtml))).toBe('x'.repeat(LIMITS.appletHtml));
+    expect(sanitizeAppletHtml('x'.repeat(LIMITS.appletHtml + 1))).toBeNull();
+  });
+});
+
+describe('sanitizeAppletEvent', () => {
+  it('reads the three states, dropping html everywhere but ready', () => {
+    expect(sanitizeAppletEvent({ status: 'pending', title: 'Picker', html: '<p>x</p>' })).toEqual({ status: 'pending', title: 'Picker' });
+    expect(sanitizeAppletEvent({ status: 'ready', title: 'Picker', html: '<p>x</p>' })).toEqual({ status: 'ready', title: 'Picker', html: '<p>x</p>' });
+    expect(sanitizeAppletEvent({ status: 'failed', title: 'Picker' })).toEqual({ status: 'failed', title: 'Picker' });
+  });
+
+  it('turns a ready event whose html fails validation into failed', () => {
+    for (const html of [undefined, '', 42, 'x'.repeat(LIMITS.appletHtml + 1)]) {
+      expect(sanitizeAppletEvent({ status: 'ready', title: 'Picker', html })).toEqual({ status: 'failed', title: 'Picker' });
+    }
+  });
+
+  it('sanitises the title and ignores anything that is not an applet event', () => {
+    expect(sanitizeAppletEvent({ status: 'pending', title: `<b>${'t'.repeat(200)}` })!.title.length).toBeLessThanOrEqual(LIMITS.appletTitle);
+    expect(sanitizeAppletEvent({ status: 'pending' })).toEqual({ status: 'pending', title: '' });
+    for (const raw of [null, 'ready', 42, [], {}, { status: 'exploded', title: 'x' }]) expect(sanitizeAppletEvent(raw)).toBeNull();
+  });
+});
+
+describe('chart point cap', () => {
+  it('keeps up to 60 points of a time series and drops the rest', () => {
+    expect(LIMITS.maxChartPoints).toBe(60);
+    const items = Array.from({ length: 75 }, (_, i) => ({ label: `M${i}`, value: `${i}`, weight: i }));
+    const scene = sanitizeScene({ title: 'T', modules: [{ category: 'C', kind: 'chart', items }] });
+    expect(scene.modules[0].items).toHaveLength(60);
+    expect(scene.modules[0].items![59]).toEqual({ label: 'M59', value: '59', weight: 59 });
   });
 });
 
