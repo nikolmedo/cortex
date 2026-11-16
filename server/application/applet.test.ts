@@ -105,16 +105,16 @@ describe('buildAppletPrompt', () => {
 });
 
 describe('buildMainPrompt with an applet in flight', () => {
-  it('tells the scene that a tool is shown above it and the answer should stay short', () => {
+  it('tells the scene that an interface is shown above it and the answer should stay short', () => {
     const prompt = buildMainPrompt('css color picker', { ...PREFACE, applet: BRIEF }, null);
-    expect(prompt).toContain('INTERACTIVE TOOL');
+    expect(prompt).toContain('INTERACTIVE INTERFACE');
     expect(prompt).toContain(`"${BRIEF.title}"`);
-    expect(prompt).toMatch(/do not draw the tool/i);
+    expect(prompt).toMatch(/do not rebuild it with modules/i);
   });
 
-  it('is unchanged when the router asked for no tool', () => {
+  it('is unchanged when the router asked for no interface', () => {
     const prompt = buildMainPrompt('why is the sky blue', PREFACE, 'notes');
-    expect(prompt).not.toContain('INTERACTIVE TOOL');
+    expect(prompt).not.toContain('INTERACTIVE INTERFACE');
     const parts = prompt.split('\n\n');
     expect(parts).toHaveLength(3);
     expect(parts[0]).toBe('QUESTION: why is the sky blue');

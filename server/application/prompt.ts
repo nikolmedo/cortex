@@ -91,8 +91,8 @@ export function buildMainPrompt(query: string, preface: ScenePreface | null, bri
     );
     if (preface.applet) {
       parts.push(
-        `INTERACTIVE TOOL: a working "${preface.applet.title}" is being built separately and is shown above your answer. `
-        + 'Do not draw the tool with modules and do not describe its controls one by one. Keep the answer short: the headline says what the tool is for, '
+        `INTERACTIVE INTERFACE: a working "${preface.applet.title}" is being built separately and is shown above your answer. `
+        + 'Do not rebuild it with modules and do not describe its controls one by one. Keep the answer short: the headline says what the interface is for, '
         + 'the body explains how to use it and the concepts behind it, and 2 to 3 modules hold reference material (formats, formulas, terms, tips). '
         + 'This overrides the module minimums in your instructions.',
       );
@@ -128,9 +128,16 @@ FIELDS
 - palette: { "primary", "secondary", "accent" } as #RRGGBB
 - plan: exactly 3 research steps specific to THIS question, each at most 60 characters, written as what the engine is doing right now. Name the concrete things involved; never generic steps like "Searching the web" or "Analyzing data".
   Example for "Why does ice float?": ["Comparing densities of ice and water", "Tracing hydrogen bonds in the crystal lattice", "Checking the 4 °C density maximum"]
-- applet: OPTIONAL. Include it only when the user asks for something to operate rather than to read: a picker, calculator, converter, generator, timer, simulator, playground, visual editor or a small game-like tool. Then the engine builds that tool as a working interactive widget beside the answer. { "title": the tool's name (max ${LIMITS.appletTitle} characters), "brief": what it must let the user do, naming its controls, inputs and outputs (max ${LIMITS.appletBrief} characters) }.
-  Omit the field entirely for every informational question, including "show me a chart of X", "how has X changed", "explain", "compare" and "who is".
+- applet: OPTIONAL. The engine can build one bespoke interactive interface for this question, written from scratch as a working widget shown above the answer. Include the field whenever such an interface would serve the user better than text, standard charts and lists. It is not limited to a fixed set of tools; any kind of content qualifies, for example:
+  - something to operate: a picker, calculator, converter, generator, timer, planner, editor, playground;
+  - something to explore: a simulation, an interactive diagram or model, a map-like or spatial layout, a reference board such as a periodic table, a keyboard or fretboard;
+  - something to play or practise: a quiz, flashcards, a small game, a trainer;
+  - a custom visualisation the standard modules cannot draw (a tree, a network, an orbit, a state machine, an animation of a process).
+  { "title": the interface's name (max ${LIMITS.appletTitle} characters), "brief": what it must show and let the user do, naming its parts, controls, inputs and outputs (max ${LIMITS.appletBrief} characters) }.
+  Omit the field when the answer is fully served by prose, a standard chart, a list, a table or a comparison: "how has X changed", "show me a chart of X", "explain", "compare", "who is", "latest on". A time series is a chart module, never an applet.
   Example for "CSS color picker": { "title": "CSS colour picker", "brief": "Hue, saturation, lightness and alpha sliders, a hex input and a live swatch; copyable hex, rgb(), hsl() and CSS custom property output." }
+  Example for "How does a binary search work?": { "title": "Binary search stepper", "brief": "A sorted row of numbers with low, mid and high markers; a target input and step, back and reset buttons that show each comparison and the shrinking range." }
+  Example for "Quiz me on European capitals": { "title": "European capitals quiz", "brief": "One country at a time with four capital choices, immediate right or wrong feedback, a running score and a restart button." }
   Example for "How has Tesla stock changed since 2020?": no applet field.
 
 LANGUAGE: title, plan and the applet title and brief are written in ${LANG_NAMES[lang]}. Enum values stay exactly as listed.`;

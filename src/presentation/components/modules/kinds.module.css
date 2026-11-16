@@ -183,11 +183,13 @@
   font-family: var(--font-display);
   font-stretch: var(--figure-stretch, 82%);
   font-weight: var(--figure-weight, 500);
-  font-size: var(--fs-figure);
+  /* Scales with the card (the nearest container) so a figure such as "$18.40"
+     fits its cell in a three-column grid instead of breaking mid-number. */
+  font-size: clamp(1.5rem, 7.5cqi, var(--fs-figure));
   line-height: 1.05;
   color: var(--text-hi);
   font-variant-numeric: tabular-nums;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
 }
 
 /* The unit caption under a figure: small mono capitals. */
@@ -920,13 +922,19 @@
 }
 
 .stats[data-variant='tiles'] {
+  /* Each tile draws its own outline; the 1px gap makes neighbours share it.
+     A grid-wide fill would paint the empty cells of an unfinished last row. */
   gap: 1px;
-  border: 1px solid var(--line-strong);
-  background: var(--line-strong);
-  overflow: hidden;
+  padding: 1px;
+}
+
+/* Tiles sit three or four to a row, so their figures take a smaller share of the card. */
+.stats[data-variant='tiles'] .figure {
+  font-size: clamp(1.25rem, 4.6cqi, var(--fs-figure));
 }
 
 .stats[data-variant='tiles'] .stat {
+  outline: 1px solid var(--line-strong);
   flex-direction: column;
   align-items: stretch;
   gap: 10px;
