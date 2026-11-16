@@ -1,38 +1,44 @@
 /*
- * The applet block: a hairline frame with signal-coloured corner brackets (the
- * same gesture as ModuleCard's .card::before), a toolbar whose title is an
- * inverted tag, and the sandboxed frame flush beneath it. No radius, no wash,
- * no glow.
+ * The applet block: a soft frame (the tab corner top-left) with a lit ring in
+ * the signal hue, a toolbar whose title is an inverted pill, and the sandboxed
+ * frame flush beneath it. Only the host is styled here; the generated document
+ * inside the iframe is themed by appletDocument.ts. The frame clips its content
+ * to the radius, so the iframe's corners follow it.
  */
 .applet {
   position: relative;
   margin-block: var(--sp-5);
-  border: 1px solid var(--line);
+  border-radius: var(--frame);
+  overflow: clip;
   background: var(--surface);
+  box-shadow:
+    var(--sheen),
+    var(--shadow-raise);
 }
 
+/* The lit ring doubles as the border: painted over the edge, strongest at the tab corner. */
 .applet::before {
-  --b: color-mix(in srgb, var(--signal) 70%, var(--line-strong));
+  --b: color-mix(in srgb, var(--signal) 75%, transparent);
   content: '';
   position: absolute;
-  inset: -1px;
-  background:
-    linear-gradient(var(--b), var(--b)) top left / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) top left / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) top right / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) top right / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) bottom left / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) bottom left / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) bottom right / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) bottom right / 1px var(--tick);
-  background-repeat: no-repeat;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, var(--b), var(--line-strong) 30%, var(--line) 72%, color-mix(in srgb, var(--signal) 28%, transparent));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
   pointer-events: none;
   z-index: 1;
 }
 
 .applet[data-state='failed']::before,
 .applet[data-state='stopped']::before {
-  --b: var(--line-strong);
+  background: var(--line-strong);
 }
 
 .bar {
@@ -45,7 +51,8 @@
 }
 
 .tag {
-  padding: 3px var(--sp-2);
+  padding: 3px 12px;
+  border-radius: var(--r-pill);
   background: var(--paper);
   color: var(--paper-ink);
   font-family: var(--font-mono);
@@ -76,9 +83,9 @@
   align-items: center;
   gap: 6px;
   min-height: 32px;
-  padding: 0 var(--sp-3);
+  padding: 0 14px;
   border: 1px solid var(--line-strong);
-  border-radius: 0;
+  border-radius: var(--r-pill);
   background: transparent;
   color: var(--text-hi);
   font-family: var(--font-mono);
@@ -86,10 +93,29 @@
   letter-spacing: var(--tag-tracking);
   text-transform: uppercase;
   cursor: pointer;
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background-color var(--dur-fast) linear,
+    border-color var(--dur-fast) linear,
+    color var(--dur-fast) linear;
+}
+
+.button svg {
+  transition: transform var(--dur-base) var(--ease-spring);
 }
 
 .button:hover {
-  border-color: var(--signal);
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--signal) 60%, var(--line-strong));
+  background: var(--signal-soft);
+}
+
+.button:hover svg {
+  transform: rotate(-90deg);
+}
+
+.button:active {
+  transform: scale(0.97);
 }
 
 .button[aria-expanded='true'] {
@@ -98,9 +124,9 @@
   color: var(--paper-ink);
 }
 
+/* The global ring takes over; the pill keeps its own shape under it. */
 .button:focus-visible {
-  outline: 1px solid var(--paper);
-  outline-offset: 3px;
+  border-radius: var(--r-pill);
 }
 
 @media (pointer: coarse) {
@@ -128,33 +154,26 @@
   overflow: hidden;
 }
 
-/* A single hairline sweeping down the frame while the tool is generated. */
+/* A soft band of light travelling across the frame while the tool is generated.
+   It only runs when motion is allowed; otherwise it rests off to the left. */
 .scan {
   position: absolute;
-  inset-inline: 0;
-  top: 0;
-  height: 1px;
-  background: color-mix(in srgb, var(--signal) 60%, transparent);
-  opacity: 0;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 25%, color-mix(in srgb, var(--signal) 9%, rgb(255 255 255 / 0.04)) 50%, transparent 75%);
+  transform: translateX(-100%);
+  pointer-events: none;
 }
 
 @media (prefers-reduced-motion: no-preference) {
   .scan {
-    opacity: 1;
-    animation: sweep 2.4s var(--ease-step, linear) infinite;
-  }
-}
-
-@keyframes sweep {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(320px);
+    animation: shimmer 2.6s ease-in-out infinite;
   }
 }
 
 .status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sp-2);
   font-family: var(--font-mono);
   font-size: var(--fs-small);
   letter-spacing: var(--readout-tracking);
@@ -162,21 +181,14 @@
   color: var(--text-hi);
 }
 
+/* A dot that breathes beside the status, in the signal hue. */
 .status::after {
-  content: '_';
-  color: var(--signal);
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  .status::after {
-    animation: blink 1s steps(1, end) infinite;
-  }
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--signal);
+  animation: pulse 1.6s ease-in-out infinite;
 }
 
 .hint {
@@ -206,6 +218,5 @@
 }
 
 .source:focus-visible {
-  outline: 1px solid var(--paper);
-  outline-offset: -1px;
+  outline-offset: -3px;
 }

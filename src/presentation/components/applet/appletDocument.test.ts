@@ -51,11 +51,11 @@ describe('buildAppletDocument', () => {
     expect(APPLET_THEME['--font-mono']).not.toMatch(/JetBrains|url\(/);
   });
 
-  it('sets the base styles: dark scheme, border-box, square controls and a visible focus ring', () => {
+  it('sets the base styles: dark scheme, border-box, soft controls and a visible focus ring', () => {
     expect(doc).toContain('color-scheme:dark');
     expect(doc).toContain('box-sizing:border-box');
-    expect(doc).toContain('border-radius:0');
-    expect(doc).toContain(':focus-visible{outline:1px solid var(--paper);outline-offset:3px}');
+    expect(doc).toContain('border-radius:8px');
+    expect(doc).toContain(':focus-visible{outline:2px solid var(--signal);outline-offset:3px}');
   });
   it('pins the base URL to the frame itself, ahead of the policy that forbids later base tags', () => {
     // A srcdoc document inherits the host page URL as its base, so an

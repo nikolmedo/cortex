@@ -1,11 +1,12 @@
 /*
  * Cortex design tokens: a surveillance-terminal system.
  *
- * Near-monochrome on a neutral void. Structure is drawn with hairlines and
- * square corners; labels are inverted tags (--paper on --paper-ink). Colour is
- * information: one signal hue per scene (--scene-primary, set by SceneTheme)
- * marks what is live or selected, and --danger / --warn / --ok mark valence.
- * Nothing glows and nothing is rounded. See docs/agents/design-system.md.
+ * A terminal HUD with soft edges. The void, the hairlines, the mono readouts
+ * and the inverted tags stay; frames are rounded and lit, surfaces have depth,
+ * and things respond to the pointer. One corner of a frame stays tight (--r-tab):
+ * that is where its tag docks, and it is what keeps a card from reading as a
+ * generic rounded tile. Colour: the scene's signal hue leads, its accent joins
+ * it in fills (--signal-grad). See docs/agents/design-system.md.
  */
 
 /* Registered so palette changes crossfade instead of snapping. */
@@ -23,6 +24,12 @@
   syntax: '<color>';
   inherits: true;
   initial-value: #e6ecee;
+}
+/* Angle of the travelling light on a focused frame (global.css `beam`). */
+@property --beam {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
 }
 
 :root {
@@ -57,6 +64,7 @@
   --scene-secondary: #b4c0c6;
   --scene-accent: #e6ecee;
   --signal: var(--scene-primary);
+  --signal-soft: color-mix(in srgb, var(--signal) 14%, transparent);
 
   /* Type */
   --font-body: 'Barlow', system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -91,12 +99,24 @@
   --top-h: 48px;
   --hit: 44px;
 
-  /* Shape: square. The radius tokens stay so nothing needs renaming. */
-  --r-sm: 0px;
-  --r-md: 0px;
-  --r-lg: 0px;
-  --r-pill: 0px;
-  --blur: none;
+  /* Shape: soft, with one tight corner per frame (top-left, where the tag docks). */
+  --r-tab: 5px;
+  --r-sm: 8px;
+  --r-md: 14px;
+  --r-lg: 22px;
+  --r-pill: 999px;
+  --blur: blur(16px) saturate(1.25);
+  /* Frame radius recipe: tight tab corner, then three soft ones. */
+  --frame: var(--r-tab) var(--r-lg) var(--r-lg) var(--r-lg);
+  --frame-sm: var(--r-tab) var(--r-md) var(--r-md) var(--r-md);
+
+  /* Depth and light */
+  --sheen: inset 0 1px 0 rgb(255 255 255 / 0.05);
+  --shadow-raise: 0 18px 44px -28px rgb(0 0 0 / 0.9);
+  --shadow-lift: 0 26px 60px -30px rgb(0 0 0 / 0.95);
+  /* The scene's two hues as one fill: bars, chart strokes, the active edge. */
+  --signal-grad: linear-gradient(90deg, var(--signal), color-mix(in oklab, var(--signal) 45%, var(--scene-accent)));
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.5, 1);
   /* Corner bracket arm length and the diagonal cut of a notched frame */
   --tick: 9px;
   --cut: 12px;

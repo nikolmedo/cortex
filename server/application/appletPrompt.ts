@@ -20,7 +20,7 @@ const THEME_ROLES: Record<AppletThemeVar, string> = {
   '--text': 'body text',
   '--text-hi': 'headings, values and results',
   '--text-dim': 'captions, hints and units',
-  '--paper': 'inverted label background and the focus ring',
+  '--paper': 'inverted label background',
   '--paper-ink': 'text on --paper',
   '--signal': 'the one accent: selected states, slider thumbs, primary button border',
   '--danger': 'errors and invalid input',
@@ -60,7 +60,7 @@ LAYOUT AND ACCESS
 THEME
 The host defines these CSS custom properties on :root. Style everything with them; the only other colours allowed are ones the content itself needs (a picked colour, a plotted series, categories in a diagram):
 ${themeList}
-Square corners (border-radius: 0), 1px hairline borders in var(--line), small uppercase labels in var(--font-mono), generous spacing, no shadows, no gradients except where the content itself needs one (a hue track), no glow, no blur. The host already sets box-sizing, a 16 px body padding, the body font, the background and the focus ring.
+Soft shapes: panels at border-radius 14px, inputs at 8px, buttons, chips and tracks as pills (999px); the host already rounds native controls. 1px hairline borders in var(--line), small uppercase labels in var(--font-mono), generous spacing. Make it feel alive: transitions of 150 to 250 ms on transform, opacity and colour for hover, press and state changes, and values that update smoothly. No drop shadows, no glow, no blur, and no gradients except where the content itself needs one (a hue track, a filled bar using var(--signal)). The host already sets box-sizing, a 16 px body padding, the body font, the background and the focus ring.
 
 LANGUAGE: every visible text (labels, buttons, hints, messages) is in ${LANG_NAMES[lang]}. Code identifiers stay in English.`;
 }

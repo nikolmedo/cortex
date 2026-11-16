@@ -1,10 +1,16 @@
-/* Settings: a square hairline panel over a flat dark backdrop. No blur, no shadow. */
+/*
+ * Settings: a glass panel over a blurred, dimmed backdrop. The panel is a soft
+ * frame with the tight tab corner and a lit ring; the choices are a pill
+ * track whose thumb slides between them.
+ */
 
 .backdrop {
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay);
-  background: rgb(6 8 10 / 0.88);
+  background: rgb(6 8 10 / 0.58);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   animation: fadeIn var(--dur-fast) linear both;
 }
 
@@ -15,27 +21,34 @@
   right: max(var(--gutter), env(safe-area-inset-right));
   width: min(360px, calc(100% - 2 * var(--gutter)));
   padding: var(--sp-5);
-  background: var(--surface-strong);
-  border: 1px solid var(--line-strong);
+  border-radius: var(--frame);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--signal) 8%, transparent), transparent 140px),
+    color-mix(in srgb, var(--surface-strong) 90%, transparent);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow:
+    var(--sheen),
+    var(--shadow-lift);
+  transform-origin: top right;
   animation: materialize var(--dur-base) var(--ease) both;
 }
 
-/* Corner brackets, as on every frame. */
+/* The lit ring, as on every frame: a gradient painted in the border box only. */
 .panel::before {
-  --b: var(--signal);
   content: '';
   position: absolute;
-  inset: -1px;
-  background:
-    linear-gradient(var(--b), var(--b)) top left / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) top left / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) top right / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) top right / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) bottom left / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) bottom left / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) bottom right / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) bottom right / 1px var(--tick);
-  background-repeat: no-repeat;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--signal) 75%, transparent), var(--line) 30%, var(--line) 72%, color-mix(in srgb, var(--signal) 28%, transparent));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
   pointer-events: none;
 }
 
@@ -46,9 +59,10 @@
   margin: calc(-1 * var(--sp-2)) calc(-1 * var(--sp-2)) var(--sp-4) 0;
 }
 
-/* The inverted title tag. */
+/* The inverted title tag, as a pill. */
 .title {
-  padding: 0 8px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
   background: var(--paper);
   color: var(--paper-ink);
   font-family: var(--font-display);
@@ -66,13 +80,35 @@
   width: var(--hit);
   height: var(--hit);
   border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
   color: var(--text-dim);
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background-color var(--dur-fast) linear,
+    border-color var(--dur-fast) linear,
+    color var(--dur-fast) linear;
+}
+
+.close svg {
+  transition: transform var(--dur-base) var(--ease-spring);
 }
 
 .close:hover {
-  border-color: var(--paper);
-  background: var(--paper);
-  color: var(--paper-ink);
+  background: var(--signal-soft);
+  border-color: color-mix(in srgb, var(--signal) 55%, var(--line-strong));
+  color: var(--text-hi);
+}
+
+.close:hover svg {
+  transform: rotate(90deg);
+}
+
+.close:active {
+  transform: scale(0.94);
+}
+
+.close:focus-visible {
+  border-radius: var(--r-pill);
 }
 
 .group + .group {
@@ -88,43 +124,56 @@
   color: var(--text-dim);
 }
 
+/* The track is a pill; its thumb (::before) slides to whichever option is checked. */
 .segment {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 3px;
   border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
   background: var(--ink-0);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.5);
+}
+
+.segment::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 2);
+  border-radius: var(--r-pill);
+  background: var(--paper);
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+
+.segment:has(.option:nth-child(2)[aria-checked='true'])::before {
+  transform: translateX(100%);
 }
 
 .option {
-  min-height: var(--hit);
+  position: relative;
+  min-height: calc(var(--hit) - 8px);
+  border-radius: var(--r-pill);
   font-size: var(--fs-small);
   color: var(--text);
+  transition: color var(--dur-fast) linear;
 }
 
-.option + .option {
-  border-left: 1px solid var(--line-strong);
-}
-
-/* Items invert on hover; the chosen one stays a solid paper block. */
 .option:hover {
-  background: var(--paper);
-  color: var(--paper-ink);
+  color: var(--text-hi);
 }
 
+/* The chosen option sits on the thumb, so its ink is the dark paper ink. */
 .option[aria-checked='true'] {
-  background: var(--paper);
   color: var(--paper-ink);
   font-weight: 600;
 }
 
 .option:focus-visible {
-  outline-offset: -4px;
-  outline-color: var(--signal);
-}
-
-.option[aria-checked='true']:focus-visible,
-.option:hover:focus-visible {
-  outline-color: var(--paper-ink);
+  border-radius: var(--r-pill);
+  outline-offset: 1px;
 }
 
 .hint {
