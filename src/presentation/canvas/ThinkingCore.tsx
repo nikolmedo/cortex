@@ -5,7 +5,7 @@ import { deviceTier, fitCanvas, subscribeTick } from './ticker';
 
 /**
  * A soft reticle: four arcs that orbit the centre while the answer is being
- * built, three nested rounded-square outlines (one per plan step) and a small
+ * built, three concentric rings (one per plan step) and a small
  * round core that breathes. The orbit speeds up and slows down on an eased
  * curve, never in steps, and a signal arc runs the other way on an inner track.
  * The core has a faint radial tint, no halo.
@@ -38,8 +38,11 @@ const GREY: Rgb = [139, 152, 171];
 const WHITE: Rgb = [255, 255, 255];
 /** The paper tone of an inverted tag, used for the brackets so only the live parts take the signal colour. */
 const PAPER: Rgb = [238, 242, 243];
-/** Half-sizes of the nested outlines as a share of the canvas side, one per plan step. */
-const OUTLINE_HALF = [0.1, 0.17, 0.24];
+/** Radii of the concentric rings as a share of the canvas side, one per plan step.
+ *  Evenly spaced, and clear of the signal arc's track (INNER_TRACK). */
+const OUTLINE_HALF = [0.09, 0.15, 0.21];
+/** Radius of the counter-rotating signal arc, as a share of the outer orbit's. */
+const INNER_TRACK = 0.8;
 const SETTLE_MS = 1100;
 const TAU = Math.PI * 2;
 const QUARTER = Math.PI / 2;
@@ -164,7 +167,7 @@ export function ThinkingCore({ phase, palette, steps, size, reduced, className, 
       ctx.lineCap = 'round';
       ctx.lineJoin = 'round';
 
-      // Nested rounded squares: one per plan step. Pending is a hairline, active
+      // Concentric rings: one per plan step. Pending is a hairline, active
       // runs a travelling dotted trace in the signal colour, done is solid.
       OUTLINE_HALF.forEach((f, i) => {
         const half = S * f;
@@ -178,7 +181,7 @@ export function ThinkingCore({ phase, palette, steps, size, reduced, className, 
         ctx.setLineDash(active ? [0.01, S / 26] : []);
         ctx.lineDashOffset = -t * 0.03;
         ctx.beginPath();
-        ctx.roundRect(c - half, c - half, half * 2, half * 2, half * 0.5);
+        ctx.arc(c, c, half, 0, TAU);
         ctx.stroke();
       });
       ctx.setLineDash([]);
@@ -208,7 +211,7 @@ export function ThinkingCore({ phase, palette, steps, size, reduced, className, 
         ctx.strokeStyle = rgba(P, 0.85 * s.spin);
         ctx.lineWidth = Math.max(1.5, S / 100) * weight * 1.15;
         ctx.beginPath();
-        ctx.arc(0, 0, R * 0.74, -0.45, 0.45);
+        ctx.arc(0, 0, R * INNER_TRACK, -0.45, 0.45);
         ctx.stroke();
         ctx.restore();
       }
