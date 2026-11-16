@@ -1,7 +1,7 @@
 # Cortex: agent index
 
 Answer engine. A Gemini model returns a validated JSON `Scene` (answer + presentation spec); fixed React components render it as a streamed, per-question interface. Questions a standard module cannot express also get a generated interactive "applet", rendered only inside a sandboxed iframe.
-Visual direction: surveillance-terminal HUD (near-monochrome, hairlines, square corners, inverted tags). Never use the name "ctOS", the Watch Dogs logo or game assets in the product.
+Visual direction: surveillance-terminal HUD with soft edges (near-monochrome void, hairlines, rounded lit frames with one tight tab corner, inverted pill tags). Never use the name "ctOS", the Watch Dogs logo or game assets in the product.
 Read these docs before exploring the tree. Update them in the same change whenever architecture, contracts, tokens, limits or commands change.
 
 ## Stack (constraints)

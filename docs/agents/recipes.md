@@ -18,13 +18,14 @@ Run commands from the repository root. Windows is a first-class platform here (t
 CI (`.github/workflows/ci.yml`, job name `typecheck, test and build`, on pull requests and pushes to `main`): Node 24, `npm ci`, `npm run typecheck`, `npm test`, `npm run build`. CI does not run the drift check or the screenshot script; run the drift check yourself (the parity test in `npm test` covers most of it).
 
 ### `scripts/shots.mts`
-Starts the API with `NODE_ENV=development CORTEX_FIXTURES=1` (port 3001) and Vite (port 5173), drives Chromium (Playwright), and writes PNGs. For each size it captures landing, searching, streaming, then one final shot per fixture, and checks for horizontal page overflow (exit code 1 on overflow).
+Starts the API with `NODE_ENV=development CORTEX_FIXTURES=1` (port 3001 by default) and Vite (port 5173 by default), drives Chromium (Playwright), and writes PNGs. For each size it captures landing, searching, streaming, then one final shot per fixture, and checks for horizontal page overflow (exit code 1 on overflow).
 | Flag | Default | Effect |
 |---|---|---|
 | `--sizes=390,768,1440` | all three | widths to capture (heights 844, 1024, 900) |
 | `--only=kyoto,postgres` | all fixtures | keeps fixtures whose short name contains one of the values. When `--only` is given, the landing, searching and streaming shots are skipped; they appear only when it is omitted |
 | `--out=<dir>` | `docs/screenshots` | output directory |
 | `--fixtures-dir=<dir>` | `server/fixtures` | replay source |
+| `--api-port=<n>` / `--web-port=<n>` | `3001` / `5173` | ports for the script's own API and Vite. The script passes `CORTEX_API_PORT` to Vite, and `vite.config.ts` reads it for the `/api` proxy target (default `3001`), so the pass can run beside a dev session: `npx tsx scripts/shots.mts --api-port=3101 --web-port=5273 --out=<dir>` |
 | `--no-servers` | off | reuse servers you already started |
 | `--freeze=<ms>` | off | extra `-f<ms>` frame with animations frozen at that time |
 | `--motion=auto\|reduced` | `auto` | sets `cortex.settings.motion`; files get a `-reduced` suffix |
@@ -59,7 +60,7 @@ Compile-time guards: `MODULE_RENDERERS` and `KIND_ICON` are `Record<FactKind, ..
 
 ## Recipe: restyle a component
 1. Read `docs/agents/design-system.md` rules and the component's `*.module.css`.
-2. Use tokens (`var(--...)`), no radius, no gradient wash, no glow/blur/shadow; model colours only through `--signal`, `--m`, `--tone`.
+2. Use tokens (`var(--...)`): radius from `--frame`/`--r-*`, depth from `--sheen`/`--shadow-*`, blur only `var(--blur)` on floating surfaces, no glow halos or text-shadow; model colours only through `--signal`, `--m`, `--tone`.
 3. A class used in the `.tsx` must exist in the stylesheet. In CSS Modules a missing class is just `undefined` and `tsc` does not catch it: grep both sides.
 4. Add reduced-motion behaviour for any animation; keep `:focus-visible` visible.
 5. Check at 390, 768 and 1440 px: `npx tsx scripts/shots.mts --only=<fixture> --out=<scratch dir>` (overflow audit included).
@@ -78,7 +79,8 @@ Compile-time guards: `MODULE_RENDERERS` and `KIND_ICON` are `Record<FactKind, ..
 
 ## Gotchas
 - The drift check compares the mirrored block as text, line endings included. This checkout uses CRLF in the working tree: a script that rewrites one `Scene.ts` with LF makes it report `DRIFT: mirrored source block text differs` although the code is identical. Restore the line endings.
-- `scripts/shots.mts` starts its own servers on 3001 and 5173 with `--strictPort`. If `npm run dev` is already running, the web server fails to start and the script silently captures against the running (live, paid) instance. Stop the dev server first or pass `--no-servers` on purpose.
+- `scripts/shots.mts` starts its own servers on 3001 and 5173 with `--strictPort`. If `npm run dev` already holds those ports, the web server fails to start and the script silently captures against the running (live, paid) instance. Pass `--api-port` and `--web-port` (free ports) to run beside it, stop the dev server first, or pass `--no-servers` on purpose.
+- `tsc -p tsconfig.app.json` rejects `--incremental false` (composite project), and any tsc run rewrites the tracked `tsconfig.app.tsbuildinfo`: `git checkout -- tsconfig.app.tsbuildinfo` before committing.
 - `CORTEX_FIXTURES=1` without `NODE_ENV=development` is refused and the server answers live.
 - Vitest runs in a node environment and only collects `*.test.ts` under `src/` and `server/`. React components are tested through pure helper modules (`items.ts`, `appletSandbox.ts`, `cardFallback.ts`, `motionProfile.ts`, `revealHold.ts`); put logic you want tested there.
 - On Windows two modules whose names differ only by case break `tsc` (hence `appletSandbox.ts` beside `AppletFrame.tsx`).
@@ -103,6 +105,6 @@ Compile-time guards: `MODULE_RENDERERS` and `KIND_ICON` are `Record<FactKind, ..
 - No authentication and no rate limiting on any API route.
 - The schema-validation retry (`generateOnce`) regenerates the whole answer.
 - `src/presentation/components/compose/blocks.tsx` `HeroMedia` still renders a duplicate `<img className={styles.heroFill}>`; its stylesheet rule is `display: none`, but the element and its request remain.
-- Unused tokens: `--r-sm/--r-md/--r-lg/--r-pill`, `--blur`, `--text-faint`; mood variables `--card-radius`, `--hairline-inset` are set but never read; `usePointerGlow` writes `--px`/`--py` that nothing reads.
-- Tracked screenshots in `docs/screenshots/` show the previous (pre-HUD) design and are stale.
+- Unused tokens: `--text-faint`, `--tick`, `--cut`, `--ease-step`; mood variables `--card-radius`, `--hairline-inset` are set but never read.
+- Tracked screenshots in `docs/screenshots/` show the previous (square, bracketed) design and are stale.
 - Regenerate the screenshots with `npx tsx scripts/shots.mts` once the design settles.

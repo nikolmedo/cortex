@@ -228,7 +228,7 @@ a {
 }
 
 /* beam: a light travelling round a frame. Drives the registered --beam angle,
-   which a conic-gradient border reads (command bar focus, pending interface). */
+   which a conic-gradient border reads (the command bar on focus). */
 @keyframes beam {
   to {
     --beam: 360deg;
