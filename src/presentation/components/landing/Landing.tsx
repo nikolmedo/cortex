@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import type { CSSProperties, ReactElement } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { useI18n } from '../../../i18n/I18nContext';
 import type { TranslationKey } from '../../../i18n/translations';
@@ -31,12 +31,12 @@ interface QuestionRowsProps {
   className?: string;
 }
 
-/** A ruled list of questions; the whole row is the button. */
+/** A list of soft rows, entering one after another (--i); the whole row is the button. */
 function QuestionRows({ questions, onSubmit, className }: QuestionRowsProps): ReactElement {
   return (
     <ol className={[styles.list, className].filter(Boolean).join(' ')}>
       {questions.map((question, i) => (
-        <li key={question}>
+        <li key={question} style={{ '--i': i } as CSSProperties}>
           <button type="button" className={styles.row} onClick={() => onSubmit(question)}>
             <span className={styles.rowIndex} aria-hidden="true">{indexOf(i)}</span>
             <span className={styles.rowText}>{question}</span>

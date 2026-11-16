@@ -1,24 +1,23 @@
 /*
- * The command line. A square hairline frame with corner brackets and a mono
- * prompt glyph. Focus turns the frame to --line-strong and the brackets to the
- * signal colour, and lengthens them; there is no ring, glow or travelling light.
- * The send block is an inverted square when it can send and a hatched square
- * when it cannot.
+ * The command line. A soft frame with the tight tab corner top-left, a mono
+ * prompt glyph and a pill send button. At rest it is a quiet lit ring; on
+ * focus a light travels round the frame (a conic gradient whose angle is the
+ * registered --beam property, driven by the `beam` keyframes) and the frame
+ * lifts a little. The dock is a fade, not a strip: the frame is the object.
  */
 
-/* Docked: a flat strip with a top hairline. It is opaque, so it takes the pointer. */
+/* Docked: a fade from the void up to the frame. It spans the width and takes the pointer. */
 .dock {
   position: fixed;
   left: 0;
   right: 0;
   bottom: 0;
   z-index: var(--z-dock);
-  padding-top: var(--sp-3);
+  padding-top: var(--sp-5);
   padding-bottom: calc(var(--sp-2) + env(safe-area-inset-bottom));
   padding-left: max(var(--gutter), env(safe-area-inset-left));
   padding-right: max(var(--gutter), env(safe-area-inset-right));
-  background: var(--ink-0);
-  border-top: 1px solid var(--line);
+  background: linear-gradient(to top, var(--ink-0) 38%, color-mix(in srgb, var(--ink-0) 82%, transparent) 72%, transparent);
   transform: translateY(calc(-1 * var(--kb, 0px)));
 }
 
@@ -34,42 +33,95 @@
 }
 
 .frame {
-  --bracket: var(--text-dim);
   position: relative;
   display: flex;
   align-items: flex-end;
   gap: var(--sp-2);
-  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-3);
-  background: var(--surface-strong);
-  border: 1px solid var(--line);
+  padding: var(--sp-2) var(--sp-2) var(--sp-2) var(--sp-4);
+  border-radius: var(--frame);
+  background: color-mix(in srgb, var(--surface-strong) 80%, transparent);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
+  box-shadow:
+    var(--sheen),
+    var(--shadow-raise);
+  transition:
+    transform var(--dur-base) var(--ease),
+    box-shadow var(--dur-base) var(--ease);
 }
 
 .bar[data-docked='false'] .frame {
-  padding: 10px 10px 10px var(--sp-4);
+  padding: 10px 10px 10px var(--sp-5);
 }
 
-/* Corner brackets, the same eight strokes a module card draws. */
-.frame::before {
+/* The resting ring: a 1px gradient border, brightest at the tab corner. */
+.frame::before,
+.frame::after {
   content: '';
   position: absolute;
-  inset: -1px;
-  background:
-    linear-gradient(var(--bracket), var(--bracket)) top left / var(--tick) 1px,
-    linear-gradient(var(--bracket), var(--bracket)) top left / 1px var(--tick),
-    linear-gradient(var(--bracket), var(--bracket)) top right / var(--tick) 1px,
-    linear-gradient(var(--bracket), var(--bracket)) top right / 1px var(--tick),
-    linear-gradient(var(--bracket), var(--bracket)) bottom left / var(--tick) 1px,
-    linear-gradient(var(--bracket), var(--bracket)) bottom left / 1px var(--tick),
-    linear-gradient(var(--bracket), var(--bracket)) bottom right / var(--tick) 1px,
-    linear-gradient(var(--bracket), var(--bracket)) bottom right / 1px var(--tick);
-  background-repeat: no-repeat;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
   pointer-events: none;
 }
 
+.frame::before {
+  background: linear-gradient(135deg, var(--line-strong), var(--line) 34%, var(--line) 70%, color-mix(in srgb, var(--signal) 26%, var(--line)));
+}
+
+/* The travelling light. It only exists while the bar has focus, so an idle
+   page runs no animation. The ring's own colour is the signal hue fading to
+   nothing, which keeps it a highlight and not a border. */
+.frame::after {
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--beam),
+    transparent 0 52%,
+    color-mix(in srgb, var(--signal) 20%, transparent) 64%,
+    var(--signal) 84%,
+    color-mix(in srgb, var(--signal) 55%, var(--paper)) 92%,
+    transparent 100%
+  );
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease);
+}
+
 .frame:focus-within {
-  --bracket: var(--signal);
-  --tick: 14px;
-  border-color: var(--line-strong);
+  transform: translateY(-2px);
+  box-shadow:
+    var(--sheen),
+    var(--shadow-lift),
+    0 22px 56px -38px color-mix(in srgb, var(--signal) 70%, transparent);
+}
+
+.frame:focus-within::after {
+  opacity: 1;
+  animation: beam 3s linear infinite;
+}
+
+/* Inert when motion is off: the light rests on its first angle, no travel, no lift. */
+@media (prefers-reduced-motion: reduce) {
+  .frame:focus-within {
+    transform: none;
+  }
+  .frame:focus-within::after {
+    animation: none;
+  }
+}
+
+:root[data-motion='reduced'] .frame:focus-within {
+  transform: none;
+}
+
+:root[data-motion='reduced'] .frame:focus-within::after {
+  animation: none;
 }
 
 /* The prompt shares the input's line box, so its glyph sits on the first line. */
@@ -113,7 +165,7 @@
   caret-color: var(--signal);
 }
 
-/* The frame carries the focus state (border, brackets); a second ring inside it would only be noise. */
+/* The frame carries the focus state (the travelling light); a second ring inside it would only be noise. */
 .input:focus-visible {
   outline: none;
 }
@@ -146,6 +198,8 @@
   animation: fadeIn var(--dur-slow) var(--ease) both;
 }
 
+/* Send: a pill. It lights to the signal hue on hover, its arrow nudges up,
+   and it gives a little under the finger. */
 .send {
   flex: none;
   display: grid;
@@ -153,8 +207,17 @@
   width: var(--hit);
   height: var(--hit);
   border: 1px solid var(--paper);
+  border-radius: var(--r-pill);
   background: var(--paper);
   color: var(--paper-ink);
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background-color var(--dur-fast) linear,
+    border-color var(--dur-fast) linear;
+}
+
+.send svg {
+  transition: transform var(--dur-base) var(--ease-spring);
 }
 
 .send:not(:disabled):hover {
@@ -162,11 +225,23 @@
   background: var(--signal);
 }
 
-/* Cannot send: a hatched block, the system's mark for "inactive". */
+.send:not(:disabled):hover svg {
+  transform: translateY(-2px);
+}
+
+.send:not(:disabled):active {
+  transform: scale(0.94);
+}
+
+.send:focus-visible {
+  border-radius: var(--r-pill);
+}
+
+/* Cannot send: a quiet disc, no fill. */
 .send:disabled {
   cursor: default;
   border-color: var(--line);
-  background: repeating-linear-gradient(135deg, var(--line-strong) 0 1px, transparent 1px 6px);
+  background: color-mix(in srgb, var(--paper) 6%, transparent);
   color: var(--text-dim);
 }
 
@@ -182,12 +257,16 @@
   color: var(--paper-ink);
 }
 
+.stop:not(:disabled):hover svg {
+  transform: scale(0.88);
+}
+
 .meta {
   display: flex;
   justify-content: space-between;
   gap: var(--sp-3);
   min-height: 22px;
-  padding: 6px 0 0;
+  padding: 8px var(--sp-3) 0;
   font-family: var(--font-mono);
   font-size: var(--fs-micro);
   letter-spacing: var(--readout-tracking);

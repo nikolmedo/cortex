@@ -212,7 +212,7 @@
 }
 
 .card[data-corner='square'] {
-  --radius: var(--r-sm);
+  --radius: var(--r-md);
 }
 
 /* notch: a leaf. Two tight corners on one diagonal, two wide ones on the other. */

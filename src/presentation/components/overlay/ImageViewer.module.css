@@ -4,7 +4,9 @@
   position: fixed;
   inset: 0;
   z-index: var(--z-overlay);
-  background: rgb(6 8 10 / 0.88);
+  background: rgb(6 8 10 / 0.7);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
   animation: fadeIn var(--dur-fast) linear both;
 }
 
@@ -37,21 +39,27 @@
   /* Whole image or nothing: this view exists because the figure had to crop. */
   object-fit: contain;
   border: 1px solid var(--line-strong);
+  border-radius: var(--frame);
   background: var(--ink-0);
+  box-shadow: var(--shadow-lift);
   pointer-events: auto;
 }
 
-/* The caption bar: a square strip under the picture, mono caption, square buttons. */
+/* The caption bar: a pill under the picture, mono caption, a pill link and a round close. */
 .bar {
   flex: none;
   align-self: center;
   display: flex;
   align-items: center;
-  gap: var(--sp-3);
+  gap: var(--sp-2);
   max-width: 100%;
-  padding: 0 0 0 var(--sp-4);
-  background: var(--surface-strong);
+  padding: 3px 3px 3px var(--sp-4);
+  background: color-mix(in srgb, var(--surface-strong) 85%, transparent);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
   border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  box-shadow: var(--sheen), var(--shadow-raise);
   pointer-events: auto;
 }
 
@@ -71,9 +79,9 @@
   align-items: center;
   gap: var(--sp-1);
   flex: none;
-  min-height: var(--hit);
-  padding: 0 var(--sp-3);
-  border-left: 1px solid var(--line-strong);
+  min-height: calc(var(--hit) - 6px);
+  padding: 0 var(--sp-4);
+  border-radius: var(--r-pill);
   font-family: var(--font-display);
   font-stretch: var(--tag-stretch);
   font-size: var(--fs-caption);
@@ -82,31 +90,59 @@
   text-transform: uppercase;
   color: var(--text-hi);
   text-decoration: none;
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background-color var(--dur-fast) linear;
+}
+
+.link svg {
+  transition: transform var(--dur-base) var(--ease-spring);
 }
 
 .link:hover {
-  background: var(--paper);
-  color: var(--paper-ink);
+  background: var(--signal-soft);
+}
+
+.link:hover svg {
+  transform: translate(2px, -2px);
+}
+
+.link:active,
+.close:active {
+  transform: scale(0.96);
 }
 
 .link:focus-visible,
 .close:focus-visible {
-  outline-offset: -4px;
+  border-radius: var(--r-pill);
+  outline-offset: -3px;
 }
 
 .close {
   display: grid;
   place-items: center;
   flex: none;
-  width: var(--hit);
-  height: var(--hit);
-  border-left: 1px solid var(--line-strong);
+  width: calc(var(--hit) - 6px);
+  height: calc(var(--hit) - 6px);
+  border-radius: 50%;
   color: var(--text-dim);
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background-color var(--dur-fast) linear,
+    color var(--dur-fast) linear;
+}
+
+.close svg {
+  transition: transform var(--dur-base) var(--ease-spring);
 }
 
 .close:hover {
-  background: var(--paper);
-  color: var(--paper-ink);
+  background: var(--signal-soft);
+  color: var(--text-hi);
+}
+
+.close:hover svg {
+  transform: rotate(90deg);
 }
 
 @media (max-width: 767px) {
@@ -117,5 +153,9 @@
 
   .caption {
     display: none;
+  }
+
+  .bar {
+    padding-left: 3px;
   }
 }

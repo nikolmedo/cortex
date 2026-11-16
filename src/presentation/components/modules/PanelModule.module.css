@@ -84,17 +84,18 @@
   margin: 2px 0;
 }
 
-/* A dotted connector runs from the label to the edge of the card. */
+/* A hairline runs from the label to the edge of the card and fades out. */
 .divider::after {
   content: '';
   flex: 1;
-  height: 0;
-  border-top: 1px dotted var(--line-strong);
+  height: 1px;
+  background: linear-gradient(90deg, var(--line-strong), transparent);
 }
 
 .dividerLabel {
   flex: none;
-  padding: 0 6px;
+  padding: 0 10px;
+  border-radius: var(--r-pill);
   background: var(--paper);
   color: var(--paper-ink);
   font-family: var(--font-display);

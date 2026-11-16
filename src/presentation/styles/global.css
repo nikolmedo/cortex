@@ -56,7 +56,6 @@ a {
 :focus-visible {
   outline: 2px solid color-mix(in srgb, var(--signal) 70%, var(--paper));
   outline-offset: 3px;
-  border-radius: var(--r-sm);
 }
 
 ::selection {

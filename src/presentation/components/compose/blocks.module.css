@@ -1,8 +1,9 @@
 /*
  * Scene blocks: header, answer, spotlight, details, hero, sources, follow-ups
- * and the mobile split tabs. Frames are square hairlines, labels are inverted
- * tags, secondary readouts are mono, and the only entrance this file owns is
- * the intent tag printing in (tagIn).
+ * and the mobile split tabs. Frames are soft with the tab corner, labels are
+ * inverted pills, secondary readouts are mono, and the rows you can press
+ * (sources, follow-ups) lean toward the pointer. The one entrance this file
+ * owns is the intent tag printing in (tagIn).
  */
 
 /* Scene header */
@@ -11,13 +12,14 @@
   max-width: 920px;
 }
 
-/* The intent tag: an inverted block that prints in once, on a live turn only. */
+/* The intent tag: an inverted pill that wipes in once, on a live turn only. */
 .eyebrow {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
   margin-bottom: var(--sp-3);
-  padding: 0 8px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
   background: var(--paper);
   color: var(--paper-ink);
   font-family: var(--font-display);
@@ -30,13 +32,14 @@
 }
 
 [data-reveal='true'] .eyebrow {
-  animation: tagIn 360ms steps(10, end) backwards;
+  animation: tagIn 420ms var(--ease) backwards;
 }
 
 .eyebrowDot {
   flex: none;
   width: 6px;
   height: 6px;
+  border-radius: 50%;
   background: var(--paper-ink);
 }
 
@@ -58,16 +61,27 @@
   color: var(--text-dim);
 }
 
-/* The headline takeaway: a 3px signal bar, then the sentence. */
+/* The headline takeaway: a rounded signal bar, then the sentence. */
 .lead {
+  position: relative;
   margin-top: var(--sp-5);
   padding-left: var(--sp-4);
   max-width: 62ch;
-  border-left: 3px solid var(--signal);
   font-size: var(--fs-lead);
   line-height: 1.5;
   color: var(--text-hi);
   text-wrap: pretty;
+}
+
+.lead::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.25em;
+  bottom: 0.25em;
+  width: 3px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--signal), color-mix(in oklab, var(--signal) 40%, var(--scene-accent)));
 }
 
 /* Answer body */
@@ -86,13 +100,14 @@
   margin-top: 1em;
 }
 
-/* Section labels (caveats, details, sources, follow-ups): a small inverted tag. */
+/* Section labels (caveats, details, sources, follow-ups): a small inverted pill. */
 .blockLabel {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
   margin-bottom: var(--sp-3);
-  padding: 0 8px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
   background: var(--paper);
   color: var(--paper-ink);
   font-family: var(--font-display);
@@ -108,24 +123,27 @@
   flex: none;
 }
 
-/* Caveats: a hatched frame with a warn edge bar; the items are mono-marked rows. */
+/* Caveats: a soft frame warmed by the warn colour, a rounded edge bar, round bullets. */
 .caveats {
   position: relative;
   margin-top: var(--sp-5);
   padding: var(--sp-4) var(--sp-4) var(--sp-4) var(--sp-5);
-  border: 1px solid var(--line-strong);
+  border: 1px solid color-mix(in srgb, var(--warn) 26%, var(--line));
+  border-radius: var(--frame-sm);
   background:
-    repeating-linear-gradient(135deg, rgb(216 228 234 / 0.035) 0 1px, transparent 1px 7px),
+    linear-gradient(180deg, color-mix(in srgb, var(--warn) 6%, transparent), transparent 90px),
     var(--surface);
+  box-shadow: var(--sheen);
 }
 
 .caveats::before {
   content: '';
   position: absolute;
   left: -1px;
-  top: -1px;
-  bottom: -1px;
+  top: var(--sp-4);
   width: 3px;
+  height: 26px;
+  border-radius: 0 var(--r-pill) var(--r-pill) 0;
   background: var(--warn);
 }
 
@@ -151,32 +169,40 @@
   top: 0.62em;
   width: 6px;
   height: 6px;
-  border: 1px solid var(--warn);
+  border-radius: 50%;
+  background: var(--warn);
 }
 
-/* Spotlight: the key figure, inside the card frame recipe (brackets, hairline). */
+/* Spotlight: the key figure and the lead element of the view. A soft frame, a
+   lit ring in the signal hue and the one tinted shadow the scene gets. */
 .spotlight {
   position: relative;
   padding: var(--sp-5);
   border: 1px solid var(--line-strong);
-  background: var(--surface-strong);
+  border-radius: var(--frame);
+  background:
+    linear-gradient(160deg, color-mix(in srgb, var(--signal) 11%, transparent), transparent 62%),
+    var(--surface-strong);
+  box-shadow:
+    var(--sheen),
+    var(--shadow-raise),
+    0 30px 70px -44px color-mix(in srgb, var(--signal) 55%, transparent);
 }
 
 .spotlight::before {
-  --b: var(--signal);
   content: '';
   position: absolute;
   inset: -1px;
-  background:
-    linear-gradient(var(--b), var(--b)) top left / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) top left / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) top right / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) top right / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) bottom left / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) bottom left / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) bottom right / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) bottom right / 1px var(--tick);
-  background-repeat: no-repeat;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--signal) 80%, transparent), transparent 32%, transparent 70%, color-mix(in srgb, var(--signal) 30%, transparent));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
   pointer-events: none;
 }
 
@@ -209,7 +235,7 @@
   color: var(--text-hi);
 }
 
-/* Callouts and quotes carry no big figure, so they lead with a 3px signal bar. */
+/* Callouts and quotes carry no big figure, so they lead with a rounded signal bar. */
 .spotlight:is([data-kind='callout'], [data-kind='quote']) {
   padding-left: var(--sp-6);
 }
@@ -221,7 +247,8 @@
   top: var(--sp-5);
   bottom: var(--sp-5);
   width: 3px;
-  background: var(--signal);
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--signal), color-mix(in oklab, var(--signal) 40%, var(--scene-accent)));
 }
 
 .spotSource {
@@ -287,11 +314,33 @@
   max-height: min(70vh, 420px);
   width: 100%;
   overflow: hidden;
-  /* Whatever the image letterboxes shows a hatch, the terminal's "no signal" field. */
+  border-radius: var(--frame);
+  /* Whatever the image letterboxes shows a soft wash of the signal hue over the void. */
   background:
-    repeating-linear-gradient(135deg, rgb(216 228 234 / 0.05) 0 1px, transparent 1px 8px),
+    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--signal) 14%, transparent), transparent 65%),
     var(--ink-1);
-  border: 1px solid var(--line-strong);
+  box-shadow:
+    var(--sheen),
+    var(--shadow-raise);
+}
+
+/* The lit ring over the picture, painted in the border box only. */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--signal) 70%, transparent), var(--line-strong) 30%, var(--line) 72%, color-mix(in srgb, var(--signal) 26%, transparent));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+  pointer-events: none;
 }
 
 @media (min-width: 1280px) {
@@ -318,12 +367,13 @@
 
 /* The figure clips its overflow, so the default outward ring would be cut off. */
 .heroFrame:focus-visible {
+  border-radius: inherit;
   outline-offset: -3px;
 }
 
 /*
- * The old blurred copy that filled the letterbox. The system has no blur, so the
- * letterbox is the hatch on .hero and this duplicate image is never painted.
+ * The old blurred copy that filled the letterbox. The letterbox is the wash on
+ * .hero now, so this duplicate image is never painted.
  */
 .heroFill {
   display: none;
@@ -336,24 +386,15 @@
   height: 100%;
   /* contain, so a landscape keeps its sides and a portrait keeps its head. */
   object-fit: contain;
+  transition: transform var(--dur-slow) var(--ease);
 }
 
-/* A faint scrim and corner brackets frame the picture like a camera feed. */
+/* A faint scrim at the foot gives the enlarge badge something to sit on. */
 .heroShade {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  --b: var(--signal);
-  background:
-    linear-gradient(var(--b), var(--b)) top left / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) top left / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) top right / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) top right / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) bottom left / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) bottom left / 1px var(--tick),
-    linear-gradient(var(--b), var(--b)) bottom right / var(--tick) 1px,
-    linear-gradient(var(--b), var(--b)) bottom right / 1px var(--tick);
-  background-repeat: no-repeat;
+  background: linear-gradient(180deg, transparent 62%, rgb(0 0 0 / 0.34));
 }
 
 .heroBadge {
@@ -362,16 +403,28 @@
   bottom: var(--sp-3);
   display: grid;
   place-items: center;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
   color: var(--paper-ink);
   background: var(--paper);
   opacity: 0;
+  transform: translateY(6px) scale(0.9);
+  transition:
+    opacity var(--dur-base) var(--ease),
+    transform var(--dur-base) var(--ease-spring);
 }
 
 .heroFrame:hover .heroBadge,
 .heroFrame:focus-visible .heroBadge {
   opacity: 1;
+  transform: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .heroFrame:not(:disabled):hover .heroImg {
+    transform: scale(1.025);
+  }
 }
 
 /*
@@ -382,26 +435,17 @@
   position: absolute;
   inset: 0;
   overflow: hidden;
-  background: repeating-linear-gradient(135deg, rgb(216 228 234 / 0.07) 0 1px, transparent 1px 7px);
+  background: color-mix(in srgb, var(--paper) 4.5%, transparent);
 }
 
-/* One hairline sweeping down the field. */
+/* One soft band of light travelling across the field. */
 .heroBone::after {
   content: '';
   position: absolute;
-  inset: 0 0 auto 0;
-  height: 1px;
-  background: var(--signal);
-  animation: heroScan 2.4s linear infinite;
-}
-
-@keyframes heroScan {
-  from {
-    top: 0;
-  }
-  to {
-    top: 100%;
-  }
+  inset: 0;
+  background: linear-gradient(100deg, transparent 20%, color-mix(in srgb, var(--signal) 10%, rgb(255 255 255 / 0.05)) 50%, transparent 80%);
+  transform: translateX(-100%);
+  animation: shimmer 2.4s ease-in-out infinite;
 }
 
 .heroFallback {
@@ -422,6 +466,7 @@
 .heroMark {
   width: 28px;
   height: 3px;
+  border-radius: var(--r-pill);
   background: var(--signal);
 }
 
@@ -434,7 +479,7 @@
   display: none;
 }
 
-/* Sources: ruled rows, an index readout, the title, the host in mono. */
+/* Sources: soft rows, an index readout, the title, the host in mono. */
 
 .sources,
 .followups {
@@ -444,12 +489,21 @@
 .sourceList {
   list-style: none;
   counter-reset: source;
-  border-bottom: 1px solid var(--line);
 }
 
 .sourceList > li {
+  position: relative;
   counter-increment: source;
-  border-top: 1px solid var(--line);
+}
+
+.sourceList > li + li::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--sp-3);
+  right: var(--sp-3);
+  height: 1px;
+  background: var(--line);
 }
 
 .source {
@@ -459,8 +513,12 @@
   column-gap: var(--sp-3);
   min-height: var(--hit);
   padding: var(--sp-2) var(--sp-3);
+  border-radius: var(--r-md);
   text-decoration: none;
   color: var(--text);
+  transition:
+    background-color var(--dur-fast) linear,
+    transform var(--dur-fast) var(--ease-spring);
 }
 
 .source::before {
@@ -470,12 +528,16 @@
   letter-spacing: var(--readout-tracking);
   font-variant-numeric: tabular-nums;
   color: var(--text-dim);
+  transition: color var(--dur-fast) linear;
 }
 
 .sourceTitle {
   font-size: var(--fs-small);
   color: inherit;
   overflow-wrap: anywhere;
+  transition:
+    transform var(--dur-base) var(--ease),
+    color var(--dur-fast) linear;
 }
 
 .sourceHost {
@@ -486,42 +548,60 @@
   font-size: var(--fs-micro);
   letter-spacing: var(--readout-tracking);
   color: var(--text-dim);
+  transition: color var(--dur-fast) linear;
 }
 
-/* Hover inverts the row; every child follows the dark ink. */
+.sourceHost svg {
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+
+/* Hover and focus: a tint, the title a few px along, the arrow out to its corner. */
 .source:hover,
 .source:focus-visible {
-  background: var(--paper);
-  color: var(--paper-ink);
+  background: color-mix(in srgb, var(--signal) 7%, transparent);
+  color: var(--text-hi);
 }
 
 .source:hover::before,
 .source:hover .sourceHost,
 .source:focus-visible::before,
 .source:focus-visible .sourceHost {
-  color: inherit;
+  color: var(--signal);
+}
+
+.source:hover .sourceTitle,
+.source:focus-visible .sourceTitle {
+  transform: translateX(3px);
+}
+
+.source:hover .sourceHost svg,
+.source:focus-visible .sourceHost svg {
+  transform: translate(2px, -2px);
+}
+
+.source:active {
+  transform: scale(0.985);
 }
 
 .source:focus-visible {
-  outline-offset: -4px;
-  outline-color: var(--paper-ink);
+  border-radius: var(--r-md);
+  outline-offset: -2px;
 }
 
-/* Follow-ups: the same row grammar, an index and an arrow. */
+/* Follow-ups: outlined soft rows, an index and an arrow that travels. */
 
 .chips {
   list-style: none;
   counter-reset: followup;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  border-bottom: 1px solid var(--line);
+  gap: var(--sp-2);
 }
 
 .chips > li {
   display: flex;
   min-width: 0;
   counter-increment: followup;
-  border-top: 1px solid var(--line);
 }
 
 .chip {
@@ -530,11 +610,17 @@
   gap: var(--sp-3);
   width: 100%;
   min-height: var(--hit);
-  padding: 10px var(--sp-3);
+  padding: 10px var(--sp-4) 10px var(--sp-3);
+  border: 1px solid var(--line);
+  border-radius: var(--r-md);
   text-align: left;
   font-size: var(--fs-small);
   line-height: 1.4;
   color: var(--text-hi);
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background-color var(--dur-fast) linear,
+    border-color var(--dur-fast) linear;
 }
 
 .chip::before {
@@ -546,6 +632,7 @@
   letter-spacing: var(--readout-tracking);
   font-variant-numeric: tabular-nums;
   color: var(--text-dim);
+  transition: color var(--dur-fast) linear;
 }
 
 .chip > span {
@@ -557,24 +644,36 @@
 .chip svg {
   flex: none;
   color: var(--text-dim);
+  transition:
+    transform var(--dur-base) var(--ease-spring),
+    color var(--dur-fast) linear;
 }
 
 .chip:hover,
 .chip:focus-visible {
-  background: var(--paper);
-  color: var(--paper-ink);
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--signal) 45%, var(--line-strong));
+  background: color-mix(in srgb, var(--signal) 7%, transparent);
 }
 
 .chip:hover::before,
 .chip:hover svg,
 .chip:focus-visible::before,
 .chip:focus-visible svg {
-  color: inherit;
+  color: var(--signal);
+}
+
+.chip:hover svg,
+.chip:focus-visible svg {
+  transform: translateX(3px);
+}
+
+.chip:active {
+  transform: scale(0.98);
 }
 
 .chip:focus-visible {
-  outline-offset: -4px;
-  outline-color: var(--paper-ink);
+  border-radius: var(--r-md);
 }
 
 /* Follow-ups arrive after everything else, one after another, in a short run. */
@@ -588,31 +687,37 @@
   min-width: 0;
 }
 
+/* A pill track; its thumb is the indicator, which glides on a spring. */
 .tabList {
   position: relative;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   margin-bottom: var(--sp-3);
+  padding: 3px;
   background: var(--surface);
   border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.45);
 }
 
-/* The selected tab is a paper block; it cuts across, it does not glide. */
 .tabIndicator {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 50%;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 2);
+  border-radius: var(--r-pill);
   background: var(--paper);
   transform: translateX(calc(var(--tab, 0) * 100%));
+  transition: transform var(--dur-base) var(--ease-spring);
 }
 
 .tab {
   position: relative;
   z-index: 1;
-  min-height: var(--hit);
+  min-height: calc(var(--hit) - 8px);
   padding: var(--sp-2) 10px;
+  border-radius: var(--r-pill);
   font-family: var(--font-display);
   font-stretch: var(--tag-stretch);
   font-size: var(--fs-caption);
@@ -621,6 +726,7 @@
   line-height: 1.25;
   text-transform: uppercase;
   color: var(--text-dim);
+  transition: color var(--dur-fast) linear;
 }
 
 .tab[aria-selected='true'] {
@@ -628,12 +734,8 @@
 }
 
 .tab:focus-visible {
-  outline-offset: -4px;
-  outline-color: var(--signal);
-}
-
-.tab[aria-selected='true']:focus-visible {
-  outline-color: var(--paper-ink);
+  border-radius: var(--r-pill);
+  outline-offset: 1px;
 }
 
 .tabPanel {

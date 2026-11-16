@@ -21,9 +21,15 @@
   opacity: 0;
 }
 
+/* The traces follow the card's soft frame: they stay inside its rounded corners. */
+.enter::before,
+.enter::after {
+  border-radius: var(--r-lg);
+}
+
 /* lock: two hairlines draw out from the centre along the top and bottom edges. */
 .enter::before {
-  inset: 0 12px;
+  inset: 0 var(--r-lg);
   background:
     linear-gradient(90deg, transparent, var(--signal), transparent) top / 100% 1px no-repeat,
     linear-gradient(90deg, transparent, color-mix(in srgb, var(--signal) 60%, transparent), transparent) bottom / 100% 1px no-repeat;

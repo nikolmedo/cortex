@@ -1,9 +1,11 @@
 /*
  * The landing is one left-aligned column on the same grid as the session
- * stream, set in the upper third: name, tagline, command, then ruled rows of
+ * stream, set in the upper third: name, tagline, command, then soft rows of
  * questions. It is placed with padding rather than centred in a tall box, so
  * nothing above the suggestions moves when the trending set replaces the
- * static one.
+ * static one. Rows enter in a short stagger (--i is the row index, set by
+ * Landing.tsx) and each one answers the pointer: its content slides, a signal
+ * edge grows on its leading side, its arrow travels.
  */
 .landing {
   position: relative;
@@ -34,15 +36,16 @@
   animation: materialize var(--dur-slow) var(--ease) 60ms both;
 }
 
-/* A terminal cursor after the name: the same hard blink as the live marker. */
+/* A terminal cursor after the name, softened to a pill that breathes. */
 .name::after {
   content: '';
   display: inline-block;
-  width: 0.14em;
+  width: 0.13em;
   height: 0.72em;
   margin-left: 0.1em;
+  border-radius: var(--r-pill);
   background: var(--signal);
-  animation: blink 1.4s steps(1, end) infinite;
+  animation: pulse 2.4s ease-in-out infinite;
 }
 
 .tagline {
@@ -63,13 +66,14 @@
   animation: materialize var(--dur-slow) var(--ease) 260ms both;
 }
 
-/* The section label is an inverted tag, like every other label in the system. */
+/* The section label is an inverted pill tag, like every other label in the system. */
 .sectionLabel {
   display: inline-flex;
   align-items: center;
   gap: var(--sp-2);
   margin-bottom: var(--sp-3);
-  padding: 0 8px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
   background: var(--paper);
   color: var(--paper-ink);
   font-family: var(--font-display);
@@ -81,13 +85,14 @@
   text-transform: uppercase;
 }
 
-/* Trending is live data: its tag carries a blinking square. */
+/* Trending is live data: its tag carries a dot that breathes. */
 .liveMark {
   flex: none;
   width: 6px;
   height: 6px;
+  border-radius: 50%;
   background: var(--paper-ink);
-  animation: blink 1.4s steps(1, end) infinite;
+  animation: pulse 2s ease-in-out infinite;
 }
 
 /* Reserves the list's height so the recent block does not move when trending
@@ -107,17 +112,29 @@
   animation: fadeIn 480ms var(--ease) both;
 }
 
-/* Rows: one hairline between each, the whole row is the button. */
+/* Rows: a faint separator inset from both sides, so the list reads as a run of
+   soft rows and not a table. The whole row is the button. */
 .list {
   list-style: none;
-  border-bottom: 1px solid var(--line);
 }
 
 .list > li {
-  border-top: 1px solid var(--line);
+  position: relative;
+  animation: materialize var(--dur-base) var(--ease) calc(320ms + var(--i, 0) * 55ms) backwards;
+}
+
+.list > li + li::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--sp-3);
+  right: var(--sp-3);
+  height: 1px;
+  background: var(--line);
 }
 
 .row {
+  position: relative;
   display: grid;
   grid-template-columns: 3ch minmax(0, 1fr) auto;
   align-items: baseline;
@@ -125,10 +142,28 @@
   width: 100%;
   min-height: var(--hit);
   padding: 10px var(--sp-3);
+  border-radius: var(--r-md);
   text-align: left;
   font-size: var(--fs-body);
   line-height: 1.4;
   color: var(--text-hi);
+  transition:
+    background-color var(--dur-fast) linear,
+    transform var(--dur-fast) var(--ease-spring);
+}
+
+/* The signal edge: a pill on the leading side that grows from the middle. */
+.row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 20%;
+  bottom: 20%;
+  width: 3px;
+  border-radius: var(--r-pill);
+  background: linear-gradient(180deg, var(--signal), color-mix(in oklab, var(--signal) 45%, var(--scene-accent)));
+  transform: scaleY(0);
+  transition: transform var(--dur-base) var(--ease-spring);
 }
 
 .rowIndex {
@@ -137,6 +172,7 @@
   letter-spacing: var(--readout-tracking);
   font-variant-numeric: tabular-nums;
   color: var(--text-dim);
+  transition: color var(--dur-fast) linear;
 }
 
 .rowText {
@@ -144,26 +180,57 @@
   overflow-wrap: anywhere;
 }
 
+.rowIndex,
+.rowText {
+  transition:
+    transform var(--dur-base) var(--ease),
+    color var(--dur-fast) linear;
+}
+
 .rowArrow {
   align-self: center;
   color: var(--text-dim);
+  transition:
+    transform var(--dur-base) var(--ease-spring),
+    color var(--dur-fast) linear;
 }
 
-/* Hover and focus invert the row to paper; every child inherits the dark ink. */
+/* Hover and focus: a tint, the edge, content a few px along, the arrow further. */
 .row:hover,
 .row:focus-visible {
-  background: var(--paper);
-  color: var(--paper-ink);
+  background: color-mix(in srgb, var(--signal) 7%, transparent);
 }
 
-.row:hover :is(.rowIndex, .rowArrow),
-.row:focus-visible :is(.rowIndex, .rowArrow) {
-  color: inherit;
+.row:hover::before,
+.row:focus-visible::before {
+  transform: scaleY(1);
 }
 
+.row:hover .rowIndex,
+.row:focus-visible .rowIndex {
+  transform: translateX(3px);
+  color: var(--signal);
+}
+
+.row:hover .rowText,
+.row:focus-visible .rowText {
+  transform: translateX(5px);
+}
+
+.row:hover .rowArrow,
+.row:focus-visible .rowArrow {
+  transform: translateX(4px);
+  color: var(--signal);
+}
+
+.row:active {
+  transform: scale(0.985);
+}
+
+/* The global focus ring takes --r-sm; the row keeps its own shape. */
 .row:focus-visible {
-  outline-offset: -4px;
-  outline-color: var(--paper-ink);
+  border-radius: var(--r-md);
+  outline-offset: -2px;
 }
 
 @media (min-width: 768px) {

@@ -1,8 +1,7 @@
 /*
- * The status strip: a flat 48px band with one bottom hairline. The product name
- * sits left as an inverted tag beside a blinking square (the live marker); the
- * actions sit right as square bordered buttons. Nothing here animates except
- * the marker, and that one blinks hard on and off.
+ * The status strip: a 48px glass band with one bottom hairline. The product
+ * name sits left as an inverted pill beside a live dot that breathes; the
+ * actions sit right as round and pill buttons that lift on hover.
  */
 .bar {
   position: fixed;
@@ -20,7 +19,9 @@
   --edge: max(var(--gutter), calc((100% - var(--content-max)) / 2));
   padding-left: max(var(--edge), env(safe-area-inset-left));
   padding-right: max(var(--edge), env(safe-area-inset-right));
-  background: var(--ink-0);
+  background: color-mix(in srgb, var(--ink-0) 68%, transparent);
+  -webkit-backdrop-filter: var(--blur);
+  backdrop-filter: var(--blur);
   border-bottom: 1px solid var(--line);
 }
 
@@ -33,7 +34,8 @@
 
 /* The inverted tag, the same recipe as a card title. */
 .brandName {
-  padding: 0 8px;
+  padding: 0 12px;
+  border-radius: var(--r-pill);
   background: var(--paper);
   color: var(--paper-ink);
   font-family: var(--font-display);
@@ -45,13 +47,15 @@
   text-transform: uppercase;
 }
 
-/* Live marker: a square that is either there or not. */
+/* Live marker: a dot that breathes, inside a faint ring. */
 .brandMark {
   flex: none;
   width: 8px;
   height: 8px;
+  border-radius: 50%;
   background: var(--signal);
-  animation: blink 1.4s steps(1, end) infinite;
+  box-shadow: 0 0 0 3px var(--signal-soft);
+  animation: pulse 2.4s ease-in-out infinite;
 }
 
 .actions {
@@ -67,12 +71,18 @@
   justify-content: center;
   min-height: var(--hit);
   border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
   color: var(--text);
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background-color var(--dur-fast) linear,
+    border-color var(--dur-fast) linear,
+    color var(--dur-fast) linear;
 }
 
 .action {
   gap: var(--sp-2);
-  padding: 0 14px 0 12px;
+  padding: 0 16px 0 12px;
   font-family: var(--font-display);
   font-stretch: var(--tag-stretch);
   font-size: var(--fs-caption);
@@ -86,18 +96,38 @@
   color: var(--text-dim);
 }
 
+.action svg,
+.iconBtn svg {
+  transition: transform var(--dur-base) var(--ease-spring);
+}
+
 /* The strip is only 4px taller than a button, so the ring sits inside it. */
 .action:focus-visible,
 .iconBtn:focus-visible {
-  outline-offset: -4px;
+  border-radius: var(--r-pill);
+  outline-offset: -3px;
 }
 
-/* Hard cut: the button flips to an inverted block, no fade. */
+/* Hover: a lift, a signal tint, the icon turns. Press gives a little. */
 .action:hover,
 .iconBtn:hover {
-  background: var(--paper);
-  border-color: var(--paper);
-  color: var(--paper-ink);
+  transform: translateY(-1px);
+  background: var(--signal-soft);
+  border-color: color-mix(in srgb, var(--signal) 55%, var(--line-strong));
+  color: var(--text-hi);
+}
+
+.action:hover svg {
+  transform: rotate(90deg);
+}
+
+.iconBtn:hover svg {
+  transform: rotate(60deg);
+}
+
+.action:active,
+.iconBtn:active {
+  transform: scale(0.96);
 }
 
 @media (max-width: 767px) {

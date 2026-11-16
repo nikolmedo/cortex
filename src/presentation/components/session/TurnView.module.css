@@ -9,7 +9,7 @@
 }
 
 .turn + .turn {
-  border-top: 1px solid var(--line);
+  background: linear-gradient(90deg, var(--line-strong), transparent 75%) top / 100% 1px no-repeat;
 }
 
 .latest {
@@ -38,7 +38,7 @@
 
 /*
  * The query is a readout row, not a headline: mono, dim, led by a prompt
- * glyph, and joined to the answer by a dashed line.
+ * glyph, and joined to the answer by a hairline that fades out.
  */
 .header {
   display: flex;
@@ -46,7 +46,7 @@
   gap: var(--sp-3);
   margin-bottom: var(--sp-5);
   padding-bottom: var(--sp-3);
-  border-bottom: 1px dashed var(--line-strong);
+  background: linear-gradient(90deg, var(--line-strong), transparent 80%) bottom / 100% 1px no-repeat;
 }
 
 .glyph {
@@ -83,13 +83,36 @@
   height: var(--hit);
   margin-left: auto;
   border: 1px solid var(--line-strong);
+  border-radius: var(--r-pill);
   color: var(--text-dim);
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background-color var(--dur-fast) linear,
+    border-color var(--dur-fast) linear,
+    color var(--dur-fast) linear;
+}
+
+.iconBtn svg {
+  transition: transform var(--dur-base) var(--ease-spring);
 }
 
 .iconBtn:hover {
-  border-color: var(--paper);
-  background: var(--paper);
-  color: var(--paper-ink);
+  transform: translateY(-1px);
+  border-color: color-mix(in srgb, var(--signal) 55%, var(--line-strong));
+  background: var(--signal-soft);
+  color: var(--text-hi);
+}
+
+.iconBtn:hover svg {
+  transform: rotate(-90deg);
+}
+
+.iconBtn:active {
+  transform: scale(0.96);
+}
+
+.iconBtn:focus-visible {
+  border-radius: var(--r-pill);
 }
 
 /* Stage: the core at full size with the live plan beside it */
@@ -133,26 +156,43 @@
   animation: materialize var(--dur-slow) var(--ease) both;
 }
 
-/* The plan is a checklist: one mono row per step, a hairline between rows. */
+/*
+ * The plan is a checklist on a rail: one mono row per step, a round marker per
+ * row and a line joining each marker to the next. A step moves from a hollow
+ * dot to a breathing signal dot to a filled one, and its text brightens as it
+ * is reached.
+ */
 .plan {
   list-style: none;
   margin-top: var(--sp-4);
-  border-bottom: 1px solid var(--line);
   text-align: left;
 }
 
 .planStep {
+  position: relative;
   display: flex;
   align-items: flex-start;
   gap: var(--sp-3);
-  padding: 9px 0;
-  border-top: 1px solid var(--line);
+  padding: 8px 0;
   font-family: var(--font-mono);
   font-size: var(--fs-small);
   letter-spacing: var(--readout-tracking);
   line-height: 1.45;
   color: var(--text-dim);
+  transition: color var(--dur-base) var(--ease);
   animation: materialize var(--dur-slow) var(--ease) both;
+}
+
+/* The rail: from under this step's marker down to the next one's. */
+.planStep:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 4.5px;
+  top: 28px;
+  bottom: -10px;
+  width: 1px;
+  background: var(--line-strong);
+  transition: background-color var(--dur-base) var(--ease);
 }
 
 .planText {
@@ -160,16 +200,21 @@
   overflow-wrap: anywhere;
 }
 
-/* Pending: a hairline square. */
+/* Pending: a hollow dot. */
 .planMark {
   flex: none;
   width: 10px;
   height: 10px;
-  margin-top: 0.42em;
+  margin-top: 6px;
   border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  transition:
+    background-color var(--dur-base) var(--ease),
+    border-color var(--dur-base) var(--ease),
+    box-shadow var(--dur-base) var(--ease);
 }
 
-/* Active: a signal square that blinks hard. */
+/* Active: a signal dot that breathes inside a soft ring. */
 .planStep[data-state='active'] {
   color: var(--text-hi);
 }
@@ -177,13 +222,18 @@
 .planStep[data-state='active'] .planMark {
   border-color: var(--signal);
   background: var(--signal);
-  animation: blink 1s steps(1, end) infinite;
+  box-shadow: 0 0 0 3px var(--signal-soft);
+  animation: pulse 1.6s ease-in-out infinite;
 }
 
-/* Done: a filled paper square. */
+/* Done: a filled paper dot, and the rail below it takes the signal hue. */
 .planStep[data-state='done'] .planMark {
   border-color: var(--paper);
   background: var(--paper);
+}
+
+.planStep[data-state='done']::before {
+  background: color-mix(in srgb, var(--signal) 55%, var(--line-strong));
 }
 
 .planStep[data-state='done'] {
@@ -203,6 +253,7 @@
 /* Error and empty notices */
 
 .notice {
+  position: relative;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--sp-3) var(--sp-4);
@@ -210,13 +261,28 @@
   padding: var(--sp-5);
   background: var(--surface);
   border: 1px solid var(--line-strong);
+  border-radius: var(--frame);
+  box-shadow: var(--sheen);
   animation: materialize var(--dur-slow) var(--ease) both;
 }
 
-/* An error is the one framed block in the danger colour: hairline, edge bar and icon. */
+/* An error is the one framed block in the danger colour: ring, edge bar and icon. */
 .notice[role='alert'] {
-  border-color: var(--danger);
-  border-left-width: 3px;
+  border-color: color-mix(in srgb, var(--danger) 65%, var(--line));
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--danger) 7%, transparent), transparent 120px),
+    var(--surface);
+}
+
+.notice[role='alert']::before {
+  content: '';
+  position: absolute;
+  left: -1px;
+  top: calc(var(--sp-5) + 2px);
+  width: 3px;
+  height: 26px;
+  border-radius: 0 var(--r-pill) var(--r-pill) 0;
+  background: var(--danger);
 }
 
 .notice:not(:has(.noticeIcon)) {
@@ -224,8 +290,13 @@
 }
 
 .noticeIcon {
+  box-sizing: border-box;
+  width: 36px;
+  height: 36px;
+  padding: 8px;
+  border-radius: 50%;
   color: var(--danger);
-  margin-top: 2px;
+  background: color-mix(in srgb, var(--danger) 14%, transparent);
 }
 
 .noticeText {
@@ -259,8 +330,9 @@
   align-items: center;
   gap: var(--sp-2);
   min-height: var(--hit);
-  padding: 0 18px;
+  padding: 0 20px 0 16px;
   border: 1px solid var(--paper);
+  border-radius: var(--r-pill);
   background: var(--paper);
   color: var(--paper-ink);
   font-family: var(--font-display);
@@ -269,11 +341,32 @@
   font-weight: 600;
   letter-spacing: var(--tag-tracking);
   text-transform: uppercase;
+  transition:
+    transform var(--dur-fast) var(--ease-spring),
+    background-color var(--dur-fast) linear,
+    border-color var(--dur-fast) linear;
+}
+
+.retry svg {
+  transition: transform var(--dur-base) var(--ease-spring);
 }
 
 .retry:hover {
+  transform: translateY(-1px);
   border-color: var(--signal);
   background: var(--signal);
+}
+
+.retry:hover svg {
+  transform: rotate(-90deg);
+}
+
+.retry:active {
+  transform: scale(0.97);
+}
+
+.retry:focus-visible {
+  border-radius: var(--r-pill);
 }
 
 @media (min-width: 768px) {
