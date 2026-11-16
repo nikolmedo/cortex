@@ -555,9 +555,9 @@ export const PrefaceWireSchema = z.object({
       `What the tool lets the user do: its controls, inputs and outputs, at most ${LIMITS.appletBrief} characters.`,
     ),
   }).optional().describe(
-    'Only when the question asks for something to operate rather than read: a picker, calculator, converter, '
-    + 'generator, timer, simulator, playground, visual editor or small game-like tool. Omit it for every other question, '
-    + 'including requests to show a chart or explain something.',
+    'Whenever a bespoke interactive interface would serve the question better than prose, standard charts and lists: '
+    + 'a tool, a simulation, an explorable diagram or model, a reference board, a quiz or small game, a custom visualisation. '
+    + 'Omit it when prose, a standard chart, a list, a table or a comparison fully answers the question.',
   ),
 });
 

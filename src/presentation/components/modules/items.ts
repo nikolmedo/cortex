@@ -316,7 +316,11 @@ export function parseChartValue(text: string | undefined): ParsedValue | null {
   const match = NUMBER_RE.exec(text);
   if (!match) return null;
   const token = match[0];
-  const negative = token.startsWith('-') || token.startsWith('−');
+  // A sign can sit before the currency symbol ("-$5"), outside the number token.
+  let prefix = text.slice(0, match.index);
+  const leadingSign = /^\s*[-−]\s*(?=\D*$)/.exec(prefix);
+  if (leadingSign) prefix = prefix.slice(leadingSign[0].length);
+  const negative = leadingSign !== null || token.startsWith('-') || token.startsWith('−');
   const digits = token.replace(/^[-−+]/, '');
   let decimalMark: '.' | ',' | null = null;
   if (digits.includes('.') && digits.includes(',')) decimalMark = digits.lastIndexOf('.') > digits.lastIndexOf(',') ? '.' : ',';
@@ -330,7 +334,7 @@ export function parseChartValue(text: string | undefined): ParsedValue | null {
   return {
     value: negative ? -value : value,
     decimals: fraction.length,
-    template: `${text.slice(0, match.index)}#${text.slice(match.index + token.length)}`.trim(),
+    template: `${prefix}#${text.slice(match.index + token.length)}`.trim(),
   };
 }
 

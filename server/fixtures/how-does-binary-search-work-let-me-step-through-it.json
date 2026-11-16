@@ -1,0 +1,258 @@
+{
+  "query": "How does binary search work? Let me step through it",
+  "lang": "en",
+  "preface": {
+    "intent": "explanation",
+    "title": "Binary search algorithm",
+    "layout": "sequence",
+    "mood": "calm",
+    "palette": {
+      "primary": "#38BDF8",
+      "secondary": "#A855F7",
+      "accent": "#F43F5E"
+    },
+    "plan": [
+      "Checking precondition of sorted array elements",
+      "Calculating midpoint index for search range",
+      "Comparing target with midpoint and splitting bounds"
+    ],
+    "applet": {
+      "title": "Binary search stepper",
+      "brief": "A sorted row of numbers with low, mid and high pointers; a target input and step, back and reset controls that show each comparison and the shrinking range."
+    }
+  },
+  "scene": {
+    "version": 3,
+    "intent": "explanation",
+    "type": "concept",
+    "title": "Binary Search Algorithm",
+    "subtitle": "Divide-and-conquer logarithmic search on sorted arrays",
+    "answer": {
+      "headline": "Binary search finds a target value in a sorted array in O(log n) time by continually halving the search window based on midpoint comparisons.",
+      "body": [
+        "Binary search operates on the principle of **decrease-and-conquer**. Unlike linear search, which inspects elements one by one from beginning to end, binary search requires the collection to be strictly sorted. It tracks two boundary pointers, `low` and `high`, defining the active search space.",
+        "At each iteration, the algorithm calculates the midpoint `mid = low + (high - low) // 2`. Comparing the midpoint element `A[mid]` with the target yields one of three outcomes: an immediate match, or an elimination of half the remaining elements. If `target ‹ A[mid]`, the target cannot exist in the right half, so `high` moves to `mid - 1`. If `target › A[mid]`, `low` advances to `mid + 1`.",
+        "Because each comparison discards exactly half of the remaining candidate indices, the search space shrinks as n, n/2, n/4, ..., 1. Consequently, even an array of one billion elements requires at most 30 comparisons to pinpoint the item or confirm it is absent."
+      ],
+      "caveats": [
+        "Requires the underlying collection to be sorted and provide O(1) random memory access.",
+        "Midpoint calculation in low-level languages must use `low + (high - low) / 2` to prevent 32-bit integer overflow."
+      ]
+    },
+    "summary": "",
+    "image_url": "",
+    "image_query": "",
+    "meta": {
+      "Time Complexity": "O(log n)",
+      "Space Complexity": "O(1) iterative",
+      "Prerequisite": "Monotonic sorted order",
+      "Data Structure": "Contiguous array"
+    },
+    "presentation": {
+      "layout": "sequence",
+      "mood": "kinetic",
+      "motif": "grid",
+      "density": "balanced",
+      "typeScale": "technical",
+      "palette": {
+        "primary": "#4DEEEA",
+        "secondary": "#88f037",
+        "accent": "#ffeb29"
+      }
+    },
+    "modules": [
+      {
+        "category": "Execution Walkthrough",
+        "color": "#4DEEEA",
+        "image_query": "",
+        "kind": "steps",
+        "facts": [
+          "Initial bounds: low = 0, high = 9",
+          "Target 23 found at index 5 in 3 iterations",
+          "Search space shrinks from 10 elements to 1"
+        ],
+        "headline": "Tracing target 23 in array [2, 5, 8, 12, 16, 23, 38, 56, 72, 91]",
+        "items": [
+          {
+            "label": "Initialize bounds",
+            "value": "Window [0..9]",
+            "detail": "Set `low = 0` (value 2) and `high = 9` (value 91). Search space spans 10 elements."
+          },
+          {
+            "label": "Pass 1: Probe midpoint",
+            "value": "low = 5, high = 9",
+            "detail": "Mid index = 0 + (9 - 0) // 2 = 4 (`A[4] = 16`). Since 23 › 16, discard left half and set `low = mid + 1` (5)."
+          },
+          {
+            "label": "Pass 2: Probe right subarray",
+            "value": "low = 5, high = 6",
+            "detail": "New search space is indices 5 to 9: [23, 38, 56, 72, 91]. Mid index = 5 + (9 - 5) // 2 = 7 (`A[7] = 56`). Since 23 ‹ 56, discard right half and set `high = mid - 1` (6)."
+          },
+          {
+            "label": "Pass 3: Match confirmed",
+            "value": "Found at Index 5",
+            "detail": "Remaining window is indices 5 to 6: [23, 38]. Mid index = 5 + (6 - 5) // 2 = 5 (`A[5] = 23`). `A[5] == 23`, return index 5."
+          }
+        ],
+        "size": "two-thirds",
+        "surface": "solid",
+        "corner": "notch",
+        "header": "icon",
+        "pattern": "grid",
+        "variant": "path"
+      },
+      {
+        "category": "Core Invariants",
+        "color": "#88f037",
+        "image_query": "",
+        "kind": "formula",
+        "facts": [
+          "Eliminates 50% of candidate items per iteration",
+          "Recurrence relation T(n) = T(n/2) + O(1)"
+        ],
+        "headline": "Mathematical boundaries and recurrence relation",
+        "items": [
+          {
+            "label": "mid = low + ⌊(high - low) / 2⌋",
+            "value": "Index computation",
+            "detail": "Overflow-safe midpoint calculation ensuring indices fit within machine integer ranges."
+          },
+          {
+            "label": "T(n) = T(n / 2) + 1",
+            "value": "Recurrence",
+            "detail": "Master theorem case 2 solves directly to logarithmic execution time."
+          },
+          {
+            "label": "k = ⌈log₂(n + 1)⌉",
+            "value": "Max comparisons",
+            "detail": "Maximum number of probes required to locate any item or exhaust the interval."
+          }
+        ],
+        "size": "third",
+        "surface": "glass",
+        "corner": "round",
+        "header": "rule"
+      },
+      {
+        "category": "Implementation",
+        "color": "#4DEEEA",
+        "image_query": "",
+        "kind": "code",
+        "facts": [],
+        "headline": "Canonical iterative Python implementation",
+        "size": "full",
+        "surface": "outline",
+        "corner": "square",
+        "header": "icon",
+        "pattern": "scan"
+      },
+      {
+        "category": "Complexity vs Linear Search",
+        "color": "#ffeb29",
+        "image_query": "",
+        "kind": "chart",
+        "facts": [
+          "Binary search scales logarithmically",
+          "Linear search scales linearly with n"
+        ],
+        "headline": "Probes required by input size n in worst case",
+        "items": [
+          {
+            "label": "n = 16",
+            "value": "4 ops",
+            "weight": 7
+          },
+          {
+            "label": "n = 64",
+            "value": "6 ops",
+            "weight": 10
+          },
+          {
+            "label": "n = 256",
+            "value": "8 ops",
+            "weight": 14
+          },
+          {
+            "label": "n = 1,024",
+            "value": "10 ops",
+            "weight": 17
+          },
+          {
+            "label": "n = 65,536",
+            "value": "16 ops",
+            "weight": 27
+          },
+          {
+            "label": "n = 1,048,576",
+            "value": "20 ops",
+            "weight": 34
+          }
+        ],
+        "size": "half",
+        "surface": "bare",
+        "corner": "round",
+        "header": "rule",
+        "variant": "bars"
+      },
+      {
+        "category": "Pitfalls & Edge Cases",
+        "color": "#ffeb29",
+        "image_query": "",
+        "kind": "proscons",
+        "facts": [
+          "Integer overflow bug in `(low + high) // 2` historically affected Java and C libraries",
+          "Array must remain strictly sorted"
+        ],
+        "headline": "Critical implementation nuances",
+        "items": [
+          {
+            "label": "Safe Midpoint Arithmetic",
+            "value": "Recommended",
+            "side": "a"
+          },
+          {
+            "label": "Off-by-one Boundary Updates",
+            "value": "Common Bug",
+            "side": "b"
+          },
+          {
+            "label": "Search on Linked Lists",
+            "value": "Anti-pattern",
+            "side": "b"
+          },
+          {
+            "label": "Bisect Left vs Right",
+            "value": "Duplicate Values",
+            "side": "a"
+          }
+        ],
+        "size": "half",
+        "surface": "solid",
+        "corner": "notch",
+        "header": "numeral"
+      }
+    ],
+    "spotlight": {
+      "kind": "stat",
+      "label": "Worst-case comparisons for 1,000,000 items",
+      "value": "20",
+      "source": "ceil(log2(1,000,000))"
+    },
+    "followups": [
+      "How does binary search handle duplicated elements with lower and upper bounds?",
+      "Why does binary search perform poorly on linked lists?",
+      "How can binary search be applied to monotonic mathematical functions?"
+    ]
+  },
+  "timing": {
+    "prefaceMs": 2308,
+    "researchMs": 1189,
+    "firstPartialMs": 7334,
+    "sceneMs": 20087,
+    "sources": 0
+  },
+  "applet": {
+    "title": "Binary search stepper",
+    "html": "<style>\n  .bs-container {\n    max-width: 800px;\n    margin: 0 auto;\n    display: flex;\n    flex-direction: column;\n    gap: 20px;\n    color: var(--text);\n    font-family: var(--font-body);\n  }\n\n  .bs-header {\n    display: flex;\n    flex-wrap: wrap;\n    justify-content: space-between;\n    align-items: flex-end;\n    gap: 12px;\n    border-bottom: 1px solid var(--line);\n    padding-bottom: 14px;\n  }\n\n  .bs-title-group h2 {\n    margin: 0 0 4px 0;\n    font-size: 1.15rem;\n    font-weight: 600;\n    color: var(--text-hi);\n  }\n\n  .bs-title-group p {\n    margin: 0;\n    font-size: 0.85rem;\n    color: var(--text-dim);\n  }\n\n  .bs-controls {\n    display: flex;\n    flex-wrap: wrap;\n    align-items: center;\n    gap: 8px;\n  }\n\n  .bs-input-group {\n    display: flex;\n    align-items: center;\n    background: var(--surface);\n    border: 1px solid var(--line);\n    padding: 2px 8px;\n  }\n\n  .bs-input-group label {\n    font-family: var(--font-mono);\n    font-size: 0.75rem;\n    text-transform: uppercase;\n    color: var(--text-dim);\n    margin-right: 6px;\n  }\n\n  .bs-input-group input {\n    background: transparent;\n    border: none;\n    color: var(--text-hi);\n    font-family: var(--font-mono);\n    font-size: 0.95rem;\n    width: 60px;\n    outline: none;\n  }\n\n  .bs-btn {\n    background: var(--surface);\n    color: var(--text);\n    border: 1px solid var(--line);\n    padding: 7px 14px;\n    font-family: var(--font-mono);\n    font-size: 0.75rem;\n    text-transform: uppercase;\n    letter-spacing: 0.05em;\n    cursor: pointer;\n    border-radius: 0;\n    transition: background 0.1s, border-color 0.1s, color 0.1s;\n  }\n\n  .bs-btn:hover:not(:disabled) {\n    background: var(--raised);\n    color: var(--text-hi);\n    border-color: var(--line-strong);\n  }\n\n  .bs-btn:disabled {\n    opacity: 0.4;\n    cursor: not-allowed;\n  }\n\n  .bs-btn.primary {\n    border-color: var(--signal);\n    color: var(--signal);\n  }\n\n  .bs-btn.primary:hover:not(:disabled) {\n    background: var(--signal);\n    color: var(--paper-ink);\n  }\n\n  /* Array visualizer */\n  .bs-board-wrap {\n    overflow-x: auto;\n    padding: 12px 2px 24px 2px;\n    -webkit-overflow-scrolling: touch;\n  }\n\n  .bs-board {\n    display: flex;\n    min-width: 100%;\n    width: max-content;\n    gap: 6px;\n    justify-content: flex-start;\n  }\n\n  .bs-cell-col {\n    display: flex;\n    flex-direction: column;\n    align-items: center;\n    width: 44px;\n    flex-shrink: 0;\n    position: relative;\n  }\n\n  .bs-tag-slot {\n    height: 20px;\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    font-family: var(--font-mono);\n    font-size: 0.65rem;\n    font-weight: 700;\n    letter-spacing: 0.05em;\n  }\n\n  .bs-tag-slot.top {\n    margin-bottom: 4px;\n  }\n\n  .bs-tag-slot.bottom {\n    margin-top: 4px;\n    height: 18px;\n    color: var(--text-dim);\n  }\n\n  .bs-cell {\n    width: 44px;\n    height: 48px;\n    background: var(--surface);\n    border: 1px solid var(--line);\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    font-family: var(--font-mono);\n    font-size: 1.05rem;\n    font-weight: 600;\n    color: var(--text-hi);\n    transition: all 0.15s ease;\n    user-select: none;\n  }\n\n  .bs-cell-col.eliminated .bs-cell {\n    opacity: 0.25;\n    background: transparent;\n    border-style: dashed;\n    color: var(--text-dim);\n  }\n\n  .bs-cell-col.in-range .bs-cell {\n    border-color: var(--line-strong);\n    background: var(--surface);\n  }\n\n  .bs-cell-col.is-mid .bs-cell {\n    border-color: var(--signal);\n    border-width: 2px;\n    color: var(--signal);\n    background: var(--raised);\n  }\n\n  .bs-cell-col.found .bs-cell {\n    border-color: var(--ok);\n    background: var(--ok);\n    color: var(--bg);\n  }\n\n  .pointer-pill {\n    padding: 1px 4px;\n    font-size: 0.65rem;\n    text-transform: uppercase;\n    line-height: 1;\n    border-radius: 0;\n  }\n\n  .ptr-l { background: var(--raised); border: 1px solid var(--line-strong); color: var(--text-hi); }\n  .ptr-m { background: var(--signal); color: var(--paper-ink); }\n  .ptr-h { background: var(--raised); border: 1px solid var(--line-strong); color: var(--text-hi); }\n\n  /* Info panel */\n  .bs-status-card {\n    background: var(--surface);\n    border: 1px solid var(--line);\n    padding: 16px;\n    display: flex;\n    flex-direction: column;\n    gap: 12px;\n  }\n\n  .bs-metrics {\n    display: grid;\n    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));\n    gap: 10px;\n    border-bottom: 1px solid var(--line);\n    padding-bottom: 12px;\n  }\n\n  .bs-metric-item {\n    display: flex;\n    flex-direction: column;\n    gap: 2px;\n  }\n\n  .bs-metric-label {\n    font-family: var(--font-mono);\n    font-size: 0.65rem;\n    text-transform: uppercase;\n    color: var(--text-dim);\n    letter-spacing: 0.05em;\n  }\n\n  .bs-metric-value {\n    font-family: var(--font-mono);\n    font-size: 1rem;\n    font-weight: 600;\n    color: var(--text-hi);\n  }\n\n  .bs-narrative {\n    font-size: 0.9rem;\n    line-height: 1.5;\n    color: var(--text);\n  }\n\n  .bs-narrative strong {\n    color: var(--text-hi);\n  }\n\n  .bs-narrative .highlight {\n    font-family: var(--font-mono);\n    padding: 1px 4px;\n    background: var(--raised);\n    border: 1px solid var(--line);\n  }\n\n  .bs-presets {\n    display: flex;\n    align-items: center;\n    gap: 6px;\n    flex-wrap: wrap;\n    font-size: 0.8rem;\n  }\n\n  .bs-presets span {\n    font-family: var(--font-mono);\n    font-size: 0.7rem;\n    color: var(--text-dim);\n    text-transform: uppercase;\n  }\n\n  .bs-preset-btn {\n    background: transparent;\n    border: 1px solid var(--line);\n    color: var(--text-dim);\n    font-family: var(--font-mono);\n    font-size: 0.75rem;\n    padding: 3px 8px;\n    cursor: pointer;\n  }\n\n  .bs-preset-btn:hover {\n    color: var(--text-hi);\n    border-color: var(--line-strong);\n  }\n</style>\n\n<div class=\"bs-container\">\n  <div class=\"bs-header\">\n    <div class=\"bs-title-group\">\n      <h2>Binary Search Stepper</h2>\n      <p>Repeatedly halving a sorted space in O(log n) time</p>\n    </div>\n\n    <div class=\"bs-controls\">\n      <div class=\"bs-input-group\">\n        <label for=\"bs-target\">Target</label>\n        <input type=\"number\" id=\"bs-target\" value=\"38\" min=\"0\" max=\"999\" />\n      </div>\n      <button class=\"bs-btn\" id=\"bs-btn-prev\" title=\"Step Back\">&larr; Back</button>\n      <button class=\"bs-btn primary\" id=\"bs-btn-next\" title=\"Next Step\">Step &rarr;</button>\n      <button class=\"bs-btn\" id=\"bs-btn-reset\" title=\"Reset to start\">Reset</button>\n    </div>\n  </div>\n\n  <div class=\"bs-board-wrap\" tabindex=\"0\" aria-label=\"Visual array grid\">\n    <div class=\"bs-board\" id=\"bs-board\"></div>\n  </div>\n\n  <div class=\"bs-status-card\">\n    <div class=\"bs-metrics\">\n      <div class=\"bs-metric-item\">\n        <span class=\"bs-metric-label\">Step / Comparisons</span>\n        <span class=\"bs-metric-value\" id=\"m-step\">0 / 0</span>\n      </div>\n      <div class=\"bs-metric-item\">\n        <span class=\"bs-metric-label\">Search Range [L, H]</span>\n        <span class=\"bs-metric-value\" id=\"m-range\">[0, 15]</span>\n      </div>\n      <div class=\"bs-metric-item\">\n        <span class=\"bs-metric-label\">Mid Index &amp; Val</span>\n        <span class=\"bs-metric-value\" id=\"m-mid\">&mdash;</span>\n      </div>\n      <div class=\"bs-metric-item\">\n        <span class=\"bs-metric-label\">Status</span>\n        <span class=\"bs-metric-value\" id=\"m-status\">Ready</span>\n      </div>\n    </div>\n\n    <div class=\"bs-narrative\" id=\"bs-explanation\" aria-live=\"polite\">\n      Initial state. Click <strong>Step &rarr;</strong> to compute the midpoint and compare against target.\n    </div>\n\n    <div class=\"bs-presets\">\n      <span>Try target:</span>\n      <button class=\"bs-preset-btn\" data-val=\"12\">12 (Left side)</button>\n      <button class=\"bs-preset-btn\" data-val=\"38\">38 (Right side)</button>\n      <button class=\"bs-preset-btn\" data-val=\"4\">4 (First element)</button>\n      <button class=\"bs-preset-btn\" data-val=\"91\">91 (Last element)</button>\n      <button class=\"bs-preset-btn\" data-val=\"25\">25 (Missing value)</button>\n    </div>\n  </div>\n</div>\n\n<script>\n{\n  const ARR = [4, 7, 12, 16, 21, 28, 33, 38, 45, 52, 60, 69, 74, 82, 88, 91];\n  \n  let target = 38;\n  let steps = [];\n  let currentStepIdx = 0;\n\n  const boardEl = document.getElementById('bs-board');\n  const targetInput = document.getElementById('bs-target');\n  const btnPrev = document.getElementById('bs-btn-prev');\n  const btnNext = document.getElementById('bs-btn-next');\n  const btnReset = document.getElementById('bs-btn-reset');\n  const metricStep = document.getElementById('m-step');\n  const metricRange = document.getElementById('m-range');\n  const metricMid = document.getElementById('m-mid');\n  const metricStatus = document.getElementById('m-status');\n  const explanationEl = document.getElementById('bs-explanation');\n\n  function precomputeSteps(arr, key) {\n    const sequence = [];\n    let L = 0;\n    let H = arr.length - 1;\n    let stepCount = 0;\n\n    // Initial state before inspecting anything\n    sequence.push({\n      L, H,\n      mid: null,\n      found: false,\n      exhausted: false,\n      stepCount: 0,\n      text: `Start binary search on array of length ${arr.length}. Looking for target <span class=\"highlight\">${key}</span>. Initial active boundary is from index 0 to ${H}.`\n    });\n\n    while (L <= H) {\n      stepCount++;\n      const mid = Math.floor((L + H) / 2);\n      const midVal = arr[mid];\n\n      if (midVal === key) {\n        sequence.push({\n          L, H, mid,\n          found: true,\n          exhausted: false,\n          stepCount,\n          text: `Midpoint at index <strong>${mid}</strong> has value <strong>${midVal}</strong>. Value matches target <span class=\"highlight\">${key}</span>! Target found in ${stepCount} ${stepCount === 1 ? 'step' : 'steps'}.`\n        });\n        return sequence;\n      } else if (midVal < key) {\n        sequence.push({\n          L, H, mid,\n          found: false,\n          exhausted: false,\n          stepCount,\n          text: `Check midpoint at index <strong>${mid}</strong> (value: <strong>${midVal}</strong>). Since ${midVal} &lt; ${key}, target must lie in the right half. Discarding indices [${L}..${mid}]. Updating low to ${mid + 1}.`\n        });\n        L = mid + 1;\n      } else {\n        sequence.push({\n          L, H, mid,\n          found: false,\n          exhausted: false,\n          stepCount,\n          text: `Check midpoint at index <strong>${mid}</strong> (value: <strong>${midVal}</strong>). Since ${midVal} &gt; ${key}, target must lie in the left half. Discarding indices [${mid}..${H}]. Updating high to ${mid - 1}.`\n        });\n        H = mid - 1;\n      }\n    }\n\n    sequence.push({\n      L, H,\n      mid: null,\n      found: false,\n      exhausted: true,\n      stepCount,\n      text: `Search range exhausted (low=${L} &gt; high=${H}). Target <span class=\"highlight\">${key}</span> does not exist in the array.`\n    });\n\n    return sequence;\n  }\n\n  function renderBoard() {\n    boardEl.innerHTML = '';\n    const state = steps[currentStepIdx];\n\n    ARR.forEach((val, idx) => {\n      const col = document.createElement('div');\n      col.className = 'bs-cell-col';\n\n      const inRange = idx >= state.L && idx <= state.H;\n      const isMid = (idx === state.mid);\n      const isFound = state.found && isMid;\n\n      if (!inRange && (state.mid === null || idx !== state.mid)) {\n        col.classList.add('eliminated');\n      } else if (inRange) {\n        col.classList.add('in-range');\n      }\n\n      if (isMid) col.classList.add('is-mid');\n      if (isFound) col.classList.add('found');\n\n      // Top Tag: Low, Mid, High indicators\n      const topTag = document.createElement('div');\n      topTag.className = 'bs-tag-slot top';\n\n      let tags = [];\n      if (idx === state.L && state.L <= state.H) tags.push('<span class=\"pointer-pill ptr-l\">L</span>');\n      if (idx === state.mid) tags.push('<span class=\"pointer-pill ptr-m\">M</span>');\n      if (idx === state.H && state.L <= state.H) tags.push('<span class=\"pointer-pill ptr-h\">H</span>');\n\n      topTag.innerHTML = tags.join('');\n\n      // Cell\n      const cell = document.createElement('div');\n      cell.className = 'bs-cell';\n      cell.textContent = val;\n\n      // Bottom Tag: Array index\n      const bottomTag = document.createElement('div');\n      bottomTag.className = 'bs-tag-slot bottom';\n      bottomTag.textContent = idx;\n\n      col.appendChild(topTag);\n      col.appendChild(cell);\n      col.appendChild(bottomTag);\n      boardEl.appendChild(col);\n    });\n  }\n\n  function update() {\n    const state = steps[currentStepIdx];\n    renderBoard();\n\n    metricStep.textContent = `${currentStepIdx} / ${steps.length - 1}`;\n    \n    if (state.L <= state.H) {\n      metricRange.textContent = `[${state.L}, ${state.H}] (${state.H - state.L + 1} items)`;\n    } else {\n      metricRange.textContent = 'None (Empty)';\n    }\n\n    if (state.mid !== null) {\n      metricMid.textContent = `i=${state.mid} (val: ${ARR[state.mid]})`;\n    } else {\n      metricMid.textContent = '\\u2014';\n    }\n\n    if (state.found) {\n      metricStatus.textContent = 'Found';\n      metricStatus.style.color = 'var(--ok)';\n    } else if (state.exhausted) {\n      metricStatus.textContent = 'Not Found';\n      metricStatus.style.color = 'var(--danger)';\n    } else if (currentStepIdx === 0) {\n      metricStatus.textContent = 'Ready';\n      metricStatus.style.color = 'var(--text-dim)';\n    } else {\n      metricStatus.textContent = 'Searching...';\n      metricStatus.style.color = 'var(--signal)';\n    }\n\n    explanationEl.innerHTML = state.text;\n\n    btnPrev.disabled = currentStepIdx === 0;\n    btnNext.disabled = currentStepIdx === steps.length - 1;\n  }\n\n  function init(newTarget) {\n    target = Number(newTarget);\n    targetInput.value = target;\n    steps = precomputeSteps(ARR, target);\n    currentStepIdx = 0;\n    update();\n  }\n\n  btnNext.addEventListener('click', () => {\n    if (currentStepIdx < steps.length - 1) {\n      currentStepIdx++;\n      update();\n    }\n  });\n\n  btnPrev.addEventListener('click', () => {\n    if (currentStepIdx > 0) {\n      currentStepIdx--;\n      update();\n    }\n  });\n\n  btnReset.addEventListener('click', () => {\n    currentStepIdx = 0;\n    update();\n  });\n\n  targetInput.addEventListener('change', () => {\n    const val = parseInt(targetInput.value, 10);\n    init(isNaN(val) ? 0 : val);\n  });\n\n  document.querySelectorAll('.bs-preset-btn').forEach(btn => {\n    btn.addEventListener('click', (e) => {\n      init(e.currentTarget.getAttribute('data-val'));\n    });\n  });\n\n  // Keyboard navigation support\n  boardEl.addEventListener('keydown', (e) => {\n    if (e.key === 'ArrowRight' || e.key === ' ') {\n      e.preventDefault();\n      btnNext.click();\n    } else if (e.key === 'ArrowLeft') {\n      e.preventDefault();\n      btnPrev.click();\n    }\n  });\n\n  init(38);\n}\n</script>"
+  }
+}

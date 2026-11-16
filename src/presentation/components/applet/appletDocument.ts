@@ -80,6 +80,10 @@ const HOST_SCRIPT = `(()=>{const root=document.documentElement;let last=0;`
 export function buildAppletDocument(html: string, lang: Locale): string {
   return '<!doctype html>'
     + `<html lang="${lang}"><head><meta charset="utf-8">`
+    // A srcdoc document takes the host page URL as its base, so href="#" would
+    // be a navigation to the host and trip the stopped state. This has to come
+    // before the policy: its base-uri 'none' rejects every later <base>.
+    + '<base href="about:srcdoc">'
     + `<meta http-equiv="Content-Security-Policy" content="${APPLET_CSP}">`
     + '<meta name="viewport" content="width=device-width, initial-scale=1">'
     + `<style>${HOST_STYLE}</style>`

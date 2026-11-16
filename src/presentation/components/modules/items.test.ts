@@ -258,3 +258,21 @@ describe('chartChange', () => {
     expect(chartChange('5 kg', '5 lb')).toBeNull();
   });
 });
+
+describe('chartChange with a sign written before the currency symbol', () => {
+  it('reads -$5 as negative five dollars', () => {
+    expect(parseChartValue('-$5')).toEqual({ value: -5, decimals: 0, template: '$#' });
+    expect(parseChartValue('−€1.50')).toEqual({ value: -1.5, decimals: 2, template: '€#' });
+  });
+
+  it('reports a deepening loss as a fall', () => {
+    const change = chartChange('-$5', '-$10');
+    expect(change?.direction).toBe('down');
+    expect(change?.absolute).toBe('−$5');
+    expect(change?.percent).toBe('−100.0%');
+  });
+
+  it('keeps a sign after the symbol working as before', () => {
+    expect(parseChartValue('$-5')).toEqual({ value: -5, decimals: 0, template: '$#' });
+  });
+});

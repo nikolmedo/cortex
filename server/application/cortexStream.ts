@@ -121,6 +121,8 @@ async function runLive({ query, lang }: StreamInput, { emit, signal }: StreamCon
       })
       .catch((err: unknown) => {
         console.warn(`[cortex] applet event failed: ${err instanceof Error ? err.message : String(err)}`);
+        // The client was told `pending`; it is owed an ending.
+        if (!signal.aborted) emit({ event: 'applet', data: { status: 'failed', title } });
         return null;
       });
   };

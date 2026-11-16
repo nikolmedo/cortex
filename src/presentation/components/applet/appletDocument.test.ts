@@ -57,4 +57,13 @@ describe('buildAppletDocument', () => {
     expect(doc).toContain('border-radius:0');
     expect(doc).toContain(':focus-visible{outline:1px solid var(--paper);outline-offset:3px}');
   });
+  it('pins the base URL to the frame itself, ahead of the policy that forbids later base tags', () => {
+    // A srcdoc document inherits the host page URL as its base, so an
+    // href="#" link would navigate the frame and trip the stopped state.
+    const doc = buildAppletDocument('<a href="#">top</a>', 'en');
+    const base = doc.indexOf('<base href="about:srcdoc">');
+    expect(base).toBeGreaterThan(-1);
+    expect(base).toBeLessThan(doc.indexOf('Content-Security-Policy'));
+    expect(doc.indexOf('Content-Security-Policy')).toBeLessThan(doc.indexOf('<a href="#">'));
+  });
 });
