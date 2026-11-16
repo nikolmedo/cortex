@@ -47,6 +47,16 @@ export const MODULE_VARIANTS = [
 ] as const;
 export const SCENE_TYPE_SCALES = ['editorial', 'technical', 'monumental'] as const;
 
+// Interactive tools ("applets"): generated markup that only ever runs inside a
+// sandboxed frame, never in the app DOM. The host defines these custom
+// properties in that frame and the applet prompt lists the same names.
+export const APPLET_THEME_VARS = [
+  '--bg', '--surface', '--raised', '--line', '--line-strong', '--text', '--text-hi', '--text-dim',
+  '--paper', '--paper-ink', '--signal', '--danger', '--ok', '--font-body', '--font-mono',
+] as const;
+/** States of the `applet` stream event: pending first, then ready or failed. */
+export const APPLET_STATUSES = ['pending', 'ready', 'failed'] as const;
+
 export const SCENE_VERSION = 3;
 
 export const LIMITS = {
@@ -72,7 +82,7 @@ export const LIMITS = {
   maxItems: 6,
   maxPanel: 8,
   maxSteps: 8,
-  maxChartPoints: 12,
+  maxChartPoints: 60,
   maxMeta: 8,
   maxSources: 8,
   maxTags: 12,
@@ -82,6 +92,9 @@ export const LIMITS = {
   maxPlan: 3,
   imageQuery: 80,
   url: 2048,
+  appletTitle: 80,
+  appletBrief: 400,
+  appletHtml: 32000,
 } as const;
 
 /** Layout used when the model omits or corrupts `presentation.layout`. */
@@ -123,6 +136,14 @@ export type ModulePattern = typeof MODULE_PATTERNS[number];
 export type ModuleSize = typeof MODULE_SIZES[number];
 export type ModuleVariant = typeof MODULE_VARIANTS[number];
 export type SceneTypeScale = typeof SCENE_TYPE_SCALES[number];
+export type AppletThemeVar = typeof APPLET_THEME_VARS[number];
+export type AppletStatus = typeof APPLET_STATUSES[number];
+
+/** The router's request for an interactive tool: what to call it and what it must do. */
+export interface AppletBrief {
+  title: string;
+  brief: string;
+}
 
 /** The variants each kind has a renderer for. A kind missing here has none. */
 export const VARIANTS_BY_KIND: Readonly<Partial<Record<FactKind, readonly ModuleVariant[]>>> = {
@@ -295,6 +316,32 @@ export function moduleVariant(kind: FactKind, value: unknown): ModuleVariant | u
   return (allowed as readonly string[]).includes(value) ? value as ModuleVariant : undefined;
 }
 
+/**
+ * The router's applet request, or null when it asked for none. Anything other
+ * than an object with a non-empty title and brief means none, so a preface
+ * without the field reads exactly as it did before applets existed.
+ */
+export function appletBrief(raw: unknown): AppletBrief | null {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
+  const { title, brief } = raw as Record<string, unknown>;
+  const name = typeof title === 'string' ? sanitizeText(title, LIMITS.appletTitle) : '';
+  const task = typeof brief === 'string' ? sanitizeText(brief, LIMITS.appletBrief) : '';
+  return name !== '' && task !== '' ? { title: name, brief: task } : null;
+}
+
+/**
+ * Generated applet markup, checked but never rewritten: angle brackets and
+ * indentation survive because it is only ever handed to a sandboxed iframe's
+ * srcdoc. Newlines are normalised and control characters other than tab and
+ * newline stripped. Blank or oversize markup is rejected rather than cut, since
+ * truncated markup is broken markup.
+ */
+export function sanitizeAppletHtml(input: unknown): string | null {
+  if (typeof input !== 'string') return null;
+  const html = input.replace(/\r\n?/g, '\n').replace(CONTROL_RE, '').trim();
+  return html !== '' && html.length <= LIMITS.appletHtml ? html : null;
+}
+
 // ---------------------------------------------------------------------------
 // Server-only zod helpers
 // ---------------------------------------------------------------------------
@@ -405,7 +452,7 @@ const WireModuleSchema = z.object({
     + 'proscons: side="a" for a pro or "b" for a con, label=the point, detail=why. '
     + 'chart: label=x-axis point (a year, a category), value=the real number with unit, weight=0-100 relative magnitude. '
     + 'panel: each item also carries a "shape" that decides how it is drawn. '
-    + 'code and prose: []. Provide 3 to 6 items (up to 8 steps, 8 panel parts, 12 tags or 12 chart points).',
+    + `code and prose: []. Provide 3 to 6 items (up to 8 steps, 8 panel parts, 12 tags or ${LIMITS.maxChartPoints} chart points).`,
   ),
   slot: z.enum(MODULE_SLOTS).optional().describe(
     'Where the card sits on a wide screen: "rail" for compact reference material beside the answer, "main" for the body flow. '
@@ -502,6 +549,16 @@ export const PrefaceWireSchema = z.object({
   mood: z.enum(SCENE_MOODS).describe('Motion and tone.'),
   palette: WirePaletteSchema,
   plan: z.array(z.string()).describe('Exactly 3 short research steps specific to this question, at most 120 characters each.'),
+  applet: z.object({
+    title: z.string().describe(`Name of the tool, at most ${LIMITS.appletTitle} characters, e.g. "CSS colour picker".`),
+    brief: z.string().describe(
+      `What the tool lets the user do: its controls, inputs and outputs, at most ${LIMITS.appletBrief} characters.`,
+    ),
+  }).optional().describe(
+    'Only when the question asks for something to operate rather than read: a picker, calculator, converter, '
+    + 'generator, timer, simulator, playground, visual editor or small game-like tool. Omit it for every other question, '
+    + 'including requests to show a chart or explain something.',
+  ),
 });
 
 // ---------------------------------------------------------------------------
@@ -817,6 +874,8 @@ export interface ScenePreface {
   mood: SceneMood;
   palette: ScenePalette;
   plan: string[];
+  /** Present only when the router asked for an interactive tool. */
+  applet?: AppletBrief;
 }
 
 const PrefaceSchema = z.object({
@@ -826,7 +885,21 @@ const PrefaceSchema = z.object({
   mood: z.enum(SCENE_MOODS).catch('calm'),
   palette: ScenePaletteSchema.catch(freshPalette),
   plan: z.unknown().transform(v => textList(v, LIMITS.planStep, LIMITS.maxPlan)),
-}).transform((p): ScenePreface => ({ ...p, layout: p.layout ?? LAYOUT_BY_INTENT[p.intent] }));
+  applet: z.unknown().transform(appletBrief),
+}).transform((p): ScenePreface => {
+  // Built key by key so the order matches the client mirror whether or not the
+  // model sent a layout; the drift check compares the serialised result.
+  const preface: ScenePreface = {
+    intent: p.intent,
+    title: p.title,
+    layout: p.layout ?? LAYOUT_BY_INTENT[p.intent],
+    mood: p.mood,
+    palette: p.palette,
+    plan: p.plan,
+  };
+  if (p.applet) preface.applet = p.applet;
+  return preface;
+});
 
 // ---------------------------------------------------------------------------
 // Entry points

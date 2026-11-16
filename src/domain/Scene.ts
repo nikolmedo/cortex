@@ -44,6 +44,16 @@ export const MODULE_VARIANTS = [
 ] as const;
 export const SCENE_TYPE_SCALES = ['editorial', 'technical', 'monumental'] as const;
 
+// Interactive tools ("applets"): generated markup that only ever runs inside a
+// sandboxed frame, never in the app DOM. The host defines these custom
+// properties in that frame and the applet prompt lists the same names.
+export const APPLET_THEME_VARS = [
+  '--bg', '--surface', '--raised', '--line', '--line-strong', '--text', '--text-hi', '--text-dim',
+  '--paper', '--paper-ink', '--signal', '--danger', '--ok', '--font-body', '--font-mono',
+] as const;
+/** States of the `applet` stream event: pending first, then ready or failed. */
+export const APPLET_STATUSES = ['pending', 'ready', 'failed'] as const;
+
 export const SCENE_VERSION = 3;
 
 export const LIMITS = {
@@ -69,7 +79,7 @@ export const LIMITS = {
   maxItems: 6,
   maxPanel: 8,
   maxSteps: 8,
-  maxChartPoints: 12,
+  maxChartPoints: 60,
   maxMeta: 8,
   maxSources: 8,
   maxTags: 12,
@@ -79,6 +89,9 @@ export const LIMITS = {
   maxPlan: 3,
   imageQuery: 80,
   url: 2048,
+  appletTitle: 80,
+  appletBrief: 400,
+  appletHtml: 32000,
 } as const;
 
 /** Layout used when the model omits or corrupts `presentation.layout`. */
@@ -120,6 +133,14 @@ export type ModulePattern = typeof MODULE_PATTERNS[number];
 export type ModuleSize = typeof MODULE_SIZES[number];
 export type ModuleVariant = typeof MODULE_VARIANTS[number];
 export type SceneTypeScale = typeof SCENE_TYPE_SCALES[number];
+export type AppletThemeVar = typeof APPLET_THEME_VARS[number];
+export type AppletStatus = typeof APPLET_STATUSES[number];
+
+/** The router's request for an interactive tool: what to call it and what it must do. */
+export interface AppletBrief {
+  title: string;
+  brief: string;
+}
 
 /** The variants each kind has a renderer for. A kind missing here has none. */
 export const VARIANTS_BY_KIND: Readonly<Partial<Record<FactKind, readonly ModuleVariant[]>>> = {
@@ -292,6 +313,32 @@ export function moduleVariant(kind: FactKind, value: unknown): ModuleVariant | u
   return (allowed as readonly string[]).includes(value) ? value as ModuleVariant : undefined;
 }
 
+/**
+ * The router's applet request, or null when it asked for none. Anything other
+ * than an object with a non-empty title and brief means none, so a preface
+ * without the field reads exactly as it did before applets existed.
+ */
+export function appletBrief(raw: unknown): AppletBrief | null {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
+  const { title, brief } = raw as Record<string, unknown>;
+  const name = typeof title === 'string' ? sanitizeText(title, LIMITS.appletTitle) : '';
+  const task = typeof brief === 'string' ? sanitizeText(brief, LIMITS.appletBrief) : '';
+  return name !== '' && task !== '' ? { title: name, brief: task } : null;
+}
+
+/**
+ * Generated applet markup, checked but never rewritten: angle brackets and
+ * indentation survive because it is only ever handed to a sandboxed iframe's
+ * srcdoc. Newlines are normalised and control characters other than tab and
+ * newline stripped. Blank or oversize markup is rejected rather than cut, since
+ * truncated markup is broken markup.
+ */
+export function sanitizeAppletHtml(input: unknown): string | null {
+  if (typeof input !== 'string') return null;
+  const html = input.replace(/\r\n?/g, '\n').replace(CONTROL_RE, '').trim();
+  return html !== '' && html.length <= LIMITS.appletHtml ? html : null;
+}
+
 // ---------------------------------------------------------------------------
 // Types (structurally identical to the server's output types)
 // ---------------------------------------------------------------------------
@@ -401,6 +448,19 @@ export interface ScenePreface {
   mood: SceneMood;
   palette: ScenePalette;
   plan: string[];
+  /** Present only when the router asked for an interactive tool. */
+  applet?: AppletBrief;
+}
+
+/**
+ * The interactive tool of a turn, as the `applet` stream event reports it.
+ * `html` is present only when `status` is 'ready', already through
+ * sanitizeAppletHtml, and may only ever reach a sandboxed iframe's srcdoc.
+ */
+export interface AppletState {
+  status: AppletStatus;
+  title: string;
+  html?: string;
 }
 
 export const DEFAULT_PRESENTATION: Readonly<ScenePresentation> = Object.freeze({
@@ -668,7 +728,7 @@ export function sanitizeScene(raw: unknown): Scene {
 export function sanitizePreface(raw: unknown): ScenePreface | null {
   if (!isObject(raw)) return null;
   const intent = asEnum(raw.intent, SCENE_INTENTS, 'explanation');
-  return {
+  const preface: ScenePreface = {
     intent,
     title: toText(raw.title, LIMITS.title),
     layout: asEnum<SceneLayout>(raw.layout, SCENE_LAYOUTS, LAYOUT_BY_INTENT[intent]),
@@ -676,4 +736,22 @@ export function sanitizePreface(raw: unknown): ScenePreface | null {
     palette: toPalette(raw.palette),
     plan: textList(raw.plan, LIMITS.planStep, LIMITS.maxPlan),
   };
+  const applet = appletBrief(raw.applet);
+  if (applet) preface.applet = applet;
+  return preface;
+}
+
+/**
+ * Normalises one untrusted `applet` stream event; null when it is not one.
+ * A 'ready' event whose markup fails sanitizeAppletHtml becomes 'failed', so
+ * the frame settles instead of waiting for markup that will never be usable.
+ */
+export function sanitizeAppletEvent(raw: unknown): AppletState | null {
+  if (!isObject(raw)) return null;
+  const status = optionalEnum(raw.status, APPLET_STATUSES);
+  if (status === undefined) return null;
+  const title = toText(raw.title, LIMITS.appletTitle);
+  if (status !== 'ready') return { status, title };
+  const html = sanitizeAppletHtml(raw.html);
+  return html === null ? { status: 'failed', title } : { status, title, html };
 }

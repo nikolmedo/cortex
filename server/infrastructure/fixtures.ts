@@ -16,6 +16,8 @@ export interface FixtureFile {
   lang: 'en' | 'es';
   preface: unknown;
   scene: unknown;
+  /** The interactive tool, when the preface asked for one and it was generated. Replayed as pending, then ready. */
+  applet?: { title: string; html: string };
   timing?: { prefaceMs: number | null; sceneMs: number | null };
 }
 

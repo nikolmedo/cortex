@@ -1,4 +1,11 @@
-import { sanitizePreface, sanitizeScene, type Scene, type ScenePreface } from '../domain/Scene';
+import {
+  sanitizeAppletEvent,
+  sanitizePreface,
+  sanitizeScene,
+  type AppletState,
+  type Scene,
+  type ScenePreface,
+} from '../domain/Scene';
 import type { Locale, TranslationKey } from '../i18n/translations';
 
 export type CortexErrorKey = Extract<TranslationKey, `error.${string}`>;
@@ -37,6 +44,14 @@ export interface StreamOptions {
   onResearch?: (info: ResearchInfo) => void;
   /** Called for every partial scene; each one supersedes the previous. */
   onPartial?: (scene: Scene) => void;
+  /**
+   * Called once with the final scene the moment it arrives. The stream may stay
+   * open after it while an applet is still being generated; the returned
+   * promise settles only at `done`.
+   */
+  onScene?: (scene: Scene) => void;
+  /** Called for every applet event, already through the mirror's sanitizer. */
+  onApplet?: (applet: AppletState) => void;
 }
 
 interface SseFrame {
@@ -80,7 +95,7 @@ function parseJson(data: string): unknown {
  * DOMException when the caller's signal aborts.
  */
 export async function streamCortex(query: string, lang: Locale, options: StreamOptions = {}): Promise<Scene> {
-  const { signal, onPreface, onResearch, onPartial } = options;
+  const { signal, onPreface, onResearch, onPartial, onScene, onApplet } = options;
   if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
 
   const internal = new AbortController();
@@ -96,6 +111,7 @@ export async function streamCortex(query: string, lang: Locale, options: StreamO
   const forwardAbort = () => internal.abort();
   signal?.addEventListener('abort', forwardAbort, { once: true });
   arm(FIRST_EVENT_TIMEOUT_MS);
+  let scene: Scene | null = null;
 
   try {
     let res: Response;
@@ -120,7 +136,6 @@ export async function streamCortex(query: string, lang: Locale, options: StreamO
     const reader = res.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
-    let scene: Scene | null = null;
     let prefaceSeen = false;
 
     for (;;) {
@@ -168,6 +183,17 @@ export async function streamCortex(query: string, lang: Locale, options: StreamO
             }
             break;
           }
+          case 'applet': {
+            // A tool that fails to parse is the tool's failure, never the answer's.
+            let applet: AppletState | null = null;
+            try {
+              applet = sanitizeAppletEvent(JSON.parse(frame.data) as unknown);
+            } catch {
+              break;
+            }
+            if (applet) onApplet?.(applet);
+            break;
+          }
           case 'scene':
             try {
               scene = sanitizeScene(parseJson(frame.data));
@@ -175,6 +201,7 @@ export async function streamCortex(query: string, lang: Locale, options: StreamO
               if (err instanceof CortexApiError) throw err;
               throw new CortexApiError('error.validation', detailOf(err));
             }
+            onScene?.(scene);
             break;
           case 'error': {
             const payload = parseJson(frame.data) as { code?: unknown } | null;
@@ -194,6 +221,9 @@ export async function streamCortex(query: string, lang: Locale, options: StreamO
     throw new CortexApiError('error.network', 'Stream closed before a scene arrived');
   } catch (err) {
     if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+    // The answer is complete once the scene is in; whatever went wrong after it
+    // (a dropped connection, the idle timer) could only have cost the applet.
+    if (scene) return scene;
     if (timedOut) throw new CortexApiError('error.timeout', detailOf(err));
     throw err;
   } finally {

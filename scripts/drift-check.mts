@@ -11,7 +11,7 @@ const CONSTANTS = [
   'FACT_KINDS', 'SPOTLIGHT_KINDS', 'ITEM_SIDES', 'SCENE_VERSION', 'LIMITS', 'LAYOUT_BY_INTENT', 'DEFAULT_PALETTE',
   'MODULE_SLOTS', 'MODULE_SPANS', 'MODULE_EMPHASES', 'MODULE_TONES', 'MODULE_REVEALS', 'ITEM_SHAPES',
   'MODULE_SURFACES', 'MODULE_CORNERS', 'MODULE_HEADERS', 'MODULE_PATTERNS', 'MODULE_SIZES', 'MODULE_VARIANTS',
-  'SCENE_TYPE_SCALES', 'VARIANTS_BY_KIND',
+  'SCENE_TYPE_SCALES', 'VARIANTS_BY_KIND', 'APPLET_THEME_VARS', 'APPLET_STATUSES',
 ] as const;
 
 let failures = 0;
@@ -27,6 +27,13 @@ const samples = ['  a <b>\n\tc\r\n', '\n\n  def f(x):\n\treturn x < 1\u0007  \n'
 for (const s of samples) {
   if (server.sanitizeText(s, 100) !== client.sanitizeText(s, 100)) fail('sanitizeText output differs');
   if (server.sanitizeCode(s, 2400) !== client.sanitizeCode(s, 2400)) fail('sanitizeCode output differs');
+}
+
+const appletSamples: unknown[] = [
+  '<style>.a > b {}</style>\r\n<script>if (1 < 2) go();\u0007</script>', '  ', 'x'.repeat(server.LIMITS.appletHtml + 1), 42,
+];
+for (const s of appletSamples) {
+  if (server.sanitizeAppletHtml(s) !== client.sanitizeAppletHtml(s)) fail('sanitizeAppletHtml output differs');
 }
 
 for (const kind of server.FACT_KINDS) {
@@ -133,6 +140,15 @@ for (const typeScale of ['monumental', 'gigantic', undefined]) {
 
 const preface = { intent: 'comparison', title: 'PG vs Mongo', layout: 'nope', mood: 'kinetic', palette: {}, plan: ['a', 'b', 'c', 'd'] };
 if (JSON.stringify(server.validatePreface(preface)) !== JSON.stringify(client.sanitizePreface(preface))) fail('normalised preface differs');
+
+// An applet request, one that must read as none, and a preface with no layout:
+// key order matters here because both sides are compared serialised.
+for (const applet of [{ title: 'Colour <picker>', brief: 'HSL sliders\nand hex' }, { title: '', brief: 'b' }, null]) {
+  const p = { intent: 'howto', title: 'Picker', mood: 'calm', palette: {}, plan: ['a'], applet };
+  if (JSON.stringify(server.validatePreface(p)) !== JSON.stringify(client.sanitizePreface(p))) {
+    fail(`normalised applet preface differs (${JSON.stringify(applet)})`);
+  }
+}
 
 // MAX_QUERY_LENGTH is duplicated in two modules that share nothing else, so it
 // is compared as source text rather than by importing the server router.

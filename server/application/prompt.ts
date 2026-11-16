@@ -89,6 +89,14 @@ export function buildMainPrompt(query: string, preface: ScenePreface | null, bri
       `ROUTER (a fast first pass over the same question; keep these unless the question clearly contradicts them, so the interface does not have to change shape mid-answer): `
       + `intent=${preface.intent}, layout=${preface.layout}, mood=${preface.mood}${palette}`,
     );
+    if (preface.applet) {
+      parts.push(
+        `INTERACTIVE TOOL: a working "${preface.applet.title}" is being built separately and is shown above your answer. `
+        + 'Do not draw the tool with modules and do not describe its controls one by one. Keep the answer short: the headline says what the tool is for, '
+        + 'the body explains how to use it and the concepts behind it, and 2 to 3 modules hold reference material (formats, formulas, terms, tips). '
+        + 'This overrides the module minimums in your instructions.',
+      );
+    }
   }
 
   if (brief) {
@@ -120,8 +128,12 @@ FIELDS
 - palette: { "primary", "secondary", "accent" } as #RRGGBB
 - plan: exactly 3 research steps specific to THIS question, each at most 60 characters, written as what the engine is doing right now. Name the concrete things involved; never generic steps like "Searching the web" or "Analyzing data".
   Example for "Why does ice float?": ["Comparing densities of ice and water", "Tracing hydrogen bonds in the crystal lattice", "Checking the 4 °C density maximum"]
+- applet: OPTIONAL. Include it only when the user asks for something to operate rather than to read: a picker, calculator, converter, generator, timer, simulator, playground, visual editor or a small game-like tool. Then the engine builds that tool as a working interactive widget beside the answer. { "title": the tool's name (max ${LIMITS.appletTitle} characters), "brief": what it must let the user do, naming its controls, inputs and outputs (max ${LIMITS.appletBrief} characters) }.
+  Omit the field entirely for every informational question, including "show me a chart of X", "how has X changed", "explain", "compare" and "who is".
+  Example for "CSS color picker": { "title": "CSS colour picker", "brief": "Hue, saturation, lightness and alpha sliders, a hex input and a live swatch; copyable hex, rgb(), hsl() and CSS custom property output." }
+  Example for "How has Tesla stock changed since 2020?": no applet field.
 
-LANGUAGE: title and plan are written in ${LANG_NAMES[lang]}. Enum values stay exactly as listed.`;
+LANGUAGE: title, plan and the applet title and brief are written in ${LANG_NAMES[lang]}. Enum values stay exactly as listed.`;
 }
 
 const ENTITY_EXAMPLE = `{
@@ -388,6 +400,7 @@ The module counts below are hard minimums, not suggestions: returning fewer than
 - analysis: 4 to 6 modules: proscons, stats, chart, quote, timeline, list.
 - current: 4 to 6 modules: timeline is REQUIRED, then stats, quote, keyvalue, list.
 Every module picks the kind that fits its content; never repeat the same kind more than twice.
+EVOLUTION OVER TIME: when the question asks how something changed or evolved over time (a stock or share price, an exchange or interest rate, a population, a market share, a temperature record), the FIRST module is one "chart" with variant "line" (or "area" for accumulations and shares) holding the series itself: as many evenly spaced, dated points as the research notes support, up to ${LIMITS.maxChartPoints} (monthly for a few years, yearly for decades), in chronological order, each with its real value and unit. Never invent, interpolate or round off figures the notes do not support: fewer real points beat many made-up ones. When the values are approximate, or the notes stop before today, say so in answer.caveats.
 
 ITEMS PER KIND (3 to 6 items unless noted). Fields not listed for a kind stay out: "weight" only exists for stats, ranking, progress and chart; "side" only for comparison and proscons.
   timeline: value = date or year, label = event.
@@ -401,7 +414,7 @@ ITEMS PER KIND (3 to 6 items unless noted). Fields not listed for a kind stay ou
   steps: EVERY step has all three fields: label = what the step does (short), detail = the full working or instruction (max ${LIMITS.stepDetail} chars), value = the outcome of that step, never empty (a result with units, a quantity, a time such as "0:45", or a state such as "Grounds evenly wet"). Up to 8 steps.
   formula: label = the expression in plain text, e.g. "d = v × t", detail = what it means and what each symbol is.
   proscons: side = "a" for a pro or "b" for a con, label = the point, detail = why it matters.
-  chart: 4 to 12 points in order; label = x-axis point, value = the real number with unit, weight = that number scaled 0-100 against the largest point.
+  chart: 4 to ${LIMITS.maxChartPoints} points in order; label = x-axis point (at most 12 characters, e.g. "Mar 2024", "2019", "Q3 23"), value = the real number with unit, weight = that number scaled 0-100 against the largest point.
   panel: a card you compose yourself, 3 to ${LIMITS.maxPanel} parts, when no other kind matches the shape of what you have to show. Every part carries a "shape": ${enumList(ITEM_SHAPES)}. figure = label + value, drawn as a large number that counts up (add weight 0-100 for a ring around it); bar = label + weight 0-100, with value as the readout; note = label + detail, a line with its explanation; pair = label + value, a key and its value; tag = label only, a keyword; divider = a rule separating groups, label optional. Consecutive tags share one row and consecutive pairs one list, so keep them together. It is not a replacement for stats, keyvalue or tags when one of those already fits.
   code: no items; body = the snippet with real newlines and indentation (max ${LIMITS.code} chars); value = language.
   prose: no items; body = one passage (max ${LIMITS.prose} chars).
